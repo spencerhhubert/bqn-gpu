@@ -259,13 +259,17 @@ async function runBundle(env: Env, id: string): Promise<Response> {
     FROM runs r JOIN commits c ON c.sha = r.project_commit
     JOIN environments e ON e.fingerprint = r.environment_fingerprint WHERE r.id = ?`).bind(id).first();
   if (!run) return error(404, "run_not_found", "Run not found");
-  const [results, capabilityRows, features] = await env.DB.batch([
+  const [results, programRows, capabilityRows, features] = await env.DB.batch([
     env.DB.prepare("SELECT * FROM results WHERE run_id = ? ORDER BY program_id, backend").bind(id),
+    env.DB.prepare(`SELECT DISTINCT p.* FROM programs p
+      JOIN results x ON x.program_id = p.id
+      WHERE x.run_id = ? ORDER BY p.id`).bind(id),
     env.DB.prepare("SELECT * FROM capability_snapshots WHERE run_id = ? ORDER BY backend").bind(id),
     env.DB.prepare("SELECT * FROM capability_features WHERE run_id = ? ORDER BY backend, feature_id").bind(id),
   ]);
   return json({
     run: parseRunRow(run as Record<string, unknown>),
+    programs: programRows.results.map((row) => parseProgramRow(row as Record<string, unknown>)),
     results: results.results.map((row) => parseResultRow(row as Record<string, unknown>)),
     capabilities: capabilityRows.results.map((row) => parseCapabilityRow(row as Record<string, unknown>)),
     capability_features: features.results.map((row) => parseFeatureRow(row as Record<string, unknown>)),
@@ -365,6 +369,7 @@ function featureRow(value: CapabilityFeature) {
 }
 
 function parseRunRow(row: Record<string, unknown>) { return parseJsonFields(row, ["input_profile_json", "metadata_json", "commit_metadata_json", "profile_json"]); }
+function parseProgramRow(row: Record<string, unknown>) { return parseJsonFields(row, ["tags_json", "input_generator_json", "comparison_policy_json", "metadata_json"]); }
 function parseResultRow(row: Record<string, unknown>) { return parseJsonFields(row, ["timings_json", "metadata_json", "input_profile_json"]); }
 function parseCapabilityRow(row: Record<string, unknown>) { return parseJsonFields(row, ["manifest_json", "metadata_json"]); }
 function parseFeatureRow(row: Record<string, unknown>) { return parseJsonFields(row, ["evidence_json", "metadata_json"]); }

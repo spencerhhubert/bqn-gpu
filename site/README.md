@@ -15,7 +15,7 @@ This directory contains the public benchmark and capability history service. It 
 
 Runs are immutable. Retrying an identical run ID is idempotent; attempting to reuse it with different content fails. A stable program ID cannot be reused for different source. Per-result timing scopes prevent resident compute and host-boundary measurements from being treated as comparable. Extra metadata objects are retained so new hardware and measurement fields can be added without discarding old records.
 
-Public, read-only endpoints are listed at `/api/v1/schema`. `/api/v1/runs/{run_id}` returns a reproduction bundle for a recorded experiment. Ingestion requires the `BENCHMARK_INGEST_TOKEN` Worker secret.
+Public, read-only endpoints are listed at `/api/v1/schema`. `/api/v1/runs/{run_id}` returns a reproduction bundle with the commit, environment, invocation, exact BQN sources and input policies, raw results, and capability evidence for a recorded experiment. Ingestion requires the `BENCHMARK_INGEST_TOKEN` Worker secret.
 
 ## Local development
 
