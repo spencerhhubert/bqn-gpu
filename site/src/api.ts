@@ -220,7 +220,11 @@ async function summary(env: Env): Promise<Response> {
       r.suite, r.timing_scope, e.cpu_model, e.accelerator_models
       FROM runs r JOIN environments e ON e.fingerprint = r.environment_fingerprint
       ORDER BY r.started_at DESC LIMIT 1`),
-    env.DB.prepare(`SELECT c.*, r.project_commit, r.started_at
+    env.DB.prepare(`SELECT c.run_id, c.backend, c.manifest_sha256,
+      c.corpus_programs, c.glyphs_total, c.monadic_supported,
+      c.dyadic_supported, c.folds_supported, c.tests_passed,
+      c.tests_failed, c.tests_skipped, c.value_domain,
+      r.project_commit, r.started_at
       FROM capability_snapshots c JOIN runs r ON r.id = c.run_id
       ORDER BY r.started_at DESC LIMIT 1`),
     env.DB.prepare(`SELECT backend, count(*) AS results, count(DISTINCT run_id) AS runs

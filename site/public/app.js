@@ -29,7 +29,7 @@ async function get(url) { const response = await fetch(url); if (!response.ok) t
 function renderSummary() {
   const { counts, latest_run: latest, latest_capability: capability } = state.summary;
   $("#count-runs").textContent = formatInteger(counts.runs);
-  $("#count-programs").textContent = formatInteger(counts.programs);
+  $("#count-programs").textContent = formatInteger(capability?.corpus_programs ?? counts.programs);
   $("#count-glyphs").textContent = capability?.glyphs_total ?? "—";
   $("#count-correct").textContent = formatInteger(counts.correct_results);
   $("#correct-denominator").textContent = `of ${formatInteger(counts.results)} recorded results`;
@@ -44,6 +44,9 @@ function renderProgramOptions() {
   const select = $("#program-filter");
   const ids = [...new Set(state.performance.map((item) => item.program_id))].sort();
   for (const id of ids) { const option = document.createElement("option"); option.value = id; option.textContent = id; select.append(option); }
+  select.value = ids.includes("program.long_pipeline_reduce.05")
+    ? "program.long_pipeline_reduce.05"
+    : (ids[0] ?? "");
 }
 
 function renderPerformance() {
