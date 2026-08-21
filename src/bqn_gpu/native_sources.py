@@ -45,6 +45,12 @@ def _render(
         return arguments[expression["name"]]
     if operation == "constant":
         return repr(float(expression["value"]))
+    if operation == "array":
+        constructor = "Tensor" if framework == "tinygrad" else "torch.tensor"
+        dtype = "dtypes.float64" if framework == "tinygrad" else "torch.float64"
+        values = repr([float(value) for value in expression["values"]])
+        device = next(iter(arguments.values()), "x")
+        return f"{constructor}({values}, dtype={dtype}, device=({device}).device)"
     if operation == "call":
         children = [
             _render(child, framework, arguments)
@@ -62,6 +68,20 @@ def _render(
             return f"({value}).{methods[expression['glyph']]}()"
         except KeyError:
             raise ValueError(f"unsupported native Fold {expression['glyph']!r}") from None
+    if operation in {"insert", "scan"}:
+        value = _render(expression["argument"], framework, arguments)
+        glyph = expression["glyph"]
+        if operation == "insert":
+            methods = {"+": "sum", "×": "prod", "⌊": "min", "⌈": "max"}
+            try:
+                return f"({value}).{methods[glyph]}(axis=0)"
+            except KeyError:
+                raise ValueError(f"unsupported native Insert {glyph!r}") from None
+        methods = {"+": "cumsum", "×": "cumprod"}
+        try:
+            return f"({value}).{methods[glyph]}(axis=0)"
+        except KeyError:
+            raise ValueError(f"unsupported native Scan {glyph!r}") from None
     raise ValueError(f"unknown native IR operation {operation!r}")
 
 

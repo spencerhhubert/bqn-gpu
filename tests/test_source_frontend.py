@@ -21,6 +21,24 @@ def atom(value: float) -> HostValue:
         ("{-𝕩+1}", {"x": atom(4)}, atom(-5)),
         ("{𝕨×𝕩+1}", {"w": atom(3), "x": atom(4)}, atom(15)),
         ("{a←|𝕩 ⋄ b←a×a ⋄ +´b}", {"x": decode_host_value([1, -2, 3])}, atom(14)),
+        ("{¬𝕩}", {"x": decode_host_value([0, 0.5, 1])}, decode_host_value([1, 0.5, 0])),
+        ("{∧𝕩}", {"x": decode_host_value([3, 1, 2])}, decode_host_value([1, 2, 3])),
+        (
+            "{2‿3⥊𝕩}",
+            {"x": decode_host_value([1, 2, 3])},
+            decode_host_value([[1, 2, 3], [1, 2, 3]]),
+        ),
+        (
+            "{𝕩≍𝕩}",
+            {"x": decode_host_value([1, 2, 3])},
+            decode_host_value([[1, 2, 3], [1, 2, 3]]),
+        ),
+        ("{+`𝕩}", {"x": decode_host_value([1, 2, 3])}, decode_host_value([1, 3, 6])),
+        (
+            "{+˝𝕩}",
+            {"x": decode_host_value([[1, 2, 3], [4, 5, 6]])},
+            decode_host_value([5, 7, 9]),
+        ),
         ("{π}", {}, atom(3.141592653589793)),
         ("{¯5e¯1}", {}, atom(-0.5)),
     ],
@@ -50,7 +68,7 @@ def test_multiline_comments_and_local_names(backend: TinygradBackend) -> None:
         ("{}", "cannot be empty"),
         ("{𝕩+}", "expected a numeric value"),
         ("{missing+1}", "unknown local name"),
-        ("{𝕩∨1}", "unsupported BQN token"),
+        ("{𝕩⌾1}", "unsupported BQN token"),
         ("{𝕩+1", "close BQN block"),
     ],
 )
@@ -92,15 +110,12 @@ def test_cli_executes_bqn_file_and_reads_json_file(tmp_path, capsys) -> None:
 
 
 def test_cli_falls_back_to_cbqn_for_unsupported_source(capsys) -> None:
-    assert main(["eval", "{𝕩∾𝕩}", "--x", "[-1,0,2]"]) == 0
+    assert main(["eval", "1⊣\"frontend fallback\""]) == 0
     captured = capsys.readouterr()
-    assert json.loads(captured.out) == {
-        "shape": [6],
-        "data": [-1.0, 0.0, 2.0, -1.0, 0.0, 2.0],
-    }
+    assert json.loads(captured.out) == 1.0
     assert "cBQN fallback" in captured.err
 
 
 def test_cli_can_require_acceleration_instead_of_fallback(capsys) -> None:
-    assert main(["eval", "{𝕩∾𝕩}", "--x", "1", "--fallback", "error"]) == 2
+    assert main(["eval", "1⊣\"frontend fallback\"", "--fallback", "error"]) == 2
     assert "unsupported BQN token" in capsys.readouterr().err

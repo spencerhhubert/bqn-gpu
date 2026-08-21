@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from numbers import Real
 from typing import Callable, Iterable, Mapping, Sequence
 
@@ -75,6 +76,11 @@ class TinygradBackend:
 
     def _call_monadic(self, glyph: str, x: TinygradValue) -> TinygradValue:
         self._check_device(x)
+        if glyph in {"∧", "∨"}:
+            if len(x.shape) != 1:
+                raise DomainError("Sort is currently supported for numeric lists")
+            tensor = x.tensor.sort(dim=0, descending=glyph == "∨")[0]
+            return TinygradValue(tensor=tensor, atom=False)
         if glyph == "=":
             return self.atom(len(x.shape))
         if glyph == "≠":
@@ -90,6 +96,48 @@ class TinygradBackend:
                 raise DomainError("Range requires a natural-number atom")
             tensor = Tensor.arange(count, device=self.device).cast(dtypes.float64)
             return TinygradValue(tensor=tensor, atom=False)
+        if glyph == "≡":
+            return self.atom(0 if x.atom else 1)
+        if glyph in {"⊣", "⊢"}:
+            return x
+        if glyph == "⥊":
+            return TinygradValue(tensor=x.tensor.reshape((x.tensor.numel(),)), atom=False)
+        if glyph == "≍":
+            return TinygradValue(tensor=x.tensor.reshape((1,) + x.shape), atom=False)
+        if glyph == "⌽":
+            if len(x.shape) == 0:
+                raise DomainError("Reverse requires an array with at least one axis")
+            return TinygradValue(tensor=x.tensor.flip(0), atom=False)
+        if glyph == "⍉":
+            if x.atom:
+                return TinygradValue(tensor=x.tensor, atom=False)
+            if len(x.shape) <= 1:
+                return x
+            axes = tuple(range(1, len(x.shape))) + (0,)
+            return TinygradValue(tensor=x.tensor.permute(axes), atom=False)
+        if glyph == "/":
+            counts = self._whole_numbers(x, "Indices", natural=True)
+            indices = [index for index, count in enumerate(counts) for _ in range(count)]
+            return self._index_list(indices)
+        if glyph in {"⍋", "⍒"}:
+            if len(x.shape) != 1:
+                raise DomainError("Grade is currently supported for numeric lists")
+            tensor = x.tensor.argsort(dim=0, descending=glyph == "⍒").cast(dtypes.float64)
+            return TinygradValue(tensor=tensor, atom=False)
+        if glyph == "⊏":
+            if len(x.shape) == 0 or x.shape[0] == 0:
+                raise DomainError("First Cell requires a nonempty array with an axis")
+            return TinygradValue(tensor=x.tensor[0], atom=False)
+        if glyph == "⊑":
+            if x.tensor.numel() == 0:
+                raise DomainError("First requires a nonempty value")
+            return TinygradValue(tensor=x.tensor.reshape((-1,))[0], atom=True)
+        if glyph in {"⊐", "⊒", "∊", "⍷"}:
+            return self._self_search(glyph, x)
+        if glyph == "⋈":
+            if not x.atom:
+                raise DomainError("dense Enlist is currently supported only for atoms")
+            return TinygradValue(tensor=x.tensor.reshape((1,)), atom=False)
         if glyph == "+":
             tensor = x.tensor
         elif glyph == "-":
@@ -108,6 +156,8 @@ class TinygradBackend:
             tensor = x.tensor.ceil()
         elif glyph == "|":
             tensor = x.tensor.abs()
+        elif glyph == "¬":
+            tensor = 1.0 - x.tensor
         else:
             raise UnsupportedPrimitive(f"monadic primitive {glyph!r} is not implemented")
         return TinygradValue(tensor=tensor, atom=x.atom)
@@ -117,6 +167,47 @@ class TinygradBackend:
     ) -> TinygradValue:
         self._check_device(w)
         self._check_device(x)
+        if glyph in {"≡", "≢"}:
+            matches = w.atom == x.atom and w.shape == x.shape
+            if not matches:
+                return self.atom(1 if glyph == "≢" else 0)
+            equal = (w.tensor == x.tensor).all().cast(dtypes.float64)
+            tensor = 1.0 - equal if glyph == "≢" else equal
+            return TinygradValue(tensor=tensor, atom=True)
+        if glyph == "⊣":
+            return w
+        if glyph == "⊢":
+            return x
+        if glyph == "⥊":
+            return self._reshape(w, x)
+        if glyph == "∾":
+            return self._join_to(w, x)
+        if glyph == "≍":
+            return self._couple(w, x)
+        if glyph == "⋈":
+            if not w.atom or not x.atom:
+                raise DomainError("dense Pair is currently supported only for atoms")
+            return TinygradValue(tensor=w.tensor.stack(x.tensor, dim=0), atom=False)
+        if glyph == "↑":
+            return self._take_or_drop(w, x, take=True)
+        if glyph == "↓":
+            return self._take_or_drop(w, x, take=False)
+        if glyph == "⌽":
+            return self._rotate(w, x)
+        if glyph == "⍉":
+            return self._reorder_axes(w, x)
+        if glyph == "/":
+            return self._replicate(w, x)
+        if glyph == "↕":
+            return self._windows(w, x)
+        if glyph == "⊏":
+            return self._select(w, x)
+        if glyph == "⊑":
+            return self._pick(w, x)
+        if glyph in {"⍋", "⍒"}:
+            return self._bins(glyph, w, x)
+        if glyph in {"⊐", "⊒", "∊", "⍷"}:
+            return self._search(glyph, w, x)
         w_tensor, x_tensor = self._leading_axis_agreement(w, x)
         if glyph == "+":
             tensor = w_tensor + x_tensor
@@ -148,6 +239,12 @@ class TinygradBackend:
             tensor = (w_tensor <= x_tensor).cast(dtypes.float64)
         elif glyph == "≥":
             tensor = (w_tensor >= x_tensor).cast(dtypes.float64)
+        elif glyph == "∧":
+            tensor = w_tensor * x_tensor
+        elif glyph == "∨":
+            tensor = w_tensor + x_tensor - w_tensor * x_tensor
+        elif glyph == "¬":
+            tensor = 1.0 + w_tensor - x_tensor
         else:
             raise UnsupportedPrimitive(f"dyadic primitive {glyph!r} is not implemented")
         return TinygradValue(tensor=tensor, atom=w.atom and x.atom)
@@ -162,21 +259,326 @@ class TinygradBackend:
         self._check_device(argument)
         if argument.atom or len(argument.shape) != 1:
             raise DomainError("BQN Fold is currently supported only for numeric lists")
-        if glyph == "+":
-            tensor = argument.tensor.sum()
-        elif glyph == "×":
-            tensor = argument.tensor.prod()
-        elif glyph == "⌊":
-            if argument.shape[0] == 0:
-                raise DomainError("Minimum Fold of an empty list has no supported fill")
-            tensor = argument.tensor.min()
-        elif glyph == "⌈":
-            if argument.shape[0] == 0:
-                raise DomainError("Maximum Fold of an empty list has no supported fill")
-            tensor = argument.tensor.max()
-        else:
-            raise UnsupportedPrimitive(f"Fold with {glyph!r} is not implemented")
+        tensor = self._reduce_tensor(glyph, argument.tensor, axis=0)
         return TinygradValue(tensor=tensor, atom=True)
+
+    def insert(self, glyph: str, argument: TinygradValue) -> TinygradValue:
+        self._check_device(argument)
+        if argument.atom or len(argument.shape) == 0:
+            raise DomainError("Insert requires an array with at least one axis")
+        tensor = self._reduce_tensor(glyph, argument.tensor, axis=0)
+        return TinygradValue(tensor=tensor, atom=len(argument.shape) == 1)
+
+    def scan(self, glyph: str, argument: TinygradValue) -> TinygradValue:
+        self._check_device(argument)
+        if argument.atom or len(argument.shape) == 0:
+            raise DomainError("Scan requires an array with at least one axis")
+        if argument.shape[0] == 0:
+            return argument
+        if glyph == "+":
+            tensor = argument.tensor.cumsum(axis=0)
+        elif glyph in {"×", "∧"}:
+            tensor = argument.tensor.cumprod(axis=0)
+        elif glyph == "∨":
+            tensor = 1.0 - (1.0 - argument.tensor).cumprod(axis=0)
+        elif glyph == "⌊":
+            tensor = -(-argument.tensor).cummax(axis=0)[0]
+        elif glyph == "⌈":
+            tensor = argument.tensor.cummax(axis=0)[0]
+        else:
+            raise UnsupportedPrimitive(f"Scan with {glyph!r} is not implemented")
+        return TinygradValue(tensor=tensor, atom=False)
+
+    def _reduce_tensor(self, glyph: str, tensor: Tensor, *, axis: int) -> Tensor:
+        if tensor.shape[axis] == 0:
+            identities = {"+": 0.0, "×": 1.0, "∧": 1.0, "∨": 0.0, "⌊": math.inf, "⌈": -math.inf}
+            try:
+                identity = identities[glyph]
+            except KeyError:
+                raise UnsupportedPrimitive(f"reduction with {glyph!r} is not implemented") from None
+            shape = tuple(length for index, length in enumerate(tensor.shape) if index != axis)
+            return Tensor.full(shape, identity, dtype=dtypes.float64, device=self.device)
+        if glyph == "+":
+            return tensor.sum(axis=axis)
+        if glyph in {"×", "∧"}:
+            return tensor.prod(axis=axis)
+        if glyph == "∨":
+            return 1.0 - (1.0 - tensor).prod(axis=axis)
+        if glyph == "⌊":
+            return tensor.min(axis=axis)
+        if glyph == "⌈":
+            return tensor.max(axis=axis)
+        raise UnsupportedPrimitive(f"reduction with {glyph!r} is not implemented")
+
+    def _reshape(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        shape = self._whole_numbers(w, "Reshape", natural=True)
+        if len(w.shape) > 1:
+            raise DomainError("Reshape requires a natural-number atom or list")
+        target_size = math.prod(shape)
+        source = x.tensor.reshape((x.tensor.numel(),))
+        if target_size == 0:
+            tensor = Tensor([], dtype=dtypes.float64, device=self.device).reshape(shape)
+        elif source.numel() == 0:
+            raise DomainError("Reshape cannot fill a nonempty result from an empty array")
+        else:
+            repetitions = math.ceil(target_size / source.numel())
+            tensor = source.repeat((repetitions,))[:target_size].reshape(shape)
+        return TinygradValue(tensor=tensor, atom=False)
+
+    def _join_to(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        result_rank = max(1, len(w.shape), len(x.shape))
+        if result_rank - len(w.shape) > 1 or result_rank - len(x.shape) > 1:
+            raise ShapeError("Join To arguments may differ in rank by at most one")
+        w_tensor = w.tensor.reshape((1,) + w.shape) if len(w.shape) < result_rank else w.tensor
+        x_tensor = x.tensor.reshape((1,) + x.shape) if len(x.shape) < result_rank else x.tensor
+        if tuple(w_tensor.shape[1:]) != tuple(x_tensor.shape[1:]):
+            raise ShapeError("Join To requires matching trailing cell shapes")
+        return TinygradValue(tensor=w_tensor.cat(x_tensor, dim=0), atom=False)
+
+    def _couple(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        if w.atom != x.atom or w.shape != x.shape:
+            raise DomainError("dense Couple requires arguments with the same kind and shape")
+        return TinygradValue(tensor=w.tensor.stack(x.tensor, dim=0), atom=False)
+
+    def _take_or_drop(
+        self, w: TinygradValue, x: TinygradValue, *, take: bool
+    ) -> TinygradValue:
+        counts = self._whole_numbers(w, "Take" if take else "Drop")
+        tensor = x.tensor.reshape((1,)) if x.atom else x.tensor
+        shape = tuple(int(length) for length in tensor.shape)
+        if len(counts) > len(shape):
+            raise DomainError("dense Take/Drop does not yet add leading unit axes")
+        slices: list[slice] = [slice(None)] * len(shape)
+        for axis, count in enumerate(counts):
+            length = shape[axis]
+            if take:
+                if abs(count) > length:
+                    raise DomainError("fill-expanding Take is outside the dense tier")
+                slices[axis] = slice(0, count) if count >= 0 else slice(length + count, length)
+            else:
+                removed = min(abs(count), length)
+                slices[axis] = slice(removed, None) if count >= 0 else slice(0, length - removed)
+        return TinygradValue(tensor=tensor[tuple(slices)], atom=False)
+
+    def _rotate(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        rotations = self._whole_numbers(w, "Rotate")
+        tensor = x.tensor.reshape((1,)) if x.atom else x.tensor
+        if len(rotations) > len(tensor.shape):
+            raise DomainError("Rotate specifies more axes than the right argument")
+        if not rotations:
+            return TinygradValue(tensor=tensor, atom=False)
+        shifts = tuple(-rotation for rotation in rotations)
+        return TinygradValue(
+            tensor=tensor.roll(shifts, dims=tuple(range(len(rotations)))), atom=False
+        )
+
+    def _reorder_axes(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        destinations = list(self._whole_numbers(w, "Reorder Axes", natural=True))
+        tensor = x.tensor
+        rank = len(x.shape)
+        if len(destinations) > rank:
+            raise DomainError("Reorder Axes specifies more axes than the right argument")
+        unused = [axis for axis in range(rank) if axis not in destinations]
+        destinations.extend(unused[: rank - len(destinations)])
+        if sorted(destinations) != list(range(rank)):
+            raise DomainError("dense Reorder Axes currently requires a permutation")
+        if rank == 0:
+            return TinygradValue(tensor=tensor, atom=False)
+        axes = tuple(sorted(range(rank), key=destinations.__getitem__))
+        return TinygradValue(tensor=tensor.permute(axes), atom=False)
+
+    def _replicate(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        tensor = x.tensor.reshape((1,)) if x.atom else x.tensor
+        if len(tensor.shape) == 0:
+            raise DomainError("Replicate requires an array axis")
+        counts = self._whole_numbers(w, "Replicate", natural=True)
+        if w.atom:
+            counts = counts * int(tensor.shape[0])
+        if len(counts) != tensor.shape[0]:
+            raise ShapeError("Replicate counts must match the first-axis length")
+        indices = [index for index, count in enumerate(counts) for _ in range(count)]
+        if not indices:
+            shape = (0,) + tuple(int(length) for length in tensor.shape[1:])
+            output = Tensor.empty(*shape, dtype=dtypes.float64, device=self.device)
+        else:
+            output = tensor[self._integer_indices(indices)]
+        return TinygradValue(tensor=output, atom=False)
+
+    def _windows(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        sizes = self._whole_numbers(w, "Windows", natural=True)
+        tensor = x.tensor.reshape((1,)) if x.atom else x.tensor
+        rank = len(tensor.shape)
+        if len(sizes) > rank:
+            raise DomainError("Windows specifies more axes than the right argument")
+        if any(size == 0 for size in sizes):
+            raise DomainError("zero-sized Windows are not yet in the dense tier")
+        output_lengths = tuple(max(0, int(tensor.shape[axis]) - size + 1) for axis, size in enumerate(sizes))
+        if any(length == 0 for length in output_lengths):
+            shape = output_lengths + sizes + tuple(int(length) for length in tensor.shape[len(sizes):])
+            output = Tensor.empty(*shape, dtype=dtypes.float64, device=self.device)
+            return TinygradValue(tensor=output, atom=False)
+        output = tensor
+        for axis, size in enumerate(sizes):
+            output = output.unfold(axis, size, 1)
+        if sizes:
+            axes = (
+                tuple(range(len(sizes)))
+                + tuple(range(rank, rank + len(sizes)))
+                + tuple(range(len(sizes), rank))
+            )
+            output = output.permute(axes)
+        return TinygradValue(tensor=output, atom=False)
+
+    def _select(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        if x.atom or len(x.shape) == 0:
+            raise DomainError("Select requires a right argument with a first axis")
+        indices = self._whole_numbers(w, "Select", natural=True)
+        if any(index >= x.shape[0] for index in indices):
+            raise DomainError("Select index is outside the first axis")
+        if w.atom:
+            output = x.tensor[indices[0]]
+        elif len(w.shape) <= 1:
+            if not indices:
+                shape = w.shape + x.shape[1:]
+                output = Tensor.empty(*shape, dtype=dtypes.float64, device=self.device)
+            else:
+                output = x.tensor[self._integer_indices(indices)].reshape(w.shape + x.shape[1:])
+        else:
+            raise DomainError("dense Select currently accepts one index array")
+        return TinygradValue(tensor=output, atom=False)
+
+    def _pick(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        if x.atom:
+            raise DomainError("Pick requires an array right argument")
+        indices = self._whole_numbers(w, "Pick", natural=True)
+        if not indices:
+            return x
+        if len(indices) > len(x.shape):
+            raise DomainError("Pick index has higher rank than the right argument")
+        if any(index >= x.shape[axis] for axis, index in enumerate(indices)):
+            raise DomainError("Pick index is outside the right argument")
+        output = x.tensor[tuple(indices)]
+        return TinygradValue(tensor=output, atom=len(indices) == len(x.shape))
+
+    def _bins(
+        self, glyph: str, w: TinygradValue, x: TinygradValue
+    ) -> TinygradValue:
+        if len(w.shape) != 1:
+            raise DomainError("Bins currently requires a numeric list left argument")
+        principal = w.tensor.reshape((1, w.shape[0]))
+        queries = x.tensor.reshape((x.tensor.numel(), 1))
+        ordered = principal <= queries if glyph == "⍋" else principal >= queries
+        output = ordered.sum(axis=1).cast(dtypes.float64).reshape(x.shape)
+        return TinygradValue(tensor=output, atom=x.atom)
+
+    def _self_search(self, glyph: str, x: TinygradValue) -> TinygradValue:
+        if len(x.shape) != 1:
+            raise DomainError("self-search is currently supported for numeric lists")
+        values = x.tensor.reshape((x.shape[0],))
+        if glyph == "⍷":
+            host = tuple(float(item) for item in values.tolist())
+            seen: set[float] = set()
+            indices = []
+            for index, value in enumerate(host):
+                if value not in seen:
+                    seen.add(value)
+                    indices.append(index)
+            output = values[self._integer_indices(indices)] if indices else Tensor.empty(0, dtype=dtypes.float64, device=self.device)
+            return TinygradValue(tensor=output, atom=False)
+        count = x.shape[0]
+        if count == 0:
+            return x
+        equal = values.reshape((count, 1)) == values.reshape((1, count))
+        positions = Tensor.arange(count, device=self.device).reshape((1, count))
+        if glyph == "⊐":
+            output = equal.where(positions, count).min(axis=1).cast(dtypes.float64)
+        else:
+            rows = Tensor.arange(count, device=self.device).reshape((count, 1))
+            earlier = positions < rows
+            occurrences = (equal * earlier).sum(axis=1).cast(dtypes.float64)
+            output = (occurrences == 0).cast(dtypes.float64) if glyph == "∊" else occurrences
+        return TinygradValue(tensor=output, atom=False)
+
+    def _search(
+        self, glyph: str, w: TinygradValue, x: TinygradValue
+    ) -> TinygradValue:
+        if glyph == "⍷":
+            return self._find(w, x)
+        if glyph == "∊":
+            principal, queries, result = x, w, w
+        else:
+            principal, queries, result = w, x, x
+        if len(principal.shape) != 1:
+            raise DomainError("dense search currently requires a numeric list principal argument")
+        principal_values = principal.tensor.reshape((principal.shape[0],))
+        query_values = queries.tensor.reshape((queries.tensor.numel(),))
+        if glyph == "⊒":
+            principal_host = tuple(float(item) for item in principal_values.tolist())
+            query_host = tuple(float(item) for item in query_values.tolist())
+            locations: dict[float, list[int]] = {}
+            for index, value in enumerate(principal_host):
+                locations.setdefault(value, []).append(index)
+            used: dict[float, int] = {}
+            output_host = []
+            for value in query_host:
+                occurrence = used.get(value, 0)
+                matches = locations.get(value, [])
+                output_host.append(matches[occurrence] if occurrence < len(matches) else len(principal_host))
+                used[value] = occurrence + 1
+            output = Tensor(output_host, dtype=dtypes.float64, device=self.device).reshape(result.shape)
+            return TinygradValue(tensor=output, atom=result.atom)
+        matches = query_values.reshape((-1, 1)) == principal_values.reshape((1, -1))
+        if glyph == "∊":
+            output = matches.any(axis=1).cast(dtypes.float64)
+        elif principal.shape[0] == 0:
+            output = Tensor.full(
+                (query_values.numel(),),
+                0.0,
+                dtype=dtypes.float64,
+                device=self.device,
+            )
+        else:
+            positions = Tensor.arange(principal.shape[0], device=self.device).reshape((1, -1))
+            output = matches.where(positions, principal.shape[0]).min(axis=1).cast(dtypes.float64)
+        return TinygradValue(tensor=output.reshape(result.shape), atom=result.atom)
+
+    def _find(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        if len(w.shape) != 1 or len(x.shape) != 1:
+            raise DomainError("Find is currently supported for numeric lists")
+        pattern_length, input_length = w.shape[0], x.shape[0]
+        if pattern_length == 0:
+            return TinygradValue(tensor=Tensor.ones(input_length + 1, dtype=dtypes.float64, device=self.device), atom=False)
+        if pattern_length > input_length:
+            return TinygradValue(tensor=Tensor.empty(0, dtype=dtypes.float64, device=self.device), atom=False)
+        windows = x.tensor.unfold(0, pattern_length, 1)
+        output = (windows == w.tensor.reshape((1, pattern_length))).all(axis=1).cast(dtypes.float64)
+        return TinygradValue(tensor=output, atom=False)
+
+    def _integer_indices(self, values: Sequence[int]) -> Tensor:
+        return Tensor(values, dtype=dtypes.int32, device=self.device)
+
+    def _index_list(self, values: Sequence[int]) -> TinygradValue:
+        tensor = Tensor(values, dtype=dtypes.float64, device=self.device)
+        return TinygradValue(tensor=tensor, atom=False)
+
+    @staticmethod
+    def _whole_numbers(
+        value: TinygradValue, operation: str, *, natural: bool = False
+    ) -> tuple[int, ...]:
+        if value.atom:
+            numbers = (float(value.tensor.item()),)
+        elif len(value.shape) <= 1:
+            numbers = tuple(float(item) for item in value.tensor.flatten().tolist())
+        else:
+            raise DomainError(f"{operation} requires an atom or list")
+        result: list[int] = []
+        for number in numbers:
+            integer = int(number)
+            if number != integer or (natural and integer < 0):
+                qualifier = "natural numbers" if natural else "whole numbers"
+                raise DomainError(f"{operation} requires {qualifier}")
+            result.append(integer)
+        return tuple(result)
 
     def synchronize(self) -> None:
         Device[self.device].synchronize()
@@ -232,13 +634,17 @@ class TinygradBackend:
 
         operation = expression["op"]
         if operation == "call":
-            if expression["glyph"] == "↕":
+            if expression["glyph"] in {
+                "⥊", "∾", "≍", "⋈", "↑", "↓", "↕", "⌽", "⍉", "/", "⊏", "⊑", "⊒", "⍷"
+            }:
                 return False
             return all(
                 TinygradBackend._fixed_output_shape(child)
                 for child in expression["arguments"]
             )
         if operation == "fold":
+            return TinygradBackend._fixed_output_shape(expression["argument"])
+        if operation in {"insert", "scan"}:
             return TinygradBackend._fixed_output_shape(expression["argument"])
         return True
 

@@ -33,7 +33,7 @@ def test_non_numeric_values_are_rejected(backend: TinygradBackend) -> None:
 
 def test_unsupported_primitive_is_explicit(backend: TinygradBackend) -> None:
     with pytest.raises(UnsupportedPrimitive):
-        backend.call("⊑", backend.atom(1), backend.atom(2))
+        backend.call("!", backend.atom(1), backend.atom(2))
 
 
 def test_wrong_valence_is_explicit(backend: TinygradBackend) -> None:

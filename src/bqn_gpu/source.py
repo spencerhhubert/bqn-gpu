@@ -9,11 +9,23 @@ from typing import Mapping, Sequence
 
 from .errors import SourceError
 from .host_value import HostValue
-from .ir import Expression, constant, dyadic, evaluate, fold, monadic
+from .ir import (
+    Expression,
+    array_constant,
+    constant,
+    dyadic,
+    evaluate,
+    fold,
+    insert,
+    monadic,
+    scan,
+)
 from .protocol import ExecutionBackend, ValueT
 
 
-_GLYPHS = frozenset("+-×÷⋆√⌊⌈|=≠<>≤≥≢↕")
+_GLYPHS = frozenset(
+    "+-×÷⋆√⌊⌈∧∨¬|≤<>≥=≠≡≢⊣⊢⥊∾≍⋈↑↓↕»«⌽⍉/⍋⍒⊏⊑⊐⊒∊⍷⊔!"
+)
 _NUMBER = re.compile(
     r"¯?(?:∞|π|(?:\d+(?:\.\d+)?)(?:[eE]¯?\d+)?)"
 )
@@ -174,20 +186,31 @@ class _Parser:
             glyph = self.advance().text
             if self.match("FOLD"):
                 return fold(glyph, self._expression())
+            if self.match("INSERT"):
+                return insert(glyph, self._expression())
+            if self.match("SCAN"):
+                return scan(glyph, self._expression())
             return monadic(glyph, self._expression())
 
         left = self._subject()
         if self.current.kind == "GLYPH":
             glyph = self.advance().text
-            if self.match("FOLD"):
-                self.fail("dyadic Fold is not implemented by the source frontend")
+            if self.current.kind in {"FOLD", "INSERT", "SCAN"}:
+                modifier = self.advance().text
+                self.fail(
+                    f"dyadic initial-value modifier {glyph}{modifier} is not implemented"
+                )
             return dyadic(glyph, left, self._expression())
         return left
 
     def _subject(self) -> Expression:
         token = self.current
         if self.match("NUMBER"):
-            return constant(_parse_number(token.text))
+            values = [_parse_number(token.text)]
+            while self.match("STRAND") is not None:
+                item = self.expect("NUMBER", "numeric strands currently require literals")
+                values.append(_parse_number(item.text))
+            return array_constant(values) if len(values) > 1 else constant(values[0])
         if self.match("ARG"):
             return {"op": "argument", "name": {"𝕨": "w", "𝕩": "x"}[token.text]}
         if self.match("NAME"):
@@ -244,6 +267,9 @@ def _tokenize(source: str) -> list[Token]:
             ",": "SEP",
             "←": "ASSIGN",
             "´": "FOLD",
+            "˝": "INSERT",
+            "`": "SCAN",
+            "‿": "STRAND",
             "𝕨": "ARG",
             "𝕩": "ARG",
         }.get(character)
@@ -307,6 +333,6 @@ def _argument_names(expression: Mapping[str, object]) -> set[str]:
         for child in expression["arguments"]:  # type: ignore[union-attr]
             result.update(_argument_names(child))
         return result
-    if operation == "fold":
+    if operation in {"fold", "insert", "scan"}:
         return _argument_names(expression["argument"])  # type: ignore[arg-type]
     return set()
