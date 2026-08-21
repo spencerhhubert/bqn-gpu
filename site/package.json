@@ -1,11 +1,12 @@
 {
-  "name": "bqn-gpu-observatory",
-  "version": "0.1.0",
+  "name": "bqn-gpu-website",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "npm run types && npm run typecheck && npm test",
-    "deploy": "wrangler deploy",
+    "build:css": "tailwindcss -i ./src/styles.css -o ./public/styles.css --minify",
+    "check": "npm run build:css && npm run types && npm run typecheck && npm test",
+    "deploy": "npm run build:css && wrangler deploy",
     "dev": "wrangler dev",
     "migrate:local": "wrangler d1 migrations apply bqn-gpu-results --local",
     "migrate:remote": "wrangler d1 migrations apply bqn-gpu-results --remote",
@@ -14,7 +15,9 @@
     "types": "wrangler types"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
     "@types/node": "22.15.17",
+    "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vitest": "4.1.11",
     "wrangler": "4.125.0"

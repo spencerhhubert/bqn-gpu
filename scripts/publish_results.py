@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a corpus report into an observatory bundle and publish it."""
+"""Convert a corpus report into a website ingestion bundle and publish it."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from bqn_gpu.corpus import Program, load_programs  # noqa: E402
 
 
-DEFAULT_ENDPOINT = "https://bqn-gpu-observatory.spencerhhubert.workers.dev/api/v1/ingest"
+DEFAULT_ENDPOINT = "https://bqn-gpu-website.spencerhhubert.workers.dev/api/v1/ingest"
 REPOSITORY = "https://github.com/spencerhhubert/bqn-gpu"
 
 

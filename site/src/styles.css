@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@source "../public/index.html";
+@source "../public/app.js";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+@layer base {
+  button, select, input { font: inherit; }
+  button:not(:disabled), select { cursor: pointer; }
+  code, pre { font-variant-ligatures: none; }
+}
+
+.chart-grid { stroke: #e2e8f0; stroke-width: 1; }
+.chart-label { fill: #64748b; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.chart-parity { stroke: #64748b; stroke-dasharray: 4 4; stroke-width: 1.5; }
+.distribution-range { stroke-width: 2; opacity: .35; vector-effect: non-scaling-stroke; }
+.distribution-iqr { stroke-linecap: round; stroke-width: 8; opacity: .75; vector-effect: non-scaling-stroke; }
+.distribution-median { stroke: white; stroke-width: 2; vector-effect: non-scaling-stroke; }
+dialog::backdrop { background: rgb(15 23 42 / 0.4); }

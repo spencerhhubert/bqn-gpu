@@ -1,4 +1,4 @@
-name: Observatory
+name: Website
 
 on:
   push:
@@ -38,8 +38,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment:
-      name: observatory
-      url: https://bqn-gpu-observatory.spencerhhubert.workers.dev
+      name: website
+      url: https://bqn-gpu-website.spencerhhubert.workers.dev
     defaults:
       run:
         working-directory: site

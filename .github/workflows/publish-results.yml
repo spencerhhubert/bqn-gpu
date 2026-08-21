@@ -1,0 +1,48 @@
+name: Publish benchmark results
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: GitHub Release tag containing ingestion payloads
+        required: true
+        type: string
+      asset_pattern:
+        description: Release asset glob to ingest
+        required: true
+        default: "*-payload.json"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      ASSET_PATTERN: ${{ inputs.asset_pattern }}
+      BQN_GPU_RESULTS_TOKEN: ${{ secrets.BENCHMARK_INGEST_TOKEN }}
+      BQN_GPU_RESULTS_URL: https://bqn-gpu-website.spencerhhubert.workers.dev/api/v1/ingest
+    steps:
+      - name: Download release payloads
+        run: gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$ASSET_PATTERN" --dir payloads
+      - name: Validate and publish
+        run: |
+          shopt -s nullglob
+          payloads=(payloads/*.json)
+          if (( ${#payloads[@]} == 0 )); then
+            echo "No payloads matched $ASSET_PATTERN" >&2
+            exit 1
+          fi
+          for payload in "${payloads[@]}"; do
+            jq -e '.schema_version == 1 and (.commit.sha | test("^[0-9a-f]{40}$")) and (.results | length > 0)' "$payload" >/dev/null
+            response=$(curl --fail-with-body --silent --show-error \
+              -H "Authorization: Bearer $BQN_GPU_RESULTS_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-binary "@$payload" \
+              "$BQN_GPU_RESULTS_URL")
+            jq -c '{ok, run_id, programs, results, idempotent}' <<<"$response"
+          done

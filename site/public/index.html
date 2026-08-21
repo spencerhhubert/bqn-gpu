@@ -3,108 +3,185 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Reproducible performance and conformance history for the bqn-gpu project.">
-    <title>bqn-gpu observatory</title>
+    <meta name="description" content="Aggregate performance, correctness, run logs, and source programs for bqn-gpu.">
+    <title>bqn-gpu results</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
-  <body>
-    <div class="noise" aria-hidden="true"></div>
-    <header class="masthead">
-      <a class="brand" href="/" aria-label="bqn-gpu observatory home">
-        <span class="brand-mark">⟨↕⟩</span>
-        <span><strong>bqn-gpu</strong><small>performance observatory</small></span>
-      </a>
-      <nav>
-        <a href="#performance">Performance</a>
-        <a href="#capability">Capability</a>
-        <a href="#runs">Runs</a>
-        <a href="https://github.com/spencerhhubert/bqn-gpu">Source ↗</a>
-      </nav>
-      <span id="live-status" class="live-status"><i></i> connecting</span>
+  <body class="min-h-screen bg-slate-50 text-slate-950 antialiased">
+    <header class="border-b border-slate-200 bg-white">
+      <div class="mx-auto flex max-w-7xl items-center justify-between gap-5 px-4 py-4 sm:px-6 lg:px-8">
+        <a href="/" class="font-mono text-lg font-semibold tracking-tight no-underline">bqn-gpu results</a>
+        <nav class="flex items-center gap-4 text-sm text-slate-600">
+          <a class="hover:text-slate-950" href="#aggregates">Aggregates</a>
+          <a class="hover:text-slate-950" href="#runs">Runs</a>
+          <a class="hover:text-slate-950" href="#programs">Programs</a>
+          <a class="hidden hover:text-slate-950 sm:inline" href="/api/v1/schema">API</a>
+          <a class="hidden hover:text-slate-950 sm:inline" href="https://github.com/spencerhhubert/bqn-gpu">GitHub ↗</a>
+        </nav>
+      </div>
     </header>
 
-    <main>
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">GPU BQN, measured honestly</p>
-          <h1>Every optimization leaves a <em>trace.</em></h1>
-          <p class="lede">Raw timings, exact commits, complete machine profiles, and cBQN-backed language claims—kept together so a fast result can be reproduced instead of merely remembered.</p>
-          <div class="commit-line">
-            <span>latest tested commit</span>
-            <a id="latest-commit" class="commit" href="#runs">no runs yet</a>
-            <span id="latest-date">waiting for data</span>
-          </div>
+    <main class="mx-auto max-w-7xl space-y-7 px-4 py-7 sm:px-6 lg:px-8">
+      <section class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight">Performance and correctness</h1>
+          <p id="page-context" class="mt-2 text-sm text-slate-600">Loading results…</p>
         </div>
-        <div class="glyph-orbit" aria-hidden="true">
-          <span class="orbit orbit-a">+</span><span class="orbit orbit-b">×</span>
-          <span class="orbit orbit-c">⌈</span><span class="orbit orbit-d">´</span>
-          <div class="core"><b>CUDA</b><small>⇄ cBQN</small></div>
-        </div>
+        <button id="reset-filters" class="self-start rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm hover:bg-slate-50 lg:self-auto">Reset filters</button>
       </section>
 
-      <section id="summary-cards" class="summary-grid" aria-label="Project summary">
-        <article><span>recorded runs</span><strong id="count-runs">—</strong><small>immutable experiment records</small></article>
-        <article><span>corpus programs</span><strong id="count-programs">—</strong><small>real BQN sources</small></article>
-        <article><span>accelerated glyphs</span><strong id="count-glyphs">—</strong><small>covered by conformance tests</small></article>
-        <article><span>correct results</span><strong id="count-correct">—</strong><small id="correct-denominator">across every backend</small></article>
+      <section class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-5" aria-label="Result filters">
+        <label class="text-xs font-medium text-slate-600">Commit
+          <select id="commit-filter" class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></select>
+        </label>
+        <label class="text-xs font-medium text-slate-600">Input size
+          <select id="size-filter" class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></select>
+        </label>
+        <label class="text-xs font-medium text-slate-600">Workload
+          <select id="category-filter" class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></select>
+        </label>
+        <label class="text-xs font-medium text-slate-600">Machine
+          <select id="hardware-filter" class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></select>
+        </label>
+        <label class="text-xs font-medium text-slate-600">Timing scope
+          <select id="timing-filter" class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></select>
+        </label>
       </section>
 
-      <section id="performance" class="panel feature-panel">
-        <div class="section-heading">
-          <div><p class="eyebrow">Performance history</p><h2>How fast, on what, and when?</h2></div>
-          <div class="filters">
-            <label>Program<select id="program-filter"><option value="">Loading programs…</option></select></label>
-            <label>Scale<select id="scale-filter"><option value="log">Log time</option><option value="linear">Linear time</option></select></label>
-          </div>
-        </div>
-        <div class="chart-shell">
-          <div class="chart-key" id="performance-legend"></div>
-          <svg id="performance-chart" role="img" aria-label="Backend median execution time history" viewBox="0 0 1000 390"></svg>
-          <div id="performance-empty" class="empty-state" hidden>No performance records match this view.</div>
-        </div>
-        <div class="chart-foot"><span>Lower is faster · median resident execution time</span><span>Raw repetitions remain available through the run API</span></div>
-      </section>
-
-      <section class="split-panels">
-        <article class="panel speed-panel">
-          <div class="section-heading"><div><p class="eyebrow">GPU / cBQN</p><h2>Speedup, paired</h2></div><span class="metric-pill">same run · same input</span></div>
-          <div id="speedup-bars" class="speedup-bars"></div>
-          <div id="speedup-empty" class="empty-state" hidden>Paired CPU and GPU measurements will appear here.</div>
+      <section class="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Aggregate summary">
+        <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">tinygrad vs cBQN</p>
+          <p id="metric-cbqn" class="mt-2 font-mono text-2xl font-semibold">—</p>
+          <p class="mt-1 text-xs text-slate-500">median paired speedup</p>
         </article>
-        <article id="capability" class="panel capability-panel">
-          <div class="section-heading"><div><p class="eyebrow">Language surface</p><h2>Capability over time</h2></div><span id="capability-backend" class="metric-pill">tinygrad</span></div>
-          <svg id="capability-chart" role="img" aria-label="Supported BQN forms over time" viewBox="0 0 620 310"></svg>
-          <div id="capability-empty" class="empty-state" hidden>Capability snapshots will appear here.</div>
-          <div class="capability-key"><span><i class="key-cyan"></i>monadic</span><span><i class="key-orange"></i>dyadic</span><span><i class="key-cream"></i>folds</span></div>
+        <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">tinygrad vs Torch</p>
+          <p id="metric-torch" class="mt-2 font-mono text-2xl font-semibold">—</p>
+          <p class="mt-1 text-xs text-slate-500">median paired speedup</p>
+        </article>
+        <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Programs measured</p>
+          <p id="metric-programs" class="mt-2 font-mono text-2xl font-semibold">—</p>
+          <p id="metric-conditions" class="mt-1 text-xs text-slate-500">—</p>
+        </article>
+        <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Correct results</p>
+          <p id="metric-correct" class="mt-2 font-mono text-2xl font-semibold">—</p>
+          <p id="metric-correct-detail" class="mt-1 text-xs text-slate-500">—</p>
         </article>
       </section>
 
-      <section id="runs" class="panel runs-panel">
-        <div class="section-heading">
-          <div><p class="eyebrow">Experiment ledger</p><h2>Recent reproducible runs</h2></div>
-          <a class="api-link" href="/api/v1/schema">API schema ↗</a>
+      <section id="aggregates" class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 p-5">
+          <h2 class="text-base font-semibold">Speedup distributions vs CPU cBQN</h2>
+          <p class="mt-1 text-sm text-slate-500">Each line is a group of matched programs. The thick interval is the middle 50%, the thin interval is p10–p90, and the dot is the median. Higher is better; 1× is parity.</p>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Run</th><th>Commit</th><th>Suite</th><th>Machine</th><th>Scope</th><th>Results</th><th>Status</th></tr></thead>
-            <tbody id="runs-body"><tr><td colspan="7" class="loading">Loading D1 records…</td></tr></tbody>
+        <div class="overflow-x-auto p-5">
+          <svg id="distribution-chart" class="min-w-[760px]" role="img" aria-label="Aggregate GPU speedup distributions compared with cBQN"></svg>
+          <p id="distribution-empty" class="py-20 text-center text-sm text-slate-500" hidden>No paired results match these filters.</p>
+        </div>
+        <details class="border-t border-slate-200">
+          <summary class="cursor-pointer px-5 py-3 text-sm font-medium text-slate-700">Exact distribution statistics</summary>
+          <div class="overflow-x-auto px-5 pb-5">
+            <table class="w-full text-left text-sm">
+              <thead class="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th class="py-2 font-medium">Condition</th><th class="py-2 font-medium">Backend</th><th class="py-2 text-right font-medium">Programs</th><th class="py-2 text-right font-medium">p10</th><th class="py-2 text-right font-medium">Median</th><th class="py-2 text-right font-medium">p90</th><th class="py-2 text-right font-medium">Faster than cBQN</th></tr></thead>
+              <tbody id="distribution-table" class="divide-y divide-slate-100 font-mono text-xs"></tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+
+      <section class="grid gap-6 xl:grid-cols-2">
+        <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 p-5">
+            <h2 class="text-base font-semibold">By program complexity</h2>
+            <p class="mt-1 text-sm text-slate-500">Static primitive glyph occurrences in the submitted BQN source. This is a source-level proxy, not asymptotic complexity.</p>
+          </div>
+          <div class="overflow-x-auto p-5">
+            <table class="w-full text-left text-sm">
+              <thead class="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th class="pb-2 font-medium">Primitives</th><th class="pb-2 text-right font-medium">Programs</th><th class="pb-2 text-right font-medium">cBQN</th><th class="pb-2 text-right font-medium">tinygrad</th><th class="pb-2 text-right font-medium">vs cBQN</th><th class="pb-2 text-right font-medium">vs Torch</th></tr></thead>
+              <tbody id="complexity-table" class="divide-y divide-slate-100 font-mono text-xs"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 p-5">
+            <h2 class="text-base font-semibold">By input size</h2>
+            <p class="mt-1 text-sm text-slate-500">Aggregate resident-compute time and paired speedup at each tested element count.</p>
+          </div>
+          <div class="overflow-x-auto p-5">
+            <table class="w-full text-left text-sm">
+              <thead class="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th class="pb-2 font-medium">Elements</th><th class="pb-2 text-right font-medium">Programs</th><th class="pb-2 text-right font-medium">cBQN</th><th class="pb-2 text-right font-medium">tinygrad</th><th class="pb-2 text-right font-medium">vs cBQN</th><th class="pb-2 text-right font-medium">vs Torch</th></tr></thead>
+              <tbody id="size-table" class="divide-y divide-slate-100 font-mono text-xs"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 p-5">
+          <h2 class="text-base font-semibold">By workload and coding style</h2>
+          <p class="mt-1 text-sm text-slate-500">Medians over matched programs. “vs Torch” is Torch time divided by tinygrad time, so values above 1× mean the BQN backend is faster.</p>
+        </div>
+        <div class="overflow-x-auto p-5">
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th class="pb-2 font-medium">Condition</th><th class="pb-2 text-right font-medium">Programs</th><th class="pb-2 text-right font-medium">cBQN</th><th class="pb-2 text-right font-medium">tinygrad</th><th class="pb-2 text-right font-medium">Torch</th><th class="pb-2 text-right font-medium">vs cBQN</th><th class="pb-2 text-right font-medium">vs Torch</th></tr></thead>
+            <tbody id="workload-table" class="divide-y divide-slate-100 font-mono text-xs"></tbody>
           </table>
         </div>
       </section>
 
-      <section class="method">
-        <p class="eyebrow">A benchmark is a recipe</p>
-        <h2>The database stores enough context to recreate the experiment.</h2>
-        <div class="method-grid">
-          <div><b>01</b><h3>Exact code</h3><p>Full Git SHA, BQN source and source hash, stable corpus ID, runner version, and invocation.</p></div>
-          <div><b>02</b><h3>Exact machine</h3><p>CPU topology, accelerators, memory, OS, driver, CUDA runtime, cBQN and framework revisions.</p></div>
-          <div><b>03</b><h3>Raw evidence</h3><p>Warmups, every measured repetition, aggregates, correctness outcome, input profile, seed, and artifacts.</p></div>
-          <div><b>04</b><h3>Explicit claims</h3><p>Capability snapshots preserve the manifest, supported valences, tested domains, behavior and test evidence.</p></div>
+      <section class="grid gap-6 lg:grid-cols-[1fr_2fr]">
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-base font-semibold">Language support</h2>
+          <p id="capability-context" class="mt-1 text-sm text-slate-500">Latest conformance snapshot.</p>
+          <dl id="capability-values" class="mt-5 grid grid-cols-2 gap-3"></dl>
+        </article>
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-base font-semibold">Measurement conditions</h2>
+          <dl id="measurement-conditions" class="mt-4 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2"></dl>
+        </article>
+      </section>
+
+      <section id="runs" class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 p-5">
+          <h2 class="text-base font-semibold">Run log</h2>
+          <p class="mt-1 text-sm text-slate-500">Open a run for its exact command, hardware/software profile, sources, and raw repetitions.</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500"><tr><th class="px-4 py-3 font-medium">Started</th><th class="px-4 py-3 font-medium">Commit</th><th class="px-4 py-3 font-medium">Suite</th><th class="px-4 py-3 font-medium">Hardware</th><th class="px-4 py-3 text-right font-medium">Results</th><th class="px-4 py-3 font-medium">Status</th><th class="px-4 py-3"></th></tr></thead>
+            <tbody id="runs-body" class="divide-y divide-slate-100"><tr><td colspan="7" class="px-4 py-10 text-center text-slate-500">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="programs" class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-end sm:justify-between">
+          <div><h2 class="text-base font-semibold">Measured programs</h2><p id="program-count-label" class="mt-1 text-sm text-slate-500">Loading program sources…</p></div>
+          <label class="text-xs font-medium text-slate-600">Filter
+            <input id="program-search" type="search" placeholder="ID, category, tag…" class="mt-1 block w-full min-w-64 rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          </label>
+        </div>
+        <div class="grid min-h-[30rem] lg:grid-cols-[22rem_1fr]">
+          <div id="program-list" class="max-h-[42rem] overflow-y-auto border-b border-slate-200 lg:border-b-0 lg:border-r"></div>
+          <div id="program-detail" class="min-w-0 p-5"><p class="text-sm text-slate-500">Select a program.</p></div>
         </div>
       </section>
     </main>
 
-    <footer><span>bqn-gpu observatory</span><span>Workers + D1 · schema v1</span><span>Data is evidence, not a promise.</span></footer>
+    <footer class="border-t border-slate-200 bg-white">
+      <div class="mx-auto flex max-w-7xl flex-wrap justify-between gap-3 px-4 py-5 text-xs text-slate-500 sm:px-6 lg:px-8">
+        <span>Benchmark records include commit, source, command, environment, and raw repetitions.</span>
+        <a class="hover:text-slate-900" href="https://github.com/spencerhhubert/bqn-gpu/releases/tag/gpu-validation-2026-08-21.2">Validation artifacts ↗</a>
+      </div>
+    </footer>
+
+    <dialog id="run-dialog" class="m-auto max-h-[90vh] w-[min(72rem,calc(100%-2rem))] overflow-hidden rounded-lg border border-slate-200 bg-white p-0 text-slate-950 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4"><h2 id="run-dialog-title" class="font-mono text-sm font-semibold">Run</h2><button id="run-dialog-close" class="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Close</button></div>
+      <div id="run-dialog-body" class="max-h-[calc(90vh-4rem)] overflow-y-auto p-5"></div>
+    </dialog>
     <script type="module" src="/app.js"></script>
   </body>
 </html>

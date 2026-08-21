@@ -1,6 +1,6 @@
-# bqn-gpu observatory
+# bqn-gpu website
 
-This directory contains the public benchmark and capability history service. It is a TypeScript Cloudflare Worker with a D1 database and a dependency-free dashboard.
+This directory contains the public benchmark and capability history website. It is a TypeScript Cloudflare Worker with a D1 database and a static Tailwind frontend.
 
 ## Data contract
 
@@ -34,8 +34,10 @@ Put a development-only `BENCHMARK_INGEST_TOKEN` in `site/.dev.vars`. The file is
 Pushes and pull requests verify the site. Tags matching `site-v*` apply pending D1 migrations and deploy the Worker, static assets, and required ingestion secret with GitHub Actions. For example:
 
 ```sh
-git tag -a site-v0.1.0 -m "Deploy observatory v0.1.0"
+git tag -a site-v0.1.0 -m "Deploy website v0.1.0"
 git push origin site-v0.1.0
 ```
 
 The GitHub environment contains an account-scoped Cloudflare token limited to Workers Scripts Write, D1 Write, and Account Settings Read. The benchmark ingestion token is separate and has no Cloudflare API permissions.
+
+Raw benchmark reports and generated ingestion payloads can be attached to a GPU-validation GitHub Release. The manual `Publish benchmark results` workflow downloads matching payload assets and sends them to the API using the repository ingestion secret. Reusing an already-published run ID is safe when the payload is identical.

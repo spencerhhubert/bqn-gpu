@@ -205,7 +205,7 @@ export async function ingest(env: Env, payload: IngestPayload, payloadSha256: st
 
 async function health(env: Env): Promise<Response> {
   const row = await env.DB.prepare("SELECT count(*) AS runs FROM runs").first<{ runs: number }>();
-  return json({ ok: true, service: "bqn-gpu-observatory", schema_version: 1, runs: row?.runs ?? 0 });
+  return json({ ok: true, service: "bqn-gpu-website", schema_version: 1, runs: row?.runs ?? 0 });
 }
 
 async function summary(env: Env): Promise<Response> {
@@ -309,9 +309,10 @@ async function capability(env: Env, url: URL): Promise<Response> {
 
 async function programs(env: Env, url: URL): Promise<Response> {
   const max = limit(url, 250, 1000);
-  const result = await env.DB.prepare(`SELECT id, source_sha256, category, variant, tags_json,
+  const result = await env.DB.prepare(`SELECT id, source, source_sha256, category, variant, tags_json,
+    input_generator_json, comparison_policy_json, metadata_json,
     first_seen_commit, last_seen_commit FROM programs ORDER BY id LIMIT ?`).bind(max).all();
-  return json({ programs: result.results.map((row) => parseJsonFields(row as Record<string, unknown>, ["tags_json"])) });
+  return json({ programs: result.results.map((row) => parseProgramRow(row as Record<string, unknown>)) });
 }
 
 async function environments(env: Env, url: URL): Promise<Response> {
