@@ -56,7 +56,7 @@ python scripts/run_corpus.py --backend cbqn --backend tinygrad --backend torch \
   --device CUDA --tag paired --size 1048576 --output results.json
 ```
 
-cBQN is always a CPU reference in this runner. Tensor inputs are transferred before timing; reported tensor-backend times include source-IR dispatch, graph construction or eager operator dispatch, kernel realization, and required device synchronization, but exclude host/device input and output transfer.
+cBQN is always a CPU reference in this runner. Tensor inputs are transferred before timing and outputs afterward. tinygrad uses a reusable JIT-captured graph after two warmups; Torch currently uses eager dispatch. Every result records its execution mode, cold time, individual warm times, and median. Required device synchronization is inside the timed region, while host/device input and output transfer is excluded.
 
 ## Development
 

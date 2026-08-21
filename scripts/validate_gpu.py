@@ -44,6 +44,7 @@ def main() -> int:
     environment.update(
         {
             "BQN_GPU_TEST_DEVICE": "CUDA",
+            "BQN_GPU_TORCH_TEST_DEVICE": "CUDA",
             "BQN_GPU_FUZZ_SEED": str(arguments.seed),
             "BQN_GPU_FUZZ_CASES": str(case_counts[arguments.profile]),
         }
@@ -68,8 +69,14 @@ def main() -> int:
         "repository_commit": command("git", "rev-parse", "HEAD"),
         "repository_dirty": bool(command("git", "status", "--porcelain")),
         "cbqn_commit": (ROOT / "deps/cbqn.rev").read_text(encoding="utf-8").strip(),
-        "backend": "tinygrad",
-        "backend_commit": conformance["backend"]["revision"],
+        "backends": [
+            {
+                "name": "tinygrad",
+                "revision": conformance["backend"]["revision"],
+                "device": "CUDA",
+            },
+            *torch_backend_metadata(),
+        ],
         "python_version": platform.python_version(),
         "operating_system": platform.platform(),
         "gpu": {
@@ -85,6 +92,23 @@ def main() -> int:
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(manifest_path)
     return completed.returncode
+
+
+def torch_backend_metadata() -> list[dict[str, str]]:
+    try:
+        import torch
+    except ImportError:
+        return []
+    if not torch.cuda.is_available():
+        return []
+    return [
+        {
+            "name": "PyTorch",
+            "version": torch.__version__,
+            "cuda_runtime": str(torch.version.cuda),
+            "device": str(torch.device("cuda", torch.cuda.current_device())),
+        }
+    ]
 
 
 if __name__ == "__main__":

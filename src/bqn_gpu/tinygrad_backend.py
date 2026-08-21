@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from numbers import Real
-from typing import Iterable, Sequence
+from typing import Callable, Iterable, Mapping, Sequence
 
-from tinygrad import Device, Tensor, dtypes
+from tinygrad import Device, Tensor, TinyJit, dtypes
 
 from .errors import DeviceError, DomainError, ShapeError, UnsupportedPrimitive
 from .host_value import HostValue, Shape
+from .ir import Expression, evaluate
 
 
 @dataclass(frozen=True)
@@ -148,6 +149,43 @@ class TinygradBackend:
 
     def synchronize(self) -> None:
         Device[self.device].synchronize()
+
+    def compile(
+        self,
+        expression: Expression,
+        arguments: Mapping[str, TinygradValue],
+    ) -> Callable[[Mapping[str, TinygradValue]], TinygradValue]:
+        """Capture a reusable tinygrad graph for one source/shape signature."""
+
+        names = tuple(sorted(arguments))
+        atom_kinds = tuple(arguments[name].atom for name in names)
+        output_atom: list[bool] = []
+        for argument in arguments.values():
+            argument.tensor.realize()
+
+        def execute_tensors(*tensors: Tensor) -> Tensor:
+            values = {
+                name: TinygradValue(tensor=tensor, atom=atom)
+                for name, tensor, atom in zip(names, tensors, atom_kinds, strict=True)
+            }
+            result = evaluate(expression, self, values)
+            if not output_atom:
+                output_atom.append(result.atom)
+            return result.tensor
+
+        jitted = TinyJit(execute_tensors)
+
+        def execute_compiled(
+            supplied: Mapping[str, TinygradValue],
+        ) -> TinygradValue:
+            if tuple(sorted(supplied)) != names:
+                raise DomainError(
+                    f"compiled program expected arguments {names}, got {tuple(sorted(supplied))}"
+                )
+            tensor = jitted(*(supplied[name].tensor for name in names))
+            return TinygradValue(tensor=tensor, atom=output_atom[0])
+
+        return execute_compiled
 
     def _check_device(self, value: TinygradValue) -> None:
         if value.tensor.device != self.device:

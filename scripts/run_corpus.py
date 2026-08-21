@@ -191,7 +191,9 @@ def benchmark_cbqn(
         start = time.perf_counter_ns()
         cbqn.call(program.bqn, *arguments)
         timings.append(time.perf_counter_ns() - start)
-    return timing_result(program, "cbqn", "CPU", cold_ns, timings)
+    result = timing_result(program, "cbqn", "CPU", cold_ns, timings)
+    result["execution_mode"] = "embedding-call"
+    return result
 
 
 def benchmark_backend(
@@ -205,11 +207,19 @@ def benchmark_backend(
     repeat: int,
 ) -> dict[str, Any]:
     device_inputs = {key: backend.from_host(value) for key, value in inputs.items()}
+    compiler = getattr(backend, "compile", None)
+    executable = (
+        compiler(compiled.expression, device_inputs) if compiler is not None else None
+    )
 
     def run_once() -> tuple[Any, int]:
         backend.synchronize()
         start = time.perf_counter_ns()
-        value = evaluate(compiled.expression, backend, device_inputs)
+        value = (
+            executable(device_inputs)
+            if executable is not None
+            else evaluate(compiled.expression, backend, device_inputs)
+        )
         realize = getattr(value.tensor, "realize", None)
         if realize is not None:
             realize()
@@ -221,7 +231,11 @@ def benchmark_backend(
     for _ in range(warmup):
         run_once()
     timings = [run_once()[1] for _ in range(repeat)]
-    return timing_result(program, name, str(backend.device).upper(), cold_ns, timings)
+    result = timing_result(program, name, str(backend.device).upper(), cold_ns, timings)
+    result["execution_mode"] = (
+        "jit-captured" if executable is not None else "eager-dispatch"
+    )
+    return result
 
 
 def timing_result(
