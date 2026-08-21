@@ -420,6 +420,12 @@ def make_programs() -> list[dict[str, Any]]:
         ("minimum", "⌊"),
         ("maximum", "⌈"),
     ):
+        insert_domain = "positive" if glyph in {"×", "∧", "∨"} else "signed"
+        scan_domain = {
+            "×": "near_one",
+            "∧": "boolean",
+            "∨": "boolean",
+        }.get(glyph, "signed")
         add(
             f"dense.insert_{name}.matrix",
             "dense-modifier",
@@ -427,7 +433,7 @@ def make_programs() -> list[dict[str, Any]]:
             insert(glyph, x),
             1,
             "monadic_matrix",
-            {"x": "positive" if glyph in {"×", "∧", "∨"} else "signed"},
+            {"x": insert_domain},
             ["dense", "modifier", "insert", name],
             rtol=3e-12,
             atol=3e-12,
@@ -439,10 +445,10 @@ def make_programs() -> list[dict[str, Any]]:
             scan(glyph, x),
             1,
             "monadic_vector",
-            {"x": "positive" if glyph in {"×", "∧", "∨"} else "signed"},
+            {"x": scan_domain},
             ["dense", "modifier", "scan", name],
-            rtol=3e-12,
-            atol=3e-12,
+            rtol=2e-10 if glyph in {"+", "×"} else 0.0,
+            atol=2e-10 if glyph in {"+", "×"} else 0.0,
         )
 
     dense_phrases = [

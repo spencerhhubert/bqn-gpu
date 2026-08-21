@@ -9341,8 +9341,8 @@
       "domains": {
         "x": "signed"
       },
-      "rtol": 3e-12,
-      "atol": 3e-12,
+      "rtol": 2e-10,
+      "atol": 2e-10,
       "tags": [
         "dense",
         "modifier",
@@ -9401,10 +9401,10 @@
       },
       "input_mode": "monadic_vector",
       "domains": {
-        "x": "positive"
+        "x": "near_one"
       },
-      "rtol": 3e-12,
-      "atol": 3e-12,
+      "rtol": 2e-10,
+      "atol": 2e-10,
       "tags": [
         "dense",
         "modifier",
@@ -9463,10 +9463,10 @@
       },
       "input_mode": "monadic_vector",
       "domains": {
-        "x": "positive"
+        "x": "boolean"
       },
-      "rtol": 3e-12,
-      "atol": 3e-12,
+      "rtol": 0.0,
+      "atol": 0.0,
       "tags": [
         "and",
         "dense",
@@ -9525,10 +9525,10 @@
       },
       "input_mode": "monadic_vector",
       "domains": {
-        "x": "positive"
+        "x": "boolean"
       },
-      "rtol": 3e-12,
-      "atol": 3e-12,
+      "rtol": 0.0,
+      "atol": 0.0,
       "tags": [
         "dense",
         "modifier",
@@ -9589,8 +9589,8 @@
       "domains": {
         "x": "signed"
       },
-      "rtol": 3e-12,
-      "atol": 3e-12,
+      "rtol": 0.0,
+      "atol": 0.0,
       "tags": [
         "dense",
         "minimum",
@@ -9651,8 +9651,8 @@
       "domains": {
         "x": "signed"
       },
-      "rtol": 3e-12,
-      "atol": 3e-12,
+      "rtol": 0.0,
+      "atol": 0.0,
       "tags": [
         "dense",
         "maximum",

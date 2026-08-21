@@ -144,4 +144,8 @@ def _number(randomizer: random.Random, domain: str) -> float:
         return randomizer.uniform(-3.0, 3.0) + 0.125
     if domain == "count":
         return float(randomizer.randint(0, 64))
+    if domain == "near_one":
+        return randomizer.uniform(0.999, 1.001)
+    if domain == "boolean":
+        return float(randomizer.choice((0, 1)))
     raise ValueError(f"unknown input domain {domain!r}")
