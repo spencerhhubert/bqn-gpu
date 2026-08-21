@@ -89,3 +89,18 @@ def test_cli_executes_bqn_file_and_reads_json_file(tmp_path, capsys) -> None:
     input_path.write_text("[1,2,3]", encoding="utf-8")
     assert main(["run", str(source_path), "--x", f"@{input_path}"]) == 0
     assert json.loads(capsys.readouterr().out) == 14.0
+
+
+def test_cli_falls_back_to_cbqn_for_unsupported_source(capsys) -> None:
+    assert main(["eval", "{𝕩≠0}", "--x", "[-1,0,2]"]) == 0
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == {
+        "shape": [3],
+        "data": [1.0, 0.0, 1.0],
+    }
+    assert "cBQN fallback" in captured.err
+
+
+def test_cli_can_require_acceleration_instead_of_fallback(capsys) -> None:
+    assert main(["eval", "{𝕩≠0}", "--x", "1", "--fallback", "error"]) == 2
+    assert "unsupported BQN token" in capsys.readouterr().err

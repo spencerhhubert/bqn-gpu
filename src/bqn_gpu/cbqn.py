@@ -82,6 +82,15 @@ class CBQN:
             for value in encoded:
                 self.library.bqn_free(value)
 
+    def evaluate(self, source: str) -> HostValue:
+        """Evaluate an immediate BQN program and read its numeric result."""
+
+        result = int(self.library.bqn_evalCStr(source.encode("utf-8")))
+        try:
+            return self._read_value(result)
+        finally:
+            self.library.bqn_free(result)
+
     def _make_value(self, value: HostValue) -> int:
         if value.atom:
             return int(self.library.bqn_makeF64(value.data[0]))

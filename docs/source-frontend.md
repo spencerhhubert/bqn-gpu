@@ -13,7 +13,7 @@ The accepted subset is deliberately narrower than BQN. It includes:
 - newline, `⋄`, and comma statement separators; and
 - `#` line comments.
 
-The frontend does not yet compile source array notation, strands, trains, block headers, nested functions, other modifiers, strings or characters, namespaces, system values, recursion, mutation, or control flow. An unsupported token or construct is rejected with a line and column. There is no silent reinterpretation and no automatic cBQN fallback yet.
+The frontend does not yet compile source array notation, strands, trains, block headers, nested functions, other modifiers, strings or characters, namespaces, system values, recursion, mutation, or control flow. An unsupported token or construct has a line-and-column diagnostic. By default the CLI reports that diagnostic on stderr and delegates to cBQN when its shared library is available and the result fits the current dense-real numeric boundary. `--fallback error` rejects instead. There is no silent reinterpretation.
 
 ## JSON values
 

@@ -45,7 +45,7 @@ result = execute(
 
 The source frontend currently supports headerless function blocks, bare expressions, `𝕨`/`𝕩`, numeric constants, parentheses, BQN right-to-left evaluation, local `←` assignments, statement separators, comments, and Fold over a deliberately small primitive surface. Supported real-number primitives include monadic and dyadic `+ - × ÷ ⌊ ⌈ |`, monadic `⋆ √`, and Fold with `+ × ⌊ ⌈` on lists.
 
-This is not yet a general BQN implementation. Unsupported syntax fails with its source location; automatic cBQN fallback is planned but not implemented. The exact claimed surface and limitations are generated in [docs/conformance.md](docs/conformance.md), and [docs/source-frontend.md](docs/source-frontend.md) describes the accepted source and data boundary.
+This is not yet a general BQN compiler. When the pinned cBQN shared library has been built, the CLI delegates unsupported source or backend domains to cBQN and reports the fallback on stderr; the current fallback result must still fit the dense-real numeric boundary. Pass `--fallback error` to require accelerated execution. The exact claimed surface and limitations are generated in [docs/conformance.md](docs/conformance.md), and [docs/source-frontend.md](docs/source-frontend.md) describes the accepted source and data boundary.
 
 The tracked corpus starts at 116 actual BQN programs and is explicitly designed to grow without a fixed cap. It includes primitive shape cases, phrases, naive/idiomatic pairs, reductions, and long pipelines. Every case is compiled through the BQN source frontend and compared as a complete value against pinned cBQN. See [docs/corpus.md](docs/corpus.md).
 

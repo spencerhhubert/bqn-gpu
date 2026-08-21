@@ -23,7 +23,7 @@
     "Nested arrays and characters are not supported.",
     "Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.",
     "Signed-zero preservation is not claimed, consistent with BQN portability guidance.",
-    "There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly."
+    "The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead."
   ],
   "primitives": [
     {
@@ -215,7 +215,7 @@
       {
         "name": "General BQN syntax",
         "status": "unsupported",
-        "constraint": "Arrays in source, trains, headers, modifiers other than Fold, namespaces, strings, nested values, and control flow are not compiled yet."
+        "constraint": "Arrays in source, trains, headers, modifiers other than Fold, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN."
       }
     ],
     "tests": ["tests/test_source_frontend.py", "tests/test_corpus.py"]

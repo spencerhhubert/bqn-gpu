@@ -43,7 +43,7 @@ Element-wise addition with atom extension and explicit leading-axis agreement.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
-- There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `-` — Negate / Subtract
 
@@ -68,7 +68,7 @@ Element-wise subtraction with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
-- There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `×` — Sign / Multiply
 
@@ -93,7 +93,7 @@ Element-wise multiplication with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
-- There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `÷` — Reciprocal / Divide
 
@@ -118,7 +118,7 @@ Element-wise division with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
-- There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `⋆` — Exponential / Power
 
@@ -143,7 +143,7 @@ Rejected explicitly.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
-- There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `√` — Square Root / Root
 
@@ -168,7 +168,7 @@ Rejected explicitly.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
-- There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `⌊` — Floor / Minimum
 
@@ -193,7 +193,7 @@ Element-wise minimum with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
-- There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `⌈` — Ceiling / Maximum
 
@@ -218,7 +218,7 @@ Element-wise maximum with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
-- There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `|` — Absolute Value / Modulus
 
@@ -243,7 +243,7 @@ BQN modulus, implemented as x minus w times floor(x divided by w).
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
-- There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## Fold
 
@@ -265,7 +265,7 @@ Both `.bqn` files and BQN strings compile to the same backend-neutral expression
 | Right-to-left function application | supported | Supported primitives, numeric constants, arguments, names, and parentheses. |
 | Local assignment `←` | supported | Subject-valued local names assigned in statement order. |
 | Separators and comments | supported | Newline, `⋄`, comma, and `#` line comments. |
-| General BQN syntax | unsupported | Arrays in source, trains, headers, modifiers other than Fold, namespaces, strings, nested values, and control flow are not compiled yet. |
+| General BQN syntax | unsupported | Arrays in source, trains, headers, modifiers other than Fold, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
 
 Source frontend tests:
 
