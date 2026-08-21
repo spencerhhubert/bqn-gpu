@@ -54,12 +54,13 @@ The default objective is end-to-end resident execution time subject to exact BQN
 Autotuning decisions must be keyed to reproducible hardware and shape signatures. A tuned result is an optimization choice, never part of language semantics.
 
 The initial dispatch cost policy avoids tinygrad JIT replay for expressions that
-only construct layout views (reshape, solo, reverse, transpose, identity, and
-literal Drop). A fused tensor consumer still selects JIT replay, and rewrites
-that erase all data-dependent work select a direct optimized no-op. The selected
-mode and reason are emitted by `bqn-gpu explain` and retained with benchmark
-results. This conservative static policy is a starting point for measured,
-hardware-keyed decisions rather than a permanent list of special cases.
+only construct layout views (reshape, solo, reverse, transpose, and identity).
+A fused tensor consumer and static structural call still select JIT replay, and
+rewrites that erase all data-dependent work select a direct optimized no-op.
+The selected mode and reason are emitted by `bqn-gpu explain` and retained with
+benchmark results. This conservative static policy is a starting point for
+measured, hardware-keyed decisions rather than a permanent list of special
+cases.
 
 ## Measurement discipline
 

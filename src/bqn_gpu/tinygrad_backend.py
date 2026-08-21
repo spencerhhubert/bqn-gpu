@@ -737,11 +737,6 @@ class TinygradBackend:
         operation = expression["op"]
         if operation in {"argument", "constant", "array"}:
             return True
-        if operation == "static_call":
-            return (
-                expression["glyph"] == "↓"
-                and TinygradBackend._is_layout_only(expression["argument"])
-            )
         if operation != "call":
             return False
         children = expression["arguments"]

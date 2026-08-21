@@ -104,7 +104,6 @@ def test_layout_only_programs_avoid_jit_replay(backend: TinygradBackend) -> None
         "x": backend.from_host(HostValue.from_array([1, 2, 3, 4], (2, 2)))
     }
     for source, arguments in (
-        ("{1↓𝕩}", vector_arguments),
         ("{⌽𝕩}", vector_arguments),
         ("{⍉𝕩}", matrix_arguments),
     ):
@@ -113,6 +112,14 @@ def test_layout_only_programs_avoid_jit_replay(backend: TinygradBackend) -> None
         assert executable(arguments).to_host() == expected
         assert executable.execution_mode == "specialized-eager"  # type: ignore[attr-defined]
         assert "without-jit" in executable.execution_reason  # type: ignore[attr-defined]
+
+
+def test_literal_drop_keeps_jit_replay(backend: TinygradBackend) -> None:
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([1, 2, 3, 4], (4,)))
+    }
+    executable = backend.compile(compile_bqn("{1↓𝕩}").expression, arguments)
+    assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
 
 
 def test_tensor_consumers_still_use_jit_replay(backend: TinygradBackend) -> None:
