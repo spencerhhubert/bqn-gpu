@@ -8,12 +8,21 @@ The accepted subset is deliberately narrower than BQN. It includes:
 - immediate blocks and bare numeric program bodies;
 - numeric constants, including BQN `¯`, decimal exponents, `π`, and `∞` spellings;
 - parentheses and right-to-left calls of the primitives in the conformance table;
-- Fold `´` for the functions listed in the Fold table;
+- numeric strands for shapes, axes, counts, and other literal vectors;
+- Fold `´`, Insert `˝`, and Scan `` ` `` for the functions in their conformance tables;
+- Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜` over supported primitive or reduction operands, including numeric literal Bind operands;
 - local subject assignment with `←`;
 - newline, `⋄`, and comma statement separators; and
 - `#` line comments.
 
-The frontend does not yet compile source array notation, strands, trains, block headers, nested functions, other modifiers, strings or characters, namespaces, system values, recursion, mutation, or control flow. An unsupported token or construct has a line-and-column diagnostic. By default the CLI reports that diagnostic on stderr and delegates to cBQN when its shared library is available and the result fits the current dense-real numeric boundary. `--fallback error` rejects instead. There is no silent reinterpretation.
+The frontend does not yet compile general array notation, trains, block headers,
+parenthesized or nested function values, the remaining modifiers, strings or
+characters, namespaces, system values, recursion, mutation, or control flow.
+An unsupported token or construct has a line-and-column diagnostic. By default
+the CLI reports that diagnostic on stderr and delegates to cBQN when its shared
+library is available and the result fits the current dense-real numeric
+boundary. `--fallback error` rejects instead. There is no silent
+reinterpretation.
 
 ## JSON values
 

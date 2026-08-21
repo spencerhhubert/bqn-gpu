@@ -14,7 +14,11 @@ def test_typed_generation_is_reproducible_and_unique() -> None:
         program.as_dict() for program in second
     ]
     assert len({program.id for program in first}) == 20
-    assert {program.strategy for program in first} == {"grammar", "mutation"}
+    assert {program.strategy for program in first} == {
+        "grammar",
+        "mutation",
+        "combinator",
+    }
     assert all(program.steps >= 6 for program in first)
 
 
@@ -38,3 +42,19 @@ def test_generated_programs_match_cbqn_and_equivalent_mutations(
         )
         if program.equivalent_to_bqn is not None:
             assert cbqn.call(program.equivalent_to_bqn, value) == expected
+
+
+def test_combinator_generation_is_compact_and_equivalent(backend, cbqn) -> None:
+    programs = generate_programs(
+        seed=41,
+        count=12,
+        min_steps=4,
+        max_steps=8,
+        strategies=("combinator",),
+    )
+    value = HostValue.from_array((math.cos(index) for index in range(17)), (17,))
+    assert all("combinator" in program.features for program in programs)
+    for program in programs:
+        expected = cbqn.call(program.equivalent_to_bqn, value)
+        assert cbqn.call(program.bqn, value) == expected
+        assert compile_bqn(program.bqn).execute(backend, x=value) == expected

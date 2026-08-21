@@ -7,7 +7,17 @@ import hashlib
 import random
 from typing import Iterable
 
-from .ir import Expression, argument, constant, dyadic, fold, function_source, monadic, scan
+from .ir import (
+    Expression,
+    argument,
+    constant,
+    dyadic,
+    fold,
+    function_source,
+    monadic,
+    render_bqn,
+    scan,
+)
 
 
 @dataclass(frozen=True)
@@ -42,7 +52,7 @@ def generate_programs(
     count: int,
     min_steps: int = 8,
     max_steps: int = 32,
-    strategies: Iterable[str] = ("grammar", "mutation"),
+    strategies: Iterable[str] = ("grammar", "mutation", "combinator"),
 ) -> list[GeneratedProgram]:
     """Generate unique, typed dense-list programs from stable per-case seeds."""
 
@@ -51,8 +61,10 @@ def generate_programs(
     if min_steps < 1 or max_steps < min_steps:
         raise ValueError("step bounds must satisfy 1 <= min_steps <= max_steps")
     enabled = tuple(strategies)
-    if not enabled or any(item not in {"grammar", "mutation"} for item in enabled):
-        raise ValueError("strategies must contain grammar and/or mutation")
+    if not enabled or any(
+        item not in {"grammar", "mutation", "combinator"} for item in enabled
+    ):
+        raise ValueError("strategies must contain grammar, mutation, and/or combinator")
 
     programs: list[GeneratedProgram] = []
     seen: set[str] = set()
@@ -85,6 +97,7 @@ def _generate_one(
     steps = randomizer.randint(min_steps, max_steps)
     expression, features = _vector_chain(randomizer, steps)
     equivalent_to: str | None = None
+    bqn_override: str | None = None
 
     if strategy == "mutation":
         equivalent_to = function_source(expression)
@@ -98,11 +111,16 @@ def _generate_one(
                 dyadic("⌽", constant(-1), expression),
             )
         features.add(mutation)
+    elif strategy == "combinator":
+        expression, body, feature = _combinator_candidate(randomizer, expression)
+        equivalent_to = function_source(expression)
+        bqn_override = "{" + body + "}"
+        features.update(("combinator", feature))
     elif randomizer.random() < 0.35:
         expression = fold(randomizer.choice(("+", "⌊", "⌈")), expression)
         features.add("fold")
 
-    bqn = function_source(expression)
+    bqn = bqn_override or function_source(expression)
     digest = hashlib.sha256(bqn.encode("utf-8")).hexdigest()[:16]
     return GeneratedProgram(
         id=f"generated.{strategy}.{digest}",
@@ -160,6 +178,45 @@ def _vector_chain(
             scans += 1
             features.add("scan")
     return expression, features
+
+
+def _combinator_candidate(
+    randomizer: random.Random,
+    operand: Expression,
+) -> tuple[Expression, str, str]:
+    rendered = render_bqn(operand)
+    choice = randomizer.choice(
+        (
+            "self",
+            "atop",
+            "over",
+            "before-bind",
+            "after-bind",
+            "atop-reduction",
+            "atop-chain",
+        )
+    )
+    if choice == "self":
+        return dyadic("×", operand, operand), f"×˜{rendered}", "self-swap"
+    if choice == "atop":
+        return monadic("|", monadic("-", operand)), f"|∘-{rendered}", "atop"
+    if choice == "over":
+        return monadic("|", monadic("-", operand)), f"|○-{rendered}", "over"
+    if choice == "before-bind":
+        count = randomizer.choice((-3, -1, 1, 3))
+        bqn_count = str(count).replace("-", "¯")
+        return dyadic("⌽", constant(count), operand), f"{bqn_count}⊸⌽{rendered}", "before-bind"
+    if choice == "after-bind":
+        value = randomizer.choice((-2, -1, 1, 2))
+        bqn_value = str(value).replace("-", "¯")
+        return dyadic("-", operand, constant(value)), f"-⟜{bqn_value} {rendered}", "after-bind"
+    if choice == "atop-reduction":
+        return fold("+", monadic("|", operand)), f"+´∘|{rendered}", "atop"
+    return (
+        fold("+", monadic("|", monadic("-", operand))),
+        f"+´∘|∘-{rendered}",
+        "atop-chain",
+    )
 
 
 def _case_seed(seed: int, index: int) -> int:

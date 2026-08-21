@@ -11,14 +11,14 @@ from .errors import SourceError
 from .host_value import HostValue
 from .ir import (
     Expression,
+    FunctionExpression,
+    apply_function,
     array_constant,
     constant,
-    dyadic,
+    constant_function,
     evaluate,
-    fold,
-    insert,
-    monadic,
-    scan,
+    modified_function,
+    primitive_function,
 )
 from .protocol import ExecutionBackend, ValueT
 
@@ -30,6 +30,13 @@ _NUMBER = re.compile(
     r"¯?(?:∞|π|(?:\d+(?:\.\d+)?)(?:[eE]¯?\d+)?)"
 )
 _MISSING = object()
+_ONE_MODIFIERS = {"SELF": "˜"}
+_TWO_MODIFIERS = {
+    "ATOP": "∘",
+    "OVER": "○",
+    "BEFORE": "⊸",
+    "AFTER": "⟜",
+}
 
 
 @dataclass(frozen=True)
@@ -182,35 +189,62 @@ class _Parser:
             pass
 
     def _expression(self) -> Expression:
-        if self.current.kind == "GLYPH":
-            glyph = self.advance().text
-            if self.match("FOLD"):
-                return fold(glyph, self._expression())
-            if self.match("INSERT"):
-                return insert(glyph, self._expression())
-            if self.match("SCAN"):
-                return scan(glyph, self._expression())
-            return monadic(glyph, self._expression())
+        if self.current.kind == "GLYPH" or self._starts_literal_bound_function():
+            function = self._function()
+            if self.current.kind in {"EOF", "RBRACE", "RPAREN", "SEP"}:
+                self.fail("derived BQN function requires an argument")
+            return apply_function(function, [self._expression()])
 
         left = self._subject()
+        if self.current.kind == "GLYPH":
+            function = self._function()
+            return apply_function(function, [left, self._expression()])
+        return left
+
+    def _function(self) -> FunctionExpression:
+        function = self._function_operand()
+        while True:
+            if self.current.kind in _ONE_MODIFIERS:
+                function = modified_function(
+                    _ONE_MODIFIERS[self.advance().kind],
+                    function,
+                )
+                continue
+            if self.current.kind in _TWO_MODIFIERS:
+                modifier = _TWO_MODIFIERS[self.advance().kind]
+                function = modified_function(
+                    modifier,
+                    function,
+                    self._function_operand(),
+                )
+                continue
+            return function
+
+    def _function_operand(self) -> FunctionExpression:
         if self.current.kind == "GLYPH":
             glyph = self.advance().text
             if self.current.kind in {"FOLD", "INSERT", "SCAN"}:
                 modifier = self.advance().text
-                self.fail(
-                    f"dyadic initial-value modifier {glyph}{modifier} is not implemented"
-                )
-            return dyadic(glyph, left, self._expression())
-        return left
+                return {"kind": "fold", "glyph": glyph, "modifier": modifier}
+            return primitive_function(glyph)
+        if self.current.kind == "NUMBER":
+            return constant_function(self._numeric_literal())
+        self.fail("expected a primitive or numeric operand after modifier")
+
+    def _starts_literal_bound_function(self) -> bool:
+        if self.current.kind != "NUMBER":
+            return False
+        offset = 1
+        while self.peek(offset).kind == "STRAND":
+            if self.peek(offset + 1).kind != "NUMBER":
+                return False
+            offset += 2
+        return self.peek(offset).kind in _TWO_MODIFIERS
 
     def _subject(self) -> Expression:
         token = self.current
-        if self.match("NUMBER"):
-            values = [_parse_number(token.text)]
-            while self.match("STRAND") is not None:
-                item = self.expect("NUMBER", "numeric strands currently require literals")
-                values.append(_parse_number(item.text))
-            return array_constant(values) if len(values) > 1 else constant(values[0])
+        if self.current.kind == "NUMBER":
+            return self._numeric_literal()
         if self.match("ARG"):
             return {"op": "argument", "name": {"𝕨": "w", "𝕩": "x"}[token.text]}
         if self.match("NAME"):
@@ -224,6 +258,14 @@ class _Parser:
             self.expect("RPAREN", "expected ')' to close expression")
             return expression
         self.fail("expected a numeric value, argument, local name, or parenthesized expression")
+
+    def _numeric_literal(self) -> Expression:
+        first = self.expect("NUMBER", "expected a numeric literal")
+        values = [_parse_number(first.text)]
+        while self.match("STRAND") is not None:
+            item = self.expect("NUMBER", "numeric strands currently require literals")
+            values.append(_parse_number(item.text))
+        return array_constant(values) if len(values) > 1 else constant(values[0])
 
 
 def _tokenize(source: str) -> list[Token]:
@@ -269,6 +311,11 @@ def _tokenize(source: str) -> list[Token]:
             "´": "FOLD",
             "˝": "INSERT",
             "`": "SCAN",
+            "˜": "SELF",
+            "∘": "ATOP",
+            "○": "OVER",
+            "⊸": "BEFORE",
+            "⟜": "AFTER",
             "‿": "STRAND",
             "𝕨": "ARG",
             "𝕩": "ARG",
@@ -335,4 +382,23 @@ def _argument_names(expression: Mapping[str, object]) -> set[str]:
         return result
     if operation in {"fold", "insert", "scan"}:
         return _argument_names(expression["argument"])  # type: ignore[arg-type]
+    if operation == "combinator":
+        result: set[str] = set()
+        for child in expression["arguments"]:  # type: ignore[union-attr]
+            result.update(_argument_names(child))
+        result.update(_function_argument_names(expression["left"]))  # type: ignore[arg-type]
+        if "right" in expression:
+            result.update(_function_argument_names(expression["right"]))  # type: ignore[arg-type]
+        return result
+    return set()
+
+
+def _function_argument_names(function: Mapping[str, object]) -> set[str]:
+    if function["kind"] == "constant":
+        return _argument_names(function["value"])  # type: ignore[arg-type]
+    if function["kind"] == "modifier":
+        result = _function_argument_names(function["left"])  # type: ignore[arg-type]
+        if "right" in function:
+            result.update(_function_argument_names(function["right"]))  # type: ignore[arg-type]
+        return result
     return set()

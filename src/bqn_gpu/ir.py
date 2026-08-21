@@ -9,6 +9,7 @@ from .protocol import ExecutionBackend, ValueT
 
 
 Expression = dict[str, Any]
+FunctionExpression = dict[str, Any]
 
 
 def argument(name: str) -> Expression:
@@ -43,6 +44,96 @@ def scan(glyph: str, x: Expression) -> Expression:
     return {"op": "scan", "glyph": glyph, "argument": x}
 
 
+def primitive_function(glyph: str) -> FunctionExpression:
+    return {"kind": "primitive", "glyph": glyph}
+
+
+def modified_function(
+    modifier: str,
+    left: FunctionExpression,
+    right: FunctionExpression | None = None,
+) -> FunctionExpression:
+    function = {"kind": "modifier", "modifier": modifier, "left": left}
+    if right is not None:
+        function["right"] = right
+    return function
+
+
+def constant_function(value: Expression) -> FunctionExpression:
+    return {"kind": "constant", "value": value}
+
+
+def apply_function(
+    function: FunctionExpression,
+    arguments: Sequence[Expression],
+) -> Expression:
+    kind = function["kind"]
+    if kind == "primitive":
+        if len(arguments) == 1:
+            return monadic(function["glyph"], arguments[0])
+        if len(arguments) == 2:
+            return dyadic(function["glyph"], arguments[0], arguments[1])
+        raise ValueError("BQN functions must be called with one or two arguments")
+    if kind == "constant":
+        return function["value"]
+    if kind == "fold":
+        if len(arguments) != 1:
+            raise ValueError("Fold/Insert/Scan initial values are not implemented")
+        operation = function["modifier"]
+        constructor = {"´": fold, "˝": insert, "`": scan}[operation]
+        return constructor(function["glyph"], arguments[0])
+    if kind == "modifier":
+        return {
+            "op": "combinator",
+            "modifier": function["modifier"],
+            "left": function["left"],
+            **({"right": function["right"]} if "right" in function else {}),
+            "arguments": list(arguments),
+        }
+    raise ValueError(f"unknown function IR kind {kind!r}")
+
+
+def expand_combinator(expression: Expression) -> Expression:
+    """Expand a pure combinator call without making backend decisions."""
+
+    if expression["op"] != "combinator":
+        raise ValueError("expected a combinator expression")
+    modifier = expression["modifier"]
+    left = expression["left"]
+    right = expression.get("right")
+    arguments = expression["arguments"]
+    if len(arguments) not in {1, 2}:
+        raise ValueError("BQN combinators require one or two arguments")
+    x = arguments[-1]
+    w = arguments[0] if len(arguments) == 2 else x
+
+    if modifier == "˜":
+        return apply_function(left, [x, w])
+    if right is None:
+        raise ValueError(f"combinator {modifier!r} requires two operands")
+    if modifier == "∘":
+        inner_arguments = [x] if len(arguments) == 1 else [w, x]
+        return apply_function(left, [apply_function(right, inner_arguments)])
+    if modifier == "○":
+        if len(arguments) == 1:
+            return apply_function(left, [apply_function(right, [x])])
+        return apply_function(
+            left,
+            [apply_function(right, [w]), apply_function(right, [x])],
+        )
+    if modifier == "⊸":
+        return apply_function(
+            right,
+            [apply_function(left, [w]), x],
+        )
+    if modifier == "⟜":
+        return apply_function(
+            left,
+            [w, apply_function(right, [x])],
+        )
+    raise ValueError(f"unknown combinator {modifier!r}")
+
+
 def evaluate(
     expression: Expression,
     backend: ExecutionBackend[ValueT],
@@ -75,6 +166,8 @@ def evaluate(
     if operation == "scan":
         value = evaluate(expression["argument"], backend, arguments)
         return backend.scan(expression["glyph"], value)
+    if operation == "combinator":
+        return evaluate(expand_combinator(expression), backend, arguments)
     raise ValueError(f"unknown IR operation {operation!r}")
 
 
@@ -88,6 +181,8 @@ def has_tensor_compute(expression: Expression) -> bool:
         return True
     if operation == "static_call":
         return True
+    if operation == "combinator":
+        return has_tensor_compute(expand_combinator(expression))
     if operation == "call":
         glyph = expression["glyph"]
         children = expression["arguments"]
@@ -131,7 +226,38 @@ def render_bqn(expression: Expression) -> str:
         return f"({expression['glyph']}˝{render_bqn(expression['argument'])})"
     if operation == "scan":
         return f"({expression['glyph']}`{render_bqn(expression['argument'])})"
+    if operation == "combinator":
+        function = {
+            "kind": "modifier",
+            "modifier": expression["modifier"],
+            "left": expression["left"],
+            **({"right": expression["right"]} if "right" in expression else {}),
+        }
+        arguments = expression["arguments"]
+        rendered_function = render_function(function)
+        if len(arguments) == 1:
+            return f"({rendered_function} {render_bqn(arguments[0])})"
+        return (
+            f"({render_bqn(arguments[0])} {rendered_function} "
+            f"{render_bqn(arguments[1])})"
+        )
     raise ValueError(f"unknown IR operation {operation!r}")
+
+
+def render_function(function: FunctionExpression) -> str:
+    kind = function["kind"]
+    if kind == "primitive":
+        return str(function["glyph"])
+    if kind == "constant":
+        return render_bqn(function["value"])
+    if kind == "fold":
+        return f"{function['glyph']}{function['modifier']}"
+    if kind == "modifier":
+        left = render_function(function["left"])
+        if "right" not in function:
+            return f"{left}{function['modifier']}"
+        return f"{left}{function['modifier']}{render_function(function['right'])}"
+    raise ValueError(f"unknown function IR kind {kind!r}")
 
 
 def function_source(expression: Expression) -> str:

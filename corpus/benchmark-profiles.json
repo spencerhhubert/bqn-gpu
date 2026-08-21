@@ -17,6 +17,7 @@
         "dense.windows_three.monadic_vector",
         "dense.insert_sum.matrix",
         "dense.scan_sum.vector",
+        "dense.combinator.atop_l1_distance",
         "dense.pair.double_reverse.naive",
         "dense.pair.double_reverse.idiomatic",
         "pair.pipeline.01.naive",

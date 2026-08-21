@@ -1124,6 +1124,16 @@ Returns the uniform dense array of sliding windows.
 | `⌊`` | supported | Dense real arrays with at least one axis; inclusive minimum scan is over major cells. |
 | `⌈`` | supported | Dense real arrays with at least one axis; inclusive maximum scan is over major cells. |
 
+## Pure combinators
+
+| Modifier | Status | Domain | Behavior |
+|---|---|---|---|
+| `˜` Self / Swap | supported | Supported primitive or reduction operands whose monadic Self or dyadic Swap expansion remains within the dense-real backend domain. | A monadic call duplicates its right argument; a dyadic call exchanges the left and right arguments. |
+| `∘` Atop | supported | Supported primitive or reduction operands, including unparenthesized combinator chains, whose expansion remains within the dense-real backend domain. | The right operand receives the original argument or arguments and its result is passed monadically to the left operand. |
+| `○` Over | supported | Supported primitive operands whose expansion remains within the dense-real backend domain. | The right operand is applied monadically to each argument before the left operand is applied. |
+| `⊸` Before / Bind Left | supported | Supported primitive operands or a numeric literal left operand, with a dense-real result. | The left operand transforms the left argument (or the duplicated right argument monadically) before the right operand receives it and the original right argument. |
+| `⟜` After / Bind Right | supported | Supported primitive operands or a numeric literal right operand, with a dense-real result. | The right operand transforms the right argument before the left operand receives the original left argument and transformed right argument. |
+
 ## BQN source frontend
 
 Both `.bqn` files and BQN strings compile to the same backend-neutral expression IR, then execute on the selected device backend.
@@ -1137,7 +1147,8 @@ Both `.bqn` files and BQN strings compile to the same backend-neutral expression
 | Separators and comments | supported | Newline, `⋄`, comma, and `#` line comments. |
 | Numeric strands | supported | Literal numeric strands separated by `‿`, used for shapes, coordinates, counts, and axes. |
 | Fold `´`, Insert `˝`, and Scan `` ` `` | supported | Prefix use with the supported dyadic function operands and no dyadic initial value. |
-| General BQN syntax | unsupported | General array notation, trains, headers, other modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
+| Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜` | supported | Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization. |
+| General BQN syntax | unsupported | General array notation, trains, headers, parenthesized or nested function values, remaining modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
 
 Source frontend tests:
 

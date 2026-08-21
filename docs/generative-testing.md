@@ -2,10 +2,14 @@
 
 The tracked corpus is curated: every durable program has a stable identity, independent BQN/tinygrad/Torch definitions, deterministic inputs, and a reason to remain. Curated examples alone tend to revisit operations that already fit the compiler well, so the project also generates candidates from a typed grammar.
 
-`scripts/discover_programs.py` has two deterministic strategies:
+`scripts/discover_programs.py` has three deterministic strategies:
 
 - `grammar` builds valid dense-list programs from semantic operations while tracking their result kind and rank. It does not sample BQN text, so malformed syntax is not treated as language coverage.
 - `mutation` starts with a generated typed expression and adds a known equivalence such as double Reverse or cancelling Rotates. The unmodified BQN is retained beside the candidate, making redundant work and missing simplifications directly measurable.
+- `combinator` wraps a generated dense expression in Self, Atop, Over,
+  Before/Bind, After/Bind, or an Atop chain. It records the fully expanded BQN
+  beside the compact form, so both language correctness and missed inlining or
+  fusion opportunities are directly testable.
 
 Every candidate records its generator seed, construction depth, semantic features, BQN source, IR, and equivalent source when one exists. The discovery command executes the candidate through bqn-gpu and pinned cBQN before saving it:
 

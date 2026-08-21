@@ -4,6 +4,7 @@
     "growth": "append durable cases as bugs, optimizations, and workloads are discovered",
     "initial_floor": 100,
     "categories": {
+      "dense-combinator": 11,
       "dense-modifier": 12,
       "dense-paired": 10,
       "dense-phrase": 10,
@@ -10050,6 +10051,461 @@
         "dense",
         "phrase",
         "structural"
+      ]
+    },
+    {
+      "id": "dense.combinator.self_square",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{×˜𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "×",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x) * (x))",
+        "torch": "lambda x: ((x) * (x))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "combinator",
+        "dense",
+        "modifier",
+        "self_square"
+      ]
+    },
+    {
+      "id": "dense.combinator.swap_subtract",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨-˜𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "-",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "argument",
+              "name": "w"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((x) - (w))",
+        "torch": "lambda w, x: ((x) - (w))"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "combinator",
+        "dense",
+        "modifier",
+        "swap_subtract"
+      ]
+    },
+    {
+      "id": "dense.combinator.atop_absolute_negate",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{|∘-𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "|",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((-(x))).abs()",
+        "torch": "lambda x: ((-(x))).abs()"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "atop_absolute_negate",
+        "combinator",
+        "dense",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.combinator.atop_absolute_difference",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨|∘-𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "|",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "w"
+                },
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (((w) - (x))).abs()",
+        "torch": "lambda w, x: (((w) - (x))).abs()"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "atop_absolute_difference",
+        "combinator",
+        "dense",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.combinator.over_subtract_absolute",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨-○|𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "-",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "|",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "w"
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "glyph": "|",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (((w).abs()) - ((x).abs()))",
+        "torch": "lambda w, x: (((w).abs()) - ((x).abs()))"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "combinator",
+        "dense",
+        "modifier",
+        "over_subtract_absolute"
+      ]
+    },
+    {
+      "id": "dense.combinator.before_exp_subtract",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨⋆⊸-𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "-",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "⋆",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "w"
+                }
+              ]
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (((w).exp()) - (x))",
+        "torch": "lambda w, x: (((w).exp()) - (x))"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "before_exp_subtract",
+        "combinator",
+        "dense",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.combinator.after_power_negate",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨⋆⟜-𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⋆",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) ** ((-(x))))",
+        "torch": "lambda w, x: ((w) ** ((-(x))))"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "positive",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "after_power_negate",
+        "combinator",
+        "dense",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.combinator.bind_rotate_right",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{¯1⊸⌽𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⌽",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": -1
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).roll((1,), dims=(0,))",
+        "torch": "lambda x: (x).roll((1,), dims=(0,))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "bind_rotate_right",
+        "combinator",
+        "dense",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.combinator.bind_subtract_one",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{-⟜1 𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "-",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "constant",
+              "value": 1
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x) - (1.0))",
+        "torch": "lambda x: ((x) - (1.0))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "bind_subtract_one",
+        "combinator",
+        "dense",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.combinator.atop_sum_absolute",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{+´∘|𝕩}",
+      "native": {
+        "expression": {
+          "op": "fold",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "|",
+            "arguments": [
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: ((x).abs()).sum()",
+        "torch": "lambda x: ((x).abs()).sum()"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "atop_sum_absolute",
+        "combinator",
+        "dense",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.combinator.atop_l1_distance",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨+´∘|∘-𝕩}",
+      "native": {
+        "expression": {
+          "op": "fold",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "|",
+            "arguments": [
+              {
+                "op": "call",
+                "glyph": "-",
+                "arguments": [
+                  {
+                    "op": "argument",
+                    "name": "w"
+                  },
+                  {
+                    "op": "argument",
+                    "name": "x"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda w, x: ((((w) - (x))).abs()).sum()",
+        "torch": "lambda w, x: ((((w) - (x))).abs()).sum()"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "atop_l1_distance",
+        "combinator",
+        "dense",
+        "modifier"
       ]
     },
     {

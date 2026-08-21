@@ -724,6 +724,48 @@
       "domain": "Dense real arrays with at least one axis; inclusive maximum scan is over major cells."
     }
   ],
+  "combinators": [
+    {
+      "glyph": "˜",
+      "name": "Self / Swap",
+      "status": "supported",
+      "domain": "Supported primitive or reduction operands whose monadic Self or dyadic Swap expansion remains within the dense-real backend domain.",
+      "behavior": "A monadic call duplicates its right argument; a dyadic call exchanges the left and right arguments.",
+      "tests": ["tests/test_dense_primitives.py", "tests/test_tinygrad_compile.py"]
+    },
+    {
+      "glyph": "∘",
+      "name": "Atop",
+      "status": "supported",
+      "domain": "Supported primitive or reduction operands, including unparenthesized combinator chains, whose expansion remains within the dense-real backend domain.",
+      "behavior": "The right operand receives the original argument or arguments and its result is passed monadically to the left operand.",
+      "tests": ["tests/test_dense_primitives.py", "tests/test_tinygrad_compile.py"]
+    },
+    {
+      "glyph": "○",
+      "name": "Over",
+      "status": "supported",
+      "domain": "Supported primitive operands whose expansion remains within the dense-real backend domain.",
+      "behavior": "The right operand is applied monadically to each argument before the left operand is applied.",
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⊸",
+      "name": "Before / Bind Left",
+      "status": "supported",
+      "domain": "Supported primitive operands or a numeric literal left operand, with a dense-real result.",
+      "behavior": "The left operand transforms the left argument (or the duplicated right argument monadically) before the right operand receives it and the original right argument.",
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⟜",
+      "name": "After / Bind Right",
+      "status": "supported",
+      "domain": "Supported primitive operands or a numeric literal right operand, with a dense-real result.",
+      "behavior": "The right operand transforms the right argument before the left operand receives the original left argument and transformed right argument.",
+      "tests": ["tests/test_dense_primitives.py"]
+    }
+  ],
   "source_frontend": {
     "summary": "Both `.bqn` files and BQN strings compile to the same backend-neutral expression IR, then execute on the selected device backend.",
     "constructs": [
@@ -763,9 +805,14 @@
         "constraint": "Prefix use with the supported dyadic function operands and no dyadic initial value."
       },
       {
+        "name": "Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜`",
+        "status": "supported",
+        "constraint": "Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization."
+      },
+      {
         "name": "General BQN syntax",
         "status": "unsupported",
-        "constraint": "General array notation, trains, headers, other modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN."
+        "constraint": "General array notation, trains, headers, parenthesized or nested function values, remaining modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN."
       }
     ],
     "tests": ["tests/test_source_frontend.py", "tests/test_dense_primitives.py", "tests/test_corpus.py"]

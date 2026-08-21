@@ -325,6 +325,22 @@ def capability_record(
                     "evidence": ["tests/test_dense_primitives.py"],
                 }
             )
+    supported_combinators = 0
+    for index, entry in enumerate(manifest.get("combinators", [])):
+        if entry["status"] == "supported":
+            supported_combinators += 1
+        features.append(
+            {
+                "id": f"combinator.{index:03d}",
+                "glyph": entry["glyph"],
+                "name": entry["name"],
+                "valence": "combinator",
+                "status": entry["status"],
+                "domain": entry.get("domain"),
+                "behavior": entry.get("behavior"),
+                "evidence": entry.get("tests", []),
+            }
+        )
     return {
         "backend": manifest["backend"]["name"],
         "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
@@ -345,6 +361,7 @@ def capability_record(
             "validation_timestamp": validation.get("timestamp_utc"),
             "inserts_supported": modifier_counts["insert"],
             "scans_supported": modifier_counts["scan"],
+            "combinators_supported": supported_combinators,
         },
     }
 

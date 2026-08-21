@@ -113,3 +113,43 @@ def test_dense_numeric_primitive_matches_cbqn(
     )
     expected = cbqn.call(source, *oracle_arguments)
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("source", "arguments"),
+    [
+        ("{×˜𝕩}", {"x": HostValue.from_atom(4)}),
+        ("{𝕨-˜𝕩}", {"w": HostValue.from_atom(3), "x": HostValue.from_atom(10)}),
+        ("{|∘-𝕩}", {"x": HostValue.from_atom(4)}),
+        ("{𝕨|∘-𝕩}", {"w": HostValue.from_atom(3), "x": HostValue.from_atom(10)}),
+        (
+            "{𝕨-○|𝕩}",
+            {"w": HostValue.from_atom(-3), "x": HostValue.from_atom(-10)},
+        ),
+        (
+            "{𝕨⋆⊸-𝕩}",
+            {"w": HostValue.from_atom(2), "x": HostValue.from_atom(3)},
+        ),
+        (
+            "{𝕨⋆⟜-𝕩}",
+            {"w": HostValue.from_atom(2), "x": HostValue.from_atom(3)},
+        ),
+        ("{¯1⊸⌽𝕩}", {"x": decode_host_value([1, 2, 3, 4])}),
+        ("{-⟜1 𝕩}", {"x": HostValue.from_atom(8)}),
+        ("{+´∘|𝕩}", {"x": decode_host_value([-1, 2, -3])}),
+    ],
+)
+def test_dense_combinators_match_cbqn(
+    source: str,
+    arguments: dict[str, HostValue],
+    dense_backend: Any,
+    cbqn: CBQN,
+) -> None:
+    compiled = compile_bqn(source)
+    actual = compiled.execute(dense_backend, **arguments)
+    oracle_arguments = (
+        (arguments["w"], arguments["x"])
+        if compiled.arity == 2
+        else (arguments["x"],)
+    )
+    assert actual == cbqn.call(source, *oracle_arguments)

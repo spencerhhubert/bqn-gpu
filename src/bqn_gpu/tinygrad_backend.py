@@ -11,7 +11,7 @@ from tinygrad import Device, Tensor, TinyJit, dtypes
 
 from .errors import DeviceError, DomainError, ShapeError, UnsupportedPrimitive
 from .host_value import HostValue, Shape
-from .ir import Expression, evaluate, has_tensor_compute
+from .ir import Expression, evaluate, expand_combinator, has_tensor_compute
 from .optimizer import OptimizationResult, optimize
 
 
@@ -775,6 +775,8 @@ class TinygradBackend:
         """Whether output shape is fixed by the input tensor signatures."""
 
         operation = expression["op"]
+        if operation == "combinator":
+            return TinygradBackend._fixed_output_shape(expand_combinator(expression))
         if operation == "static_call":
             return TinygradBackend._fixed_output_shape(expression["argument"])
         if operation == "call":

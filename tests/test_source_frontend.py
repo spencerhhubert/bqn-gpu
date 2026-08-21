@@ -39,6 +39,9 @@ def atom(value: float) -> HostValue:
             {"x": decode_host_value([[1, 2, 3], [4, 5, 6]])},
             decode_host_value([5, 7, 9]),
         ),
+        ("{×˜𝕩}", {"x": atom(4)}, atom(16)),
+        ("{-⟜1 𝕩}", {"x": atom(8)}, atom(7)),
+        ("{+´∘|𝕩}", {"x": decode_host_value([-1, 2, -3])}, atom(6)),
         ("{π}", {}, atom(3.141592653589793)),
         ("{¯5e¯1}", {}, atom(-0.5)),
     ],
@@ -135,3 +138,11 @@ def test_cli_explains_shape_specialized_rewrites(capsys) -> None:
     ]
     assert explanation["lowering"]["tensor_compute_before"] is True
     assert explanation["lowering"]["tensor_compute_after"] is False
+
+
+def test_cli_explains_combinator_lowering(capsys) -> None:
+    assert main(["explain", "{+´∘|𝕩}", "--x", "[-1,2,-3]"]) == 0
+    explanation = json.loads(capsys.readouterr().out)
+    assert explanation["semantic_bqn"] == "(+´∘| 𝕩)"
+    assert explanation["optimized_bqn"] == "(+´(|𝕩))"
+    assert explanation["rewrites"][0]["rule"] == "inline-atop"

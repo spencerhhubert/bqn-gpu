@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping
 
-from .ir import Expression, monadic, render_bqn
+from .ir import Expression, expand_combinator, monadic, render_bqn
 
 
 @dataclass(frozen=True)
@@ -31,6 +31,20 @@ def optimize(
 
     def visit(node: Expression) -> Expression:
         operation = node["op"]
+        if operation == "combinator":
+            rewritten = {
+                **node,
+                "arguments": [visit(child) for child in node["arguments"]],
+            }
+            replacement = expand_combinator(rewritten)
+            events.append(
+                OptimizationEvent(
+                    rule=f"inline-{_COMBINATOR_NAMES[node['modifier']]}",
+                    before=render_bqn(rewritten),
+                    after=render_bqn(replacement),
+                )
+            )
+            return visit(replacement)
         if operation == "call":
             rewritten = {
                 **node,
@@ -58,6 +72,8 @@ def optimize(
 
 def infer_rank(expression: Expression, argument_ranks: Mapping[str, int]) -> int | None:
     operation = expression["op"]
+    if operation == "combinator":
+        return infer_rank(expand_combinator(expression), argument_ranks)
     if operation == "argument":
         return argument_ranks.get(expression["name"])
     if operation == "constant":
@@ -93,6 +109,15 @@ def infer_rank(expression: Expression, argument_ranks: Mapping[str, int]) -> int
     if glyph == "≍":
         return None if child_rank is None else child_rank + 1
     return child_rank
+
+
+_COMBINATOR_NAMES = {
+    "˜": "self-swap",
+    "∘": "atop",
+    "○": "over",
+    "⊸": "before-bind",
+    "⟜": "after-bind",
+}
 
 
 def _rewrite(

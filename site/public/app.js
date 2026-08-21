@@ -319,12 +319,14 @@ function renderCapability() {
   $("#capability-context").textContent = `${backendLabel(snapshot)} · ${shortCommit(snapshot.project_commit)} · ${formatInteger(snapshot.corpus_programs)} corpus programs`;
   const insertCount = (snapshot.manifest?.inserts ?? []).filter((item) => item.status === "supported").length;
   const scanCount = (snapshot.manifest?.scans ?? []).filter((item) => item.status === "supported").length;
+  const combinatorCount = (snapshot.manifest?.combinators ?? []).filter((item) => item.status === "supported").length;
   const items = [
     ["Monadic forms", snapshot.monadic_supported],
     ["Dyadic forms", snapshot.dyadic_supported],
     ["Fold operands", snapshot.folds_supported],
     ["Insert operands", insertCount],
     ["Scan operands", scanCount],
+    ["Pure combinators", combinatorCount],
     ["Tests", `${snapshot.tests_passed} passed`],
   ];
   for (const [label, value] of items) {

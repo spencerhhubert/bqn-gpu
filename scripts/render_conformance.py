@@ -105,6 +105,21 @@ def render() -> str:
                 f"| `{entry['glyph']}{modifier}` | {entry['status']} | {entry['domain']} |"
             )
 
+    lines.extend(
+        [
+            "",
+            "## Pure combinators",
+            "",
+            "| Modifier | Status | Domain | Behavior |",
+            "|---|---|---|---|",
+        ]
+    )
+    for entry in manifest.get("combinators", []):
+        lines.append(
+            f"| `{entry['glyph']}` {entry['name']} | {entry['status']} | "
+            f"{entry['domain']} | {entry['behavior']} |"
+        )
+
     source = manifest["source_frontend"]
     lines.extend(
         [

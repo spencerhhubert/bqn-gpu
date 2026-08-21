@@ -128,3 +128,15 @@ def test_tensor_consumers_still_use_jit_replay(backend: TinygradBackend) -> None
     }
     executable = backend.compile(compile_bqn("{1+⍉𝕩}").expression, arguments)
     assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
+
+
+def test_combinator_is_inlined_before_jit_capture(backend: TinygradBackend) -> None:
+    expression = compile_bqn("{+´∘|𝕩}").expression
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([-1, 2, -3], (3,)))
+    }
+    optimization = backend.optimize(expression, arguments)
+    assert optimization.events[0].rule == "inline-atop"
+    executable = backend.compile(expression, arguments)
+    assert executable(arguments).to_host() == HostValue.from_atom(6)
+    assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
