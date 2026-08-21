@@ -51,3 +51,15 @@ def test_torch_backend_reports_unavailable_cuda(torch_module: Any) -> None:
         pytest.skip("CUDA is available on this test host")
     with pytest.raises(DeviceError, match="CUDA is unavailable"):
         TorchBackend("CUDA")
+
+
+def test_torch_backend_uses_a_concrete_cuda_index_when_available(
+    torch_module: Any,
+) -> None:
+    if not torch_module.cuda.is_available():
+        pytest.skip("CUDA is unavailable on this test host")
+    from bqn_gpu.torch_backend import TorchBackend
+
+    backend = TorchBackend("CUDA")
+    assert backend.torch_device.index == torch_module.cuda.current_device()
+    assert backend.atom(1).tensor.device == backend.torch_device

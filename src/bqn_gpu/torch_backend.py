@@ -49,6 +49,8 @@ class TorchBackend:
             raise DeviceError(f"invalid PyTorch device {device!r}: {error}") from error
         if requested.type == "cuda" and not torch.cuda.is_available():
             raise DeviceError("PyTorch CUDA execution was requested but CUDA is unavailable")
+        if requested.type == "cuda" and requested.index is None:
+            requested = torch.device("cuda", torch.cuda.current_device())
         self.torch_device = requested
         self.device = str(requested)
 
