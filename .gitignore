@@ -3,6 +3,7 @@ AGENTS.local.md
 /.build/
 /.pytest_cache/
 /.venv/
+/.wrangler/
 __pycache__/
 *.egg-info/
 *.py[cod]
