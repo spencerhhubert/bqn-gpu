@@ -37,6 +37,8 @@ The semantic layer does not expose tinygrad UOps directly. A future raw CUDA bac
 
 PyTorch is a second implementation of that protocol and a familiar performance baseline. The source compiler and corpus do not contain Torch-specific programs: the same BQN source IR dispatches to either tensor backend. This makes backend discrepancies visible and prevents benchmark definitions from drifting apart.
 
+CUDA validation runs the tinygrad and PyTorch adapter suites in fresh processes. Each framework owns CUDA runtime and context state, and process isolation prevents one adapter's tests from leaving stale handles in the other while retaining the same commit, hardware, inputs, and semantic oracle.
+
 ## Growth path
 
 1. Establish primitive semantics and conformance through tinygrad.

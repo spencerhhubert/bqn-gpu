@@ -38,7 +38,8 @@ def main() -> int:
 
     case_counts = {"smoke": 64, "full": 2048, "fuzz": 20000}
     arguments.output_dir.mkdir(parents=True, exist_ok=True)
-    junit_path = arguments.output_dir / "junit.xml"
+    tinygrad_junit_path = arguments.output_dir / "junit-tinygrad.xml"
+    torch_junit_path = arguments.output_dir / "junit-torch.xml"
 
     environment = os.environ.copy()
     environment.update(
@@ -49,8 +50,44 @@ def main() -> int:
             "BQN_GPU_FUZZ_CASES": str(case_counts[arguments.profile]),
         }
     )
-    test_command = [sys.executable, "-m", "pytest", f"--junitxml={junit_path}"]
-    completed = subprocess.run(test_command, cwd=ROOT, env=environment, check=False)
+    # tinygrad and PyTorch own independent CUDA runtime/context state. Running
+    # their full suites in one process can leave PyTorch with stale resource
+    # handles after tinygrad tests. Fresh processes also make failures easier
+    # to attribute to one adapter.
+    tinygrad_completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-k",
+            "not torch",
+            f"--junitxml={tinygrad_junit_path}",
+        ],
+        cwd=ROOT,
+        env=environment,
+        check=False,
+    )
+    torch_completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests/test_dense_primitives.py",
+            "tests/test_torch_backend.py",
+            "tests/test_native_baselines.py",
+            "-k",
+            "torch",
+            f"--junitxml={torch_junit_path}",
+        ],
+        cwd=ROOT,
+        env=environment,
+        check=False,
+    )
+    test_exit_code = (
+        0
+        if tinygrad_completed.returncode == 0 and torch_completed.returncode == 0
+        else 1
+    )
 
     gpu_fields = command(
         "nvidia-smi",
@@ -61,8 +98,12 @@ def main() -> int:
     manifest = {
         "schema_version": 1,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "result": "pass" if completed.returncode == 0 else "fail",
-        "test_exit_code": completed.returncode,
+        "result": "pass" if test_exit_code == 0 else "fail",
+        "test_exit_code": test_exit_code,
+        "suite_exit_codes": {
+            "tinygrad": tinygrad_completed.returncode,
+            "torch": torch_completed.returncode,
+        },
         "profile": arguments.profile,
         "random_seed": arguments.seed,
         "random_cases": case_counts[arguments.profile],
@@ -85,13 +126,17 @@ def main() -> int:
             "memory_mib": int(gpu_fields[2]),
             "compute_capability": gpu_fields[3],
         },
-        "artifacts": ["gpu-validation.json", "junit.xml"],
+        "artifacts": [
+            "gpu-validation.json",
+            "junit-tinygrad.xml",
+            "junit-torch.xml",
+        ],
         "sanitizer": "not run; the current backend dispatches generated tinygrad kernels",
     }
     manifest_path = arguments.output_dir / "gpu-validation.json"
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(manifest_path)
-    return completed.returncode
+    return test_exit_code
 
 
 def torch_backend_metadata() -> list[dict[str, str]]:
