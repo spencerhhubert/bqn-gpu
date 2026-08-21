@@ -153,9 +153,9 @@ function renderDistribution(rows) {
   chart.hidden = datasets.length === 0;
   if (!datasets.length) return;
 
-  const width = 1000;
-  const left = 300;
-  const right = 925;
+  const width = 1120;
+  const left = 385;
+  const right = 1040;
   const top = 58;
   const rowHeight = 28;
   const bottom = top + datasets.length * rowHeight + 20;
