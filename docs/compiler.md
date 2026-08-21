@@ -1,0 +1,56 @@
+# Optimizing compiler contract
+
+BQN's high-level array operations are optimization opportunities. The compiler must not irreversibly decompose them into a sequence of eager framework calls before it knows shapes, layouts, consumers, and the surrounding program.
+
+The intended pipeline is:
+
+```text
+BQN source
+  -> semantic HIR (BQN glyphs, modifiers, valence, atom/array distinction)
+  -> shape/type specialization and legality checks
+  -> array/index IR (iteration domains, index maps, reductions, scans, gathers)
+  -> fusion, layout, placement, and cost decisions
+  -> scheduled kernel IR
+  -> tinygrad, generated CUDA, or a correct host fallback
+```
+
+## Semantic HIR
+
+The high-level IR retains primitive identity and BQN evaluation rules. It is the common input to the reference interpreter and optimized compilation. It must preserve atom versus rank-0-array kind, leading-axis agreement, cell rank, fill dependencies, and exact structural domains.
+
+Every lowering or optimization is checked by evaluating the original source with pinned cBQN. Optimized and unoptimized execution must also agree so that a compiler pass cannot silently redefine the language.
+
+## Specialization
+
+GPU programs are specialized by the facts that materially change generated code: argument kind, dtype, rank, shape or symbolic shape constraints, layout, device, and semantic options. Compilation artifacts are cached by this signature. Dynamic shapes remain possible, but a hot stable shape should reach a branch-free specialized kernel.
+
+Shape-only expressions are evaluated outside kernels when possible. Structural values used as indices or axes are kept on-device when doing so avoids synchronization and enables a useful fused kernel.
+
+## Array/index IR
+
+Elementwise operations, broadcasts, reshapes, transposes, reverses, slices, rotates, windows, and regular selections should compose as index maps. A consumer can then read its producer through the composed map without materializing every intermediate array.
+
+Materialization remains available when reuse, irregular access, register pressure, or launch occupancy makes it cheaper. The compiler records layouts and aliases explicitly rather than relying on incidental tensor-framework behavior.
+
+Reductions, scans, sorting, searching, grouping, and irregular gathers are first-class operations. They are not encoded as opaque Python loops. Each may select among library lowering, generated multi-stage kernels, and tuned custom kernels.
+
+## Optimization policy
+
+The default objective is end-to-end resident execution time subject to exact BQN semantics. Important passes include:
+
+- constant, shape, and index-expression folding;
+- algebraic simplification guarded by floating-point legality;
+- elementwise and producer/consumer fusion;
+- fusion of structural index maps into elementwise consumers;
+- reduction and scan fusion where ordering permits it;
+- dead result and unused argument elimination;
+- layout propagation and transpose avoidance;
+- common-subexpression reuse when cheaper than recomputation;
+- launch coalescing, vectorization, memory coalescing, and occupancy-aware scheduling; and
+- CPU/GPU placement based on transfer, launch, and computation costs.
+
+Autotuning decisions must be keyed to reproducible hardware and shape signatures. A tuned result is an optimization choice, never part of language semantics.
+
+## Measurement discipline
+
+Development uses a compact sentinel set covering elementwise fusion, structural index-map fusion, reductions, scans, selection, sorting/search, and mixed complex programs. Full multi-size measurements are recorded only for tagged milestones. Raw repetitions, exact commits, hardware, compiler choices, and correctness evidence remain reproducible through the results service.
