@@ -10,7 +10,7 @@ from tinygrad import Device, Tensor, TinyJit, dtypes
 
 from .errors import DeviceError, DomainError, ShapeError, UnsupportedPrimitive
 from .host_value import HostValue, Shape
-from .ir import Expression, evaluate
+from .ir import Expression, evaluate, has_tensor_compute
 
 
 @dataclass(frozen=True)
@@ -220,6 +220,14 @@ class TinygradBackend:
 
     @staticmethod
     def can_compile(expression: Expression) -> bool:
+        """Whether the expression has fixed shape and launches tensor work."""
+
+        return TinygradBackend._fixed_output_shape(expression) and has_tensor_compute(
+            expression
+        )
+
+    @staticmethod
+    def _fixed_output_shape(expression: Expression) -> bool:
         """Whether output shape is fixed by the input tensor signatures."""
 
         operation = expression["op"]
@@ -227,11 +235,11 @@ class TinygradBackend:
             if expression["glyph"] == "↕":
                 return False
             return all(
-                TinygradBackend.can_compile(child)
+                TinygradBackend._fixed_output_shape(child)
                 for child in expression["arguments"]
             )
         if operation == "fold":
-            return TinygradBackend.can_compile(expression["argument"])
+            return TinygradBackend._fixed_output_shape(expression["argument"])
         return True
 
     def _check_device(self, value: TinygradValue) -> None:

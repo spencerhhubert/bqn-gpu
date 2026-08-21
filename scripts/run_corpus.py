@@ -368,9 +368,7 @@ def benchmark_native(
         run_once()
     timings = [run_once()[1] for _ in range(repeat)]
     result = timing_result(program, name, str(runtime.device).upper(), cold_ns, timings)
-    result["execution_mode"] = (
-        "native-jit-captured" if name == "native-tinygrad" else "native-eager"
-    )
+    result["execution_mode"] = getattr(runtime, "execution_mode", "native-eager")
     result["timing_scope"] = "resident-compute"
     return result
 

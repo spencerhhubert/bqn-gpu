@@ -50,6 +50,25 @@ def evaluate(
     raise ValueError(f"unknown IR operation {operation!r}")
 
 
+def has_tensor_compute(expression: Expression) -> bool:
+    """Whether evaluating an expression launches data-dependent tensor work."""
+
+    operation = expression["op"]
+    if operation in {"argument", "constant"}:
+        return False
+    if operation == "fold":
+        return True
+    if operation == "call":
+        glyph = expression["glyph"]
+        children = expression["arguments"]
+        if glyph in {"=", "≠", "≢", "↕"} and len(children) == 1:
+            return False
+        if glyph == "+" and len(children) == 1:
+            return has_tensor_compute(children[0])
+        return True
+    raise ValueError(f"unknown IR operation {operation!r}")
+
+
 def render_bqn(expression: Expression) -> str:
     operation = expression["op"]
     if operation == "argument":

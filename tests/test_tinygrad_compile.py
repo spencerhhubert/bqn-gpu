@@ -4,6 +4,13 @@ from bqn_gpu import HostValue, TinygradBackend, compile_bqn
 from bqn_gpu.ir import evaluate
 
 
+def test_only_fixed_shape_tensor_work_is_compiled() -> None:
+    assert TinygradBackend.can_compile(compile_bqn("{𝕩+2×|𝕩-1}").expression)
+    assert not TinygradBackend.can_compile(compile_bqn("{+𝕩}").expression)
+    assert not TinygradBackend.can_compile(compile_bqn("{≢𝕩}").expression)
+    assert not TinygradBackend.can_compile(compile_bqn("{↕𝕩}").expression)
+
+
 def test_compiled_tinygrad_program_reuses_source_graph(
     backend: TinygradBackend,
 ) -> None:

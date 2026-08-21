@@ -9,6 +9,7 @@ from tinygrad import Device, Tensor, TinyJit, dtypes
 from .corpus import Program
 from .errors import DeviceError
 from .host_value import HostValue
+from .ir import has_tensor_compute
 
 
 class NativeTinygradRuntime:
@@ -21,6 +22,7 @@ class NativeTinygradRuntime:
         except Exception as error:
             raise DeviceError(f"tinygrad device {requested!r} is unavailable: {error}") from error
         self.device = requested
+        self.execution_mode = "native-eager"
 
     def from_host(self, value: HostValue) -> Tensor:
         tensor = Tensor(value.data, dtype=dtypes.float64, device=self.device)
@@ -40,7 +42,16 @@ class NativeTinygradRuntime:
         )
         for value in arguments.values():
             value.realize()
+        if not has_tensor_compute(program.native_expression):
+            self.execution_mode = "native-eager"
+
+            def execute_eager(supplied: Mapping[str, Tensor]) -> Tensor:
+                return function(*(supplied[name] for name in names))
+
+            return execute_eager
+
         jitted = TinyJit(function)
+        self.execution_mode = "native-jit-captured"
 
         def execute(supplied: Mapping[str, Tensor]) -> Tensor:
             return jitted(*(supplied[name] for name in names))
