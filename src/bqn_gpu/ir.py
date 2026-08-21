@@ -58,6 +58,14 @@ def evaluate(
     if operation == "call":
         values = tuple(evaluate(child, backend, arguments) for child in expression["arguments"])
         return backend.call(expression["glyph"], *values)
+    if operation == "static_call":
+        value = evaluate(expression["argument"], backend, arguments)
+        return backend.call_static(
+            expression["glyph"],
+            expression["left_values"],
+            expression["left_atom"],
+            value,
+        )
     if operation == "fold":
         value = evaluate(expression["argument"], backend, arguments)
         return backend.reduce(expression["glyph"], value)
@@ -77,6 +85,8 @@ def has_tensor_compute(expression: Expression) -> bool:
     if operation in {"argument", "constant", "array"}:
         return False
     if operation in {"fold", "insert", "scan"}:
+        return True
+    if operation == "static_call":
         return True
     if operation == "call":
         glyph = expression["glyph"]
@@ -107,6 +117,14 @@ def render_bqn(expression: Expression) -> str:
                 f"{render_bqn(children[1])})"
             )
         raise ValueError("BQN primitive calls must be monadic or dyadic")
+    if operation == "static_call":
+        values = expression["left_values"]
+        left = (
+            _render_number(values[0])
+            if expression["left_atom"]
+            else "‿".join(_render_number(value) for value in values)
+        )
+        return f"({left}{expression['glyph']}{render_bqn(expression['argument'])})"
     if operation == "fold":
         return f"({expression['glyph']}´{render_bqn(expression['argument'])})"
     if operation == "insert":

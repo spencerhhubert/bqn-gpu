@@ -12,6 +12,9 @@ def test_only_fixed_shape_tensor_work_is_compiled() -> None:
     assert not TinygradBackend.can_compile(compile_bqn("{↕𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{⌽⌽𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{⍉𝕩}").expression)
+    assert TinygradBackend.can_compile(compile_bqn("{1↓𝕩}").expression)
+    assert TinygradBackend.can_compile(compile_bqn("{3↕𝕩}").expression)
+    assert not TinygradBackend.can_compile(compile_bqn("{𝕨↓𝕩}").expression)
 
 
 def test_compiled_tinygrad_program_reuses_source_graph(
@@ -40,6 +43,18 @@ def test_compiled_and_eager_tinygrad_results_match(backend: TinygradBackend) -> 
         assert executable(arguments).to_host() == expected
 
 
+def test_literal_structural_arguments_compile_once(backend: TinygradBackend) -> None:
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([1, 2, 3, 4], (4,)))
+    }
+    for source in ("{1↓𝕩}", "{3↕𝕩}", "{1⌽𝕩}", "{2/𝕩}"):
+        program = compile_bqn(source)
+        expected = evaluate(program.expression, backend, arguments).to_host()
+        executable = backend.compile(program.expression, arguments)
+        for _ in range(3):
+            assert executable(arguments).to_host() == expected
+
+
 def test_shape_specialized_optimizer_explains_structural_rewrites() -> None:
     cases = [
         ("{⌽⌽𝕩}", 1, "double-reverse"),
@@ -64,7 +79,7 @@ def test_compile_decision_follows_shape_specialized_rewrites(
     arguments = {
         "x": backend.from_host(HostValue.from_array([1, 2, 3], (3,)))
     }
-    assert not backend.can_compile(expression)
+    assert backend.can_compile(expression)
     assert backend.can_compile(expression, arguments)
 
 

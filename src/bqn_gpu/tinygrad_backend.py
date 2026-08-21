@@ -75,6 +75,26 @@ class TinygradBackend:
             f"primitive {glyph!r} does not have supported valence {len(arguments)}"
         )
 
+    def call_static(
+        self,
+        glyph: str,
+        left_values: Sequence[int],
+        left_atom: bool,
+        argument: TinygradValue,
+    ) -> TinygradValue:
+        values = tuple(int(value) for value in left_values)
+        if glyph == "↑":
+            return self._take_or_drop_counts(values, argument, take=True)
+        if glyph == "↓":
+            return self._take_or_drop_counts(values, argument, take=False)
+        if glyph == "⌽":
+            return self._rotate_counts(values, argument)
+        if glyph == "/":
+            return self._replicate_counts(values, left_atom, argument)
+        if glyph == "↕":
+            return self._windows_sizes(values, argument)
+        raise UnsupportedPrimitive(f"static primitive {glyph!r} is not implemented")
+
     def _call_monadic(self, glyph: str, x: TinygradValue) -> TinygradValue:
         self._check_device(x)
         if glyph in {"∧", "∨"}:
@@ -348,6 +368,11 @@ class TinygradBackend:
         self, w: TinygradValue, x: TinygradValue, *, take: bool
     ) -> TinygradValue:
         counts = self._whole_numbers(w, "Take" if take else "Drop")
+        return self._take_or_drop_counts(counts, x, take=take)
+
+    def _take_or_drop_counts(
+        self, counts: Sequence[int], x: TinygradValue, *, take: bool
+    ) -> TinygradValue:
         tensor = x.tensor.reshape((1,)) if x.atom else x.tensor
         shape = tuple(int(length) for length in tensor.shape)
         if len(counts) > len(shape):
@@ -366,6 +391,11 @@ class TinygradBackend:
 
     def _rotate(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
         rotations = self._whole_numbers(w, "Rotate")
+        return self._rotate_counts(rotations, x)
+
+    def _rotate_counts(
+        self, rotations: Sequence[int], x: TinygradValue
+    ) -> TinygradValue:
         tensor = x.tensor.reshape((1,)) if x.atom else x.tensor
         if len(rotations) > len(tensor.shape):
             raise DomainError("Rotate specifies more axes than the right argument")
@@ -392,11 +422,22 @@ class TinygradBackend:
         return TinygradValue(tensor=tensor.permute(axes), atom=False)
 
     def _replicate(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        counts = self._whole_numbers(w, "Replicate", natural=True)
+        return self._replicate_counts(counts, w.atom, x)
+
+    def _replicate_counts(
+        self,
+        counts: Sequence[int],
+        left_atom: bool,
+        x: TinygradValue,
+    ) -> TinygradValue:
         tensor = x.tensor.reshape((1,)) if x.atom else x.tensor
         if len(tensor.shape) == 0:
             raise DomainError("Replicate requires an array axis")
-        counts = self._whole_numbers(w, "Replicate", natural=True)
-        if w.atom:
+        counts = tuple(counts)
+        if any(count < 0 for count in counts):
+            raise DomainError("Replicate requires natural numbers")
+        if left_atom:
             counts = counts * int(tensor.shape[0])
         if len(counts) != tensor.shape[0]:
             raise ShapeError("Replicate counts must match the first-axis length")
@@ -410,6 +451,14 @@ class TinygradBackend:
 
     def _windows(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
         sizes = self._whole_numbers(w, "Windows", natural=True)
+        return self._windows_sizes(sizes, x)
+
+    def _windows_sizes(
+        self, sizes: Sequence[int], x: TinygradValue
+    ) -> TinygradValue:
+        sizes = tuple(sizes)
+        if any(size < 0 for size in sizes):
+            raise DomainError("Windows requires natural numbers")
         tensor = x.tensor.reshape((1,)) if x.atom else x.tensor
         rank = len(tensor.shape)
         if len(sizes) > rank:
@@ -665,15 +714,22 @@ class TinygradBackend:
         """Whether output shape is fixed by the input tensor signatures."""
 
         operation = expression["op"]
+        if operation == "static_call":
+            return TinygradBackend._fixed_output_shape(expression["argument"])
         if operation == "call":
             glyph = expression["glyph"]
             children = expression["arguments"]
             if len(children) == 1 and glyph in {"↕", "/", "⍷"}:
                 return False
-            if len(children) == 2 and glyph in {
-                "⥊", "∾", "≍", "⋈", "↑", "↓", "↕", "⌽", "⍉", "/", "⊏", "⊑", "⊒", "⍷"
-            }:
-                return False
+            if len(children) == 2:
+                if glyph in {"⊒", "⍷"}:
+                    return False
+                if glyph in {"⥊", "⍉", "⊏", "⊑"}:
+                    return False
+                if glyph in {"↑", "↓", "↕", "⌽", "/"}:
+                    return TinygradBackend._literal_whole_numbers_expression(
+                        children[0]
+                    ) and TinygradBackend._fixed_output_shape(children[1])
             return all(
                 TinygradBackend._fixed_output_shape(child)
                 for child in children
@@ -683,6 +739,16 @@ class TinygradBackend:
         if operation in {"insert", "scan"}:
             return TinygradBackend._fixed_output_shape(expression["argument"])
         return True
+
+    @staticmethod
+    def _literal_whole_numbers_expression(expression: Expression) -> bool:
+        if expression["op"] == "constant":
+            values = (expression["value"],)
+        elif expression["op"] == "array":
+            values = tuple(expression["values"])
+        else:
+            return False
+        return all(int(value) == value for value in values)
 
     def _check_device(self, value: TinygradValue) -> None:
         if value.tensor.device != self.device:

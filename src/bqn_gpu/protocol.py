@@ -29,6 +29,14 @@ class ExecutionBackend(Protocol[ValueT]):
 
     def call(self, glyph: str, *arguments: ValueT) -> ValueT: ...
 
+    def call_static(
+        self,
+        glyph: str,
+        left_values: Sequence[int],
+        left_atom: bool,
+        argument: ValueT,
+    ) -> ValueT: ...
+
     def reduce(self, glyph: str, argument: ValueT) -> ValueT: ...
 
     def insert(self, glyph: str, argument: ValueT) -> ValueT: ...

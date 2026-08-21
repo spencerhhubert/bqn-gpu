@@ -36,7 +36,7 @@ def optimize(
                 **node,
                 "arguments": [visit(child) for child in node["arguments"]],
             }
-        elif operation in {"fold", "insert", "scan"}:
+        elif operation in {"fold", "insert", "scan", "static_call"}:
             rewritten = {**node, "argument": visit(node["argument"])}
         else:
             return node
@@ -70,6 +70,8 @@ def infer_rank(expression: Expression, argument_ranks: Mapping[str, int]) -> int
         rank = infer_rank(expression["argument"], argument_ranks)
         return None if rank is None else max(0, rank - 1)
     if operation == "scan":
+        return infer_rank(expression["argument"], argument_ranks)
+    if operation == "static_call":
         return infer_rank(expression["argument"], argument_ranks)
     if operation != "call":
         return None
@@ -105,7 +107,10 @@ def _rewrite(
         return arguments[0], "identity-monad"
 
     if len(arguments) != 1:
-        return _cancel_rotates(expression, argument_ranks)
+        replacement, rule = _cancel_rotates(expression, argument_ranks)
+        if rule is not None:
+            return replacement, rule
+        return _specialize_literal_structural(expression)
     child = arguments[0]
     if child["op"] != "call" or len(child["arguments"]) != 1:
         return expression, None
@@ -135,10 +140,14 @@ def _cancel_rotates(
         return expression, None
     outer = _literal_whole_numbers(arguments[0])
     inner = arguments[1]
-    if inner["op"] != "call" or inner["glyph"] != "⌽" or len(inner["arguments"]) != 2:
+    if inner["op"] == "static_call" and inner["glyph"] == "⌽":
+        inner_counts = tuple(inner["left_values"])
+        target = inner["argument"]
+    elif inner["op"] == "call" and inner["glyph"] == "⌽" and len(inner["arguments"]) == 2:
+        inner_counts = _literal_whole_numbers(inner["arguments"][0])
+        target = inner["arguments"][1]
+    else:
         return expression, None
-    inner_counts = _literal_whole_numbers(inner["arguments"][0])
-    target = inner["arguments"][1]
     rank = infer_rank(target, argument_ranks)
     if (
         outer is not None
@@ -150,6 +159,27 @@ def _cancel_rotates(
     ):
         return target, "cancel-rotates"
     return expression, None
+
+
+def _specialize_literal_structural(
+    expression: Expression,
+) -> tuple[Expression, str | None]:
+    if expression["glyph"] not in {"↑", "↓", "↕", "⌽", "/"}:
+        return expression, None
+    left, right = expression["arguments"]
+    values = _literal_whole_numbers(left)
+    if values is None:
+        return expression, None
+    return (
+        {
+            "op": "static_call",
+            "glyph": expression["glyph"],
+            "left_values": list(values),
+            "left_atom": left["op"] == "constant",
+            "argument": right,
+        },
+        "specialize-literal-structural-argument",
+    )
 
 
 def _literal_whole_numbers(expression: Expression) -> tuple[int, ...] | None:
