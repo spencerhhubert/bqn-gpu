@@ -95,7 +95,7 @@ function renderPerformance() {
 function renderSpeedups() {
   const groups = new Map();
   for (const item of state.performance) {
-    const key = `${item.run_id}\u0000${item.program_id}`;
+    const key = `${item.run_id}\u0000${item.program_id}\u0000${item.timing_scope}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(item);
   }

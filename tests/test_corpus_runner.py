@@ -34,7 +34,7 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
         check=True,
     )
     report = json.loads(output.read_text(encoding="utf-8"))
-    assert report["schema_version"] == 1
+    assert report["schema_version"] == 2
     assert report["program_count"] == 1
     assert {result["backend"] for result in report["results"]} == {
         "cbqn",
@@ -42,3 +42,34 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     }
     assert all(result["correct"] for result in report["results"])
     assert all(result["median_warm_ns"] > 0 for result in report["results"])
+    assert all(result["timing_scope"] == "resident-compute" for result in report["results"])
+    assert report["timing_scope"] == "resident-compute"
+    assert report["environment"]["fingerprint"]
+    assert report["environment"]["cpu"]["threads"] > 0
+    assert next(
+        result for result in report["results"] if result["backend"] == "cbqn"
+    )["execution_mode"] == "embedding-resident"
+
+    payload_path = tmp_path / "payload.json"
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/publish_results.py",
+            str(output),
+            "--suite",
+            "test-smoke",
+            "--dry-run",
+            "--allow-dirty",
+            "--output-payload",
+            str(payload_path),
+        ],
+        cwd=ROOT,
+        check=True,
+    )
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    assert payload["commit"]["sha"] == report["repository_commit"]
+    assert payload["environment"]["fingerprint"] == report["environment"]["fingerprint"]
+    assert len(payload["programs"]) == 1
+    assert len(payload["results"]) == 2
+    assert all(result["timing_scope"] == "resident-compute" for result in payload["results"])
+    assert all(len(result["timings_ns"]) == 1 for result in payload["results"])

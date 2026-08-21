@@ -49,6 +49,7 @@ function payload() {
       backend: "tinygrad",
       backend_version: "test",
       execution_mode: "jit-captured",
+      timing_scope: "resident-compute",
       correct: true,
       input_size: 1_048_576,
       cold_ns: 2_000_000,

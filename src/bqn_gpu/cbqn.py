@@ -11,6 +11,54 @@ from .host_value import HostValue
 BQNV = ctypes.c_uint64
 
 
+class PreparedCBQNCall:
+    """A compiled cBQN function with arguments retained in the embedding heap."""
+
+    def __init__(self, owner: "CBQN", function: int, arguments: list[int]) -> None:
+        self._owner = owner
+        self._function = function
+        self._arguments = arguments
+        self._closed = False
+
+    def invoke(self) -> int:
+        """Call cBQN and return an owned raw result for timing-sensitive code."""
+
+        if self._closed:
+            raise RuntimeError("prepared cBQN call is closed")
+        if len(self._arguments) == 1:
+            return int(
+                self._owner.library.bqn_call1(self._function, self._arguments[0])
+            )
+        return int(
+            self._owner.library.bqn_call2(
+                self._function, self._arguments[0], self._arguments[1]
+            )
+        )
+
+    def read_and_free(self, result: int) -> HostValue:
+        try:
+            return self._owner._read_value(result)
+        finally:
+            self._owner.library.bqn_free(result)
+
+    def free(self, result: int) -> None:
+        self._owner.library.bqn_free(result)
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        for value in self._arguments:
+            self._owner.library.bqn_free(value)
+        self._arguments.clear()
+        self._closed = True
+
+    def __enter__(self) -> "PreparedCBQNCall":
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.close()
+
+
 class CBQN:
     def __init__(self, library_path: Path) -> None:
         if not library_path.is_file():
@@ -63,10 +111,7 @@ class CBQN:
     def call(self, source: str, *arguments: HostValue) -> HostValue:
         if len(arguments) not in (1, 2):
             raise ValueError("cBQN wrapper supports monadic and dyadic functions")
-        function = self._functions.get(source)
-        if function is None:
-            function = int(self.library.bqn_evalCStr(source.encode("utf-8")))
-            self._functions[source] = function
+        function = self._function(source)
 
         encoded = [self._make_value(value) for value in arguments]
         try:
@@ -81,6 +126,20 @@ class CBQN:
         finally:
             for value in encoded:
                 self.library.bqn_free(value)
+
+    def prepare(self, source: str, *arguments: HostValue) -> PreparedCBQNCall:
+        """Compile source and retain encoded arguments for resident CPU timings."""
+
+        if len(arguments) not in (1, 2):
+            raise ValueError("cBQN wrapper supports monadic and dyadic functions")
+        encoded: list[int] = []
+        try:
+            encoded.extend(self._make_value(value) for value in arguments)
+            return PreparedCBQNCall(self, self._function(source), encoded)
+        except BaseException:
+            for value in encoded:
+                self.library.bqn_free(value)
+            raise
 
     def evaluate(self, source: str) -> HostValue:
         """Evaluate an immediate BQN program and read its numeric result."""
@@ -99,6 +158,13 @@ class CBQN:
         return int(
             self.library.bqn_makeF64Arr(len(value.shape), shape_buffer, data_buffer)
         )
+
+    def _function(self, source: str) -> int:
+        function = self._functions.get(source)
+        if function is None:
+            function = int(self.library.bqn_evalCStr(source.encode("utf-8")))
+            self._functions[source] = function
+        return function
 
     def _read_value(self, value: int) -> HostValue:
         value_type = self.library.bqn_type(value)

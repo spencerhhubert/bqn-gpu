@@ -46,6 +46,12 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--size", type=int, default=262144)
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--repeat", type=int, default=10)
+    parser.add_argument(
+        "--cbqn-timing-scope",
+        choices=("resident", "boundary"),
+        default="resident",
+        help="retain cBQN arguments outside timings, or include HostValue embedding copies",
+    )
     parser.add_argument("--match", default="*", help="program ID glob")
     parser.add_argument("--tag", action="append", help="require a corpus tag")
     parser.add_argument("--limit", type=int)
@@ -55,6 +61,7 @@ def parse_arguments() -> argparse.Namespace:
 
 def main() -> int:
     arguments = parse_arguments()
+    started_at = datetime.now(timezone.utc)
     if arguments.size < 1 or arguments.warmup < 0 or arguments.repeat < 1:
         raise SystemExit("size and repeat must be positive; warmup must be non-negative")
 
@@ -90,6 +97,7 @@ def main() -> int:
                         expected,
                         arguments.warmup,
                         arguments.repeat,
+                        arguments.cbqn_timing_scope,
                     )
                 else:
                     result = benchmark_backend(
@@ -107,20 +115,29 @@ def main() -> int:
     finally:
         cbqn.close()
 
+    versions = backend_versions(backends)
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
+        "started_at_utc": started_at.isoformat(),
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "repository_commit": repository_commit(),
         "repository_dirty": repository_dirty(),
         "python_version": platform.python_version(),
         "platform": platform.platform(),
         "device": arguments.device.upper(),
+        "timing_scope": (
+            "resident-compute"
+            if arguments.cbqn_timing_scope == "resident"
+            else "backend-specific"
+        ),
+        "command": benchmark_command(arguments, requested),
         "warmup": arguments.warmup,
         "repeat": arguments.repeat,
         "program_count": len(programs),
         "requested_backends": requested,
         "skipped_backends": skipped,
-        "versions": backend_versions(backends),
+        "versions": versions,
+        "environment": environment_profile(versions),
         "results": results,
     }
     rendered = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
@@ -179,7 +196,13 @@ def benchmark_cbqn(
     expected: Any,
     warmup: int,
     repeat: int,
+    timing_scope: str,
 ) -> dict[str, Any]:
+    if timing_scope == "resident":
+        return benchmark_cbqn_resident(
+            cbqn, program, arguments, expected, warmup, repeat
+        )
+
     cold_start = time.perf_counter_ns()
     actual = cbqn.call(program.bqn, *arguments)
     cold_ns = time.perf_counter_ns() - cold_start
@@ -193,6 +216,39 @@ def benchmark_cbqn(
         timings.append(time.perf_counter_ns() - start)
     result = timing_result(program, "cbqn", "CPU", cold_ns, timings)
     result["execution_mode"] = "embedding-call"
+    result["timing_scope"] = "host-value-boundary"
+    return result
+
+
+def benchmark_cbqn_resident(
+    cbqn: CBQN,
+    program: Program,
+    arguments: tuple[Any, ...],
+    expected: Any,
+    warmup: int,
+    repeat: int,
+) -> dict[str, Any]:
+    with cbqn.prepare(program.bqn, *arguments) as executable:
+        cold_start = time.perf_counter_ns()
+        raw_result = executable.invoke()
+        cold_ns = time.perf_counter_ns() - cold_start
+        actual = executable.read_and_free(raw_result)
+        assert_close(actual, expected, program)
+
+        for _ in range(warmup):
+            raw_result = executable.invoke()
+            executable.free(raw_result)
+
+        timings = []
+        for _ in range(repeat):
+            start = time.perf_counter_ns()
+            raw_result = executable.invoke()
+            timings.append(time.perf_counter_ns() - start)
+            executable.free(raw_result)
+
+    result = timing_result(program, "cbqn", "CPU", cold_ns, timings)
+    result["execution_mode"] = "embedding-resident"
+    result["timing_scope"] = "resident-compute"
     return result
 
 
@@ -238,6 +294,7 @@ def benchmark_backend(
     result["execution_mode"] = (
         "jit-captured" if executable is not None else "eager-dispatch"
     )
+    result["timing_scope"] = "resident-compute"
     return result
 
 
@@ -286,6 +343,133 @@ def repository_dirty() -> bool:
             ["git", "status", "--porcelain"], cwd=ROOT, text=True
         ).strip()
     )
+
+
+def benchmark_command(arguments: argparse.Namespace, backends: list[str]) -> list[str]:
+    command = ["python3", "scripts/run_corpus.py"]
+    for backend in backends:
+        command.extend(("--backend", backend))
+    command.extend(
+        (
+            "--device",
+            arguments.device,
+            "--size",
+            str(arguments.size),
+            "--warmup",
+            str(arguments.warmup),
+            "--repeat",
+            str(arguments.repeat),
+            "--cbqn-timing-scope",
+            arguments.cbqn_timing_scope,
+            "--match",
+            arguments.match,
+        )
+    )
+    for tag in arguments.tag or ():
+        command.extend(("--tag", tag))
+    if arguments.limit is not None:
+        command.extend(("--limit", str(arguments.limit)))
+    return command
+
+
+def environment_profile(versions: dict[str, str]) -> dict[str, Any]:
+    profile: dict[str, Any] = {
+        "architecture": platform.machine(),
+        "operating_system": platform.system(),
+        "kernel": platform.release(),
+        "cpu": cpu_profile(),
+        "memory_bytes": memory_bytes(),
+        "accelerators": accelerator_profiles(),
+        "software": {
+            "python": platform.python_version(),
+            **versions,
+        },
+    }
+    encoded = json.dumps(profile, sort_keys=True, separators=(",", ":")).encode()
+    return {"fingerprint": hashlib.sha256(encoded).hexdigest(), **profile}
+
+
+def cpu_profile() -> dict[str, Any]:
+    profile: dict[str, Any] = {
+        "model": platform.processor() or "unknown",
+        "threads": os.cpu_count(),
+    }
+    try:
+        output = subprocess.check_output(["lscpu", "--json"], text=True)
+        fields = {
+            item["field"].rstrip(":"): item["data"]
+            for item in json.loads(output)["lscpu"]
+        }
+        sockets = _integer_field(fields.get("Socket(s)"))
+        cores_per_socket = _integer_field(fields.get("Core(s) per socket"))
+        profile.update(
+            {
+                "model": fields.get("Model name", profile["model"]),
+                "sockets": sockets,
+                "cores": (
+                    sockets * cores_per_socket
+                    if sockets is not None and cores_per_socket is not None
+                    else None
+                ),
+                "threads": _integer_field(fields.get("CPU(s)")) or profile["threads"],
+            }
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError, KeyError, ValueError):
+        pass
+    return {key: value for key, value in profile.items() if value is not None}
+
+
+def memory_bytes() -> int | None:
+    try:
+        for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
+            if line.startswith("MemTotal:"):
+                return int(line.split()[1]) * 1024
+    except (FileNotFoundError, ValueError, IndexError):
+        pass
+    return None
+
+
+def accelerator_profiles() -> list[dict[str, Any]]:
+    try:
+        output = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,driver_version,memory.total,compute_cap",
+                "--format=csv,noheader,nounits",
+            ],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return []
+    profiles = []
+    for line in output.splitlines():
+        fields = [field.strip() for field in line.split(",")]
+        if len(fields) != 4:
+            continue
+        try:
+            memory = int(fields[2]) * 1024 * 1024
+        except ValueError:
+            memory = None
+        profiles.append(
+            {
+                "kind": "gpu",
+                "vendor": "NVIDIA",
+                "model": fields[0],
+                "count": 1,
+                "memory_bytes": memory,
+                "compute_capability": fields[3],
+                "driver": fields[1],
+            }
+        )
+    return profiles
+
+
+def _integer_field(value: str | None) -> int | None:
+    try:
+        return int(value) if value is not None else None
+    except ValueError:
+        return None
 
 
 if __name__ == "__main__":

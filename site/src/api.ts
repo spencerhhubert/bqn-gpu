@@ -140,14 +140,14 @@ export async function ingest(env: Env, payload: IngestPayload, payloadSha256: st
     ),
     env.DB.prepare(`
       INSERT INTO results (
-        run_id, program_id, backend, backend_version, execution_mode, correct,
+        run_id, program_id, backend, backend_version, execution_mode, timing_scope, correct,
         skipped, error, input_size, cold_ns, median_ns, min_ns, max_ns, p95_ns,
         timings_json, output_sha256, metadata_json
       )
       SELECT ?,
         json_extract(value, '$.program_id'), json_extract(value, '$.backend'),
         json_extract(value, '$.backend_version'), json_extract(value, '$.execution_mode'),
-        json_extract(value, '$.correct'), json_extract(value, '$.skipped'),
+        json_extract(value, '$.timing_scope'), json_extract(value, '$.correct'), json_extract(value, '$.skipped'),
         json_extract(value, '$.error'), json_extract(value, '$.input_size'),
         json_extract(value, '$.cold_ns'), json_extract(value, '$.median_ns'),
         json_extract(value, '$.min_ns'), json_extract(value, '$.max_ns'),
@@ -277,7 +277,7 @@ async function performance(env: Env, url: URL): Promise<Response> {
     if (value) { conditions.push(`${column} = ?`); values.push(value); }
   }
   const result = await env.DB.prepare(`SELECT x.*, r.project_commit, r.started_at, r.device,
-    r.dtype, r.timing_scope, r.input_profile_json, e.cpu_model, e.accelerator_models
+    r.dtype, r.input_profile_json, e.cpu_model, e.accelerator_models
     FROM results x JOIN runs r ON r.id = x.run_id
     JOIN environments e ON e.fingerprint = r.environment_fingerprint
     WHERE ${conditions.join(" AND ")} ORDER BY r.started_at ASC LIMIT ?`).bind(...values, max).all();

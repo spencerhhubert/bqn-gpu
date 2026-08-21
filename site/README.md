@@ -10,10 +10,10 @@ This directory contains the public benchmark and capability history service. It 
 - a fingerprinted hardware/software environment, including CPU topology, accelerators, drivers, runtimes, cBQN, and framework revisions;
 - the suite, command, timing scope, dtype, seed, input profile, warmup/repetition counts, and artifact URL;
 - stable BQN program IDs, sources, hashes, input generators, comparison policies, and tags;
-- correctness outcomes, raw nanosecond timings, aggregates, and output hashes for each backend; and
+- correctness outcomes, explicit timing scope, raw nanosecond timings, aggregates, and output hashes for each backend; and
 - an optional capability snapshot with its full manifest and feature-level evidence.
 
-Runs are immutable. Retrying an identical run ID is idempotent; attempting to reuse it with different content fails. A stable program ID cannot be reused for different source. Extra metadata objects are retained so new hardware and measurement fields can be added without discarding old records.
+Runs are immutable. Retrying an identical run ID is idempotent; attempting to reuse it with different content fails. A stable program ID cannot be reused for different source. Per-result timing scopes prevent resident compute and host-boundary measurements from being treated as comparable. Extra metadata objects are retained so new hardware and measurement fields can be added without discarding old records.
 
 Public, read-only endpoints are listed at `/api/v1/schema`. `/api/v1/runs/{run_id}` returns a reproduction bundle for a recorded experiment. Ingestion requires the `BENCHMARK_INGEST_TOKEN` Worker secret.
 

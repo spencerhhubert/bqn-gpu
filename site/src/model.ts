@@ -88,6 +88,7 @@ export interface ResultRecord {
   backend: string;
   backend_version?: string;
   execution_mode: string;
+  timing_scope: string;
   correct: boolean;
   skipped?: boolean;
   error?: string;

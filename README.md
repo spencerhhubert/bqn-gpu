@@ -56,9 +56,21 @@ python scripts/run_corpus.py --backend cbqn --backend tinygrad --backend torch \
   --device CUDA --tag paired --size 1048576 --output results.json
 ```
 
-cBQN is always a CPU reference in this runner. Tensor inputs are transferred before timing and outputs afterward. tinygrad uses a reusable JIT-captured graph after two warmups; Torch currently uses eager dispatch. Every result records its execution mode, cold time, individual warm times, and median. Required device synchronization is inside the timed region, while host/device input and output transfer is excluded.
+cBQN is always a CPU reference in this runner. By default, cBQN arguments and tensor inputs are both constructed before timing, so `resident-compute` rows compare the same execution boundary. `--cbqn-timing-scope boundary` separately measures cBQN's current `HostValue` embedding copies and marks those rows `host-value-boundary`; they must not be used for resident GPU speedup claims. tinygrad uses a reusable JIT-captured graph after two warmups; Torch currently uses eager dispatch. Every result records its timing scope, execution mode, cold time, raw warm repetitions, and aggregates. Required device synchronization is inside tensor timings, while host/device transfer is excluded.
 
 Performance and capability history is published by the TypeScript Cloudflare Worker in [`site/`](site/). Its D1 schema keeps raw timings together with the tested commit, BQN source hashes, full input recipe, correctness result, and fingerprinted hardware/software environment. Tagged `site-v*` releases automatically deploy the dashboard and API; see [`site/README.md`](site/README.md) for the versioned ingestion contract and reproduction endpoints.
+
+Schema-version 2 corpus reports capture the CPU topology, memory, accelerators, drivers, kernel, Python, cBQN, and backend versions without recording hostnames or infrastructure addresses. A clean report can be validated and published with:
+
+```sh
+python3 scripts/publish_results.py results.json \
+  --suite paired-1m \
+  --validation-manifest .build/validation/gpu-validation.json \
+  --junit .build/validation/junit.xml \
+  --dry-run --output-payload payload.json
+```
+
+Remove `--dry-run` and provide `BQN_GPU_RESULTS_TOKEN` to ingest it. The publisher rejects dirty benchmark reports by default, verifies program source hashes and commit agreement, and can attach the complete conformance manifest plus JUnit counts.
 
 ## Development
 

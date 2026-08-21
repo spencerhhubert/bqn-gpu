@@ -147,6 +147,7 @@ function validateResult(value: unknown, path: string): ResultRecord {
     backend: identifier(item.backend, `${path}.backend`),
     backend_version: optionalText(item.backend_version, `${path}.backend_version`, 300),
     execution_mode: identifier(item.execution_mode, `${path}.execution_mode`),
+    timing_scope: identifier(item.timing_scope, `${path}.timing_scope`),
     correct: boolean(item.correct, `${path}.correct`),
     skipped: optionalBoolean(item.skipped, `${path}.skipped`),
     error: optionalText(item.error, `${path}.error`, 4000),
