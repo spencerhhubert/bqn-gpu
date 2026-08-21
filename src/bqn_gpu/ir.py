@@ -64,6 +64,13 @@ def constant_function(value: Expression) -> FunctionExpression:
     return {"kind": "constant", "value": value}
 
 
+def train_function(functions: Sequence[FunctionExpression]) -> FunctionExpression:
+    if len(functions) < 2:
+        raise ValueError("a BQN train requires at least two components")
+    _validate_train_components(functions)
+    return {"kind": "train", "functions": list(functions)}
+
+
 def apply_function(
     function: FunctionExpression,
     arguments: Sequence[Expression],
@@ -83,6 +90,12 @@ def apply_function(
         operation = function["modifier"]
         constructor = {"´": fold, "˝": insert, "`": scan}[operation]
         return constructor(function["glyph"], arguments[0])
+    if kind == "train":
+        return {
+            "op": "train",
+            "functions": function["functions"],
+            "arguments": list(arguments),
+        }
     if kind == "modifier":
         modifier = function["modifier"]
         if modifier in {"˘", "¨", "⌜", "⎉"}:
@@ -113,6 +126,17 @@ def apply_function(
             "arguments": list(arguments),
         }
     raise ValueError(f"unknown function IR kind {kind!r}")
+
+
+def expand_train(expression: Expression) -> Expression:
+    """Expand a train call while retaining its source-level semantic IR."""
+
+    if expression["op"] != "train":
+        raise ValueError("expected a train expression")
+    arguments = expression["arguments"]
+    if len(arguments) not in {1, 2}:
+        raise ValueError("BQN trains require one or two arguments")
+    return _apply_train(expression["functions"], arguments)
 
 
 def expand_combinator(expression: Expression) -> Expression:
@@ -190,6 +214,8 @@ def evaluate(
         return backend.scan(expression["glyph"], value)
     if operation == "combinator":
         return evaluate(expand_combinator(expression), backend, arguments)
+    if operation == "train":
+        return evaluate(expand_train(expression), backend, arguments)
     if operation == "map":
         values = tuple(
             evaluate(child, backend, arguments) for child in expression["arguments"]
@@ -225,6 +251,8 @@ def has_tensor_compute(expression: Expression) -> bool:
         return True
     if operation == "combinator":
         return has_tensor_compute(expand_combinator(expression))
+    if operation == "train":
+        return has_tensor_compute(expand_train(expression))
     if operation == "map":
         return True
     if operation == "call":
@@ -285,6 +313,16 @@ def render_bqn(expression: Expression) -> str:
             f"({render_bqn(arguments[0])} {rendered_function} "
             f"{render_bqn(arguments[1])})"
         )
+    if operation == "train":
+        function = {"kind": "train", "functions": expression["functions"]}
+        arguments = expression["arguments"]
+        rendered_function = render_function(function)
+        if len(arguments) == 1:
+            return f"({rendered_function} {render_bqn(arguments[0])})"
+        return (
+            f"({render_bqn(arguments[0])} {rendered_function} "
+            f"{render_bqn(arguments[1])})"
+        )
     if operation == "map":
         function = render_function(expression["function"])
         modifier = expression["modifier"]
@@ -317,6 +355,10 @@ def render_function(function: FunctionExpression) -> str:
         if "right" not in function:
             return f"{left}{function['modifier']}"
         return f"{left}{function['modifier']}{render_function(function['right'])}"
+    if kind == "train":
+        return "(" + "".join(
+            render_function(component) for component in function["functions"]
+        ) + ")"
     raise ValueError(f"unknown function IR kind {kind!r}")
 
 
@@ -330,3 +372,38 @@ def _render_number(value: Real) -> str:
         return "¯∞" if number < 0 else "∞"
     rendered = repr(number) if not number.is_integer() else str(int(number))
     return "¯" + rendered[1:] if rendered.startswith("-") else rendered
+
+
+def _apply_train(
+    functions: Sequence[FunctionExpression],
+    arguments: Sequence[Expression],
+) -> Expression:
+    if len(functions) == 1:
+        return apply_function(functions[0], arguments)
+    if len(functions) % 2 == 0:
+        return apply_function(
+            functions[0],
+            [_apply_train(functions[1:], arguments)],
+        )
+    return apply_function(
+        functions[1],
+        [
+            apply_function(functions[0], arguments),
+            _apply_train(functions[2:], arguments),
+        ],
+    )
+
+
+def _validate_train_components(functions: Sequence[FunctionExpression]) -> None:
+    if len(functions) == 1:
+        if functions[0]["kind"] == "constant":
+            raise ValueError("the final component of a BQN train must be a function")
+        return
+    if len(functions) % 2 == 0:
+        if functions[0]["kind"] == "constant":
+            raise ValueError("the left function of a 2-train cannot be a subject")
+        _validate_train_components(functions[1:])
+        return
+    if functions[1]["kind"] == "constant":
+        raise ValueError("a train combining position must contain a function")
+    _validate_train_components(functions[2:])

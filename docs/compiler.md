@@ -70,6 +70,12 @@ multiply/reduction graph rather than one host-constructed reduction per row.
 Other uniform-result mapped functions currently use a correct cell planner and
 are candidates for further batched lowering when measurements justify it.
 
+Parenthesized function trains remain explicit in semantic IR. After argument
+specialization they expand according to BQN two-train composition and
+right-associated three-train fork rules. Nested trains and derived functions
+expand recursively, producing the same ordinary tensor IR as an explicitly
+written block and recording each train-inline decision in the explanation.
+
 ## Measurement discipline
 
 Development uses a compact sentinel set covering elementwise fusion, structural index-map fusion, reductions, scans, selection, sorting/search, and mixed complex programs. Full multi-size measurements are recorded only for tagged milestones. Raw repetitions, exact commits, hardware, compiler choices, and correctness evidence remain reproducible through the results service.

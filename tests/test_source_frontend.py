@@ -52,6 +52,21 @@ def atom(value: float) -> HostValue:
             {"w": decode_host_value([10, 20]), "x": decode_host_value([1, 2, 3])},
             decode_host_value([[10, 20, 30], [20, 40, 60]]),
         ),
+        (
+            "{(⊢+⌽)𝕩}",
+            {"x": decode_host_value([1, 2, 3, 4])},
+            decode_host_value([5, 5, 5, 5]),
+        ),
+        (
+            "{(+´÷≠)𝕩}",
+            {"x": decode_host_value([1, 2, 3, 4])},
+            atom(2.5),
+        ),
+        (
+            "{(1+⊢)𝕩}",
+            {"x": decode_host_value([1, 2, 3])},
+            decode_host_value([2, 3, 4]),
+        ),
         ("{π}", {}, atom(3.141592653589793)),
         ("{¯5e¯1}", {}, atom(-0.5)),
     ],
@@ -82,6 +97,7 @@ def test_multiline_comments_and_local_names(backend: TinygradBackend) -> None:
         ("{𝕩+}", "expected a numeric value"),
         ("{missing+1}", "unknown local name"),
         ("{𝕩⌾1}", "unsupported BQN token"),
+        ("{(⊢+1)𝕩}", "final component"),
         ("{𝕩+1", "close BQN block"),
     ],
 )
@@ -175,3 +191,12 @@ def test_cli_explains_rank_mapping(capsys) -> None:
     assert explanation["semantic_ir"]["modifier"] == "⎉"
     assert explanation["semantic_ir"]["ranks"] == [1.0]
     assert explanation["lowering"]["tinygrad_fixed_output_shape"] is True
+
+
+def test_cli_explains_function_train_lowering(capsys) -> None:
+    assert main(["explain", "{(⊢-+´÷≠)𝕩}", "--x", "[1,2,3,4]"]) == 0
+    explanation = json.loads(capsys.readouterr().out)
+    assert explanation["semantic_ir"]["op"] == "train"
+    assert explanation["semantic_ir"]["functions"][2]["kind"] == "fold"
+    assert explanation["rewrites"][0]["rule"] == "inline-function-train"
+    assert explanation["optimized_bqn"] == "(𝕩-((+´𝕩)÷(≠𝕩)))"

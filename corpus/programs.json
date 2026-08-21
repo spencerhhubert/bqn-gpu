@@ -11,6 +11,7 @@
       "dense-phrase": 10,
       "dense-primitive": 34,
       "dense-structural": 10,
+      "dense-train": 10,
       "glyph": 103,
       "paired": 24,
       "phrase": 55,
@@ -10507,6 +10508,523 @@
         "combinator",
         "dense",
         "modifier"
+      ]
+    },
+    {
+      "id": "dense.train.reverse_add",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(⊢+⌽)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "+",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "call",
+              "glyph": "⌽",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x) + ((x).flip(0)))",
+        "torch": "lambda x: ((x) + (torch.flip((x), dims=(0,))))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "3-train",
+        "dense",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.train.mean",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(+´÷≠)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "÷",
+          "arguments": [
+            {
+              "op": "fold",
+              "glyph": "+",
+              "argument": {
+                "op": "argument",
+                "name": "x"
+              }
+            },
+            {
+              "op": "call",
+              "glyph": "≠",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (((x).sum()) / (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))",
+        "torch": "lambda x: (((x).sum()) / (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "3-train",
+        "dense",
+        "reduction",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.train.l1_mean",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(+´∘|÷≠)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "÷",
+          "arguments": [
+            {
+              "op": "fold",
+              "glyph": "+",
+              "argument": {
+                "op": "call",
+                "glyph": "|",
+                "arguments": [
+                  {
+                    "op": "argument",
+                    "name": "x"
+                  }
+                ]
+              }
+            },
+            {
+              "op": "call",
+              "glyph": "≠",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((((x).abs()).sum()) / (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))",
+        "torch": "lambda x: ((((x).abs()).sum()) / (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "3-train",
+        "combinator",
+        "dense",
+        "reduction",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.train.centered",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(⊢-+´÷≠)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "-",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "call",
+              "glyph": "÷",
+              "arguments": [
+                {
+                  "op": "fold",
+                  "glyph": "+",
+                  "argument": {
+                    "op": "argument",
+                    "name": "x"
+                  }
+                },
+                {
+                  "op": "call",
+                  "glyph": "≠",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x) - ((((x).sum()) / (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))))",
+        "torch": "lambda x: ((x) - ((((x).sum()) / (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "long-train",
+        "reduction",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.train.even_reverse_centered",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(⌽⊢-≠)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⌽",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                },
+                {
+                  "op": "call",
+                  "glyph": "≠",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (((x) - (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))).flip(0)",
+        "torch": "lambda x: torch.flip((((x) - (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))), dims=(0,))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "2-train",
+        "dense",
+        "long-train",
+        "structural",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.train.reverse_length_offset",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(⊢+⌽-≠)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "+",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "call",
+                  "glyph": "⌽",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "glyph": "≠",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x) + ((((x).flip(0)) - (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))))",
+        "torch": "lambda x: ((x) + (((torch.flip((x), dims=(0,))) - (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "long-train",
+        "structural",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.train.nested_scaled_reverse_add",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{((⊢+⌽)×≠)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "×",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "+",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                },
+                {
+                  "op": "call",
+                  "glyph": "⌽",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "glyph": "≠",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((((x) + ((x).flip(0)))) * (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))",
+        "torch": "lambda x: ((((x) + (torch.flip((x), dims=(0,))))) * (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "nested-train",
+        "structural",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.train.reverse_transpose",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(⌽⍉)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⌽",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "⍉",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x).permute((tuple(range(1, len((x).shape))) + (0,)))).flip(0)",
+        "torch": "lambda x: torch.flip(((x).permute((tuple(range(1, len((x).shape))) + (0,)))), dims=(0,))"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "2-train",
+        "dense",
+        "structural",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.train.plus_minus_pair",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨(+⋈-)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⋈",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "+",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "w"
+                },
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "w"
+                },
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (((w) + (x))).stack((((w) - (x))), dim=0)",
+        "torch": "lambda w, x: torch.stack(((((w) + (x))), (((w) - (x)))), dim=0)"
+      },
+      "input_mode": "dyadic_atoms",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "3-train",
+        "dense",
+        "dyadic",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.train.sum_times_l1",
+      "category": "dense-train",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(+´×+´∘|)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "×",
+          "arguments": [
+            {
+              "op": "fold",
+              "glyph": "+",
+              "argument": {
+                "op": "argument",
+                "name": "x"
+              }
+            },
+            {
+              "op": "fold",
+              "glyph": "+",
+              "argument": {
+                "op": "call",
+                "glyph": "|",
+                "arguments": [
+                  {
+                    "op": "argument",
+                    "name": "x"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (((x).sum()) * (((x).abs()).sum()))",
+        "torch": "lambda x: (((x).sum()) * (((x).abs()).sum()))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "3-train",
+        "combinator",
+        "dense",
+        "reduction",
+        "train"
       ]
     },
     {

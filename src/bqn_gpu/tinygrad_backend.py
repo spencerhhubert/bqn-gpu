@@ -11,7 +11,7 @@ from tinygrad import Device, Tensor, TinyJit, dtypes
 
 from .errors import DeviceError, DomainError, ShapeError, UnsupportedPrimitive
 from .host_value import HostValue, Shape
-from .ir import Expression, evaluate, expand_combinator, has_tensor_compute
+from .ir import Expression, evaluate, expand_combinator, expand_train, has_tensor_compute
 from .mapping import plan_mapping
 from .optimizer import OptimizationResult, optimize
 
@@ -922,6 +922,8 @@ class TinygradBackend:
         operation = expression["op"]
         if operation == "combinator":
             return TinygradBackend._fixed_output_shape(expand_combinator(expression))
+        if operation == "train":
+            return TinygradBackend._fixed_output_shape(expand_train(expression))
         if operation == "map":
             return all(
                 TinygradBackend._fixed_output_shape(child)

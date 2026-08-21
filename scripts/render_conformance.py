@@ -123,6 +123,21 @@ def render() -> str:
     lines.extend(
         [
             "",
+            "## Function trains",
+            "",
+            "| Form | Status | Domain | Behavior |",
+            "|---|---|---|---|",
+        ]
+    )
+    for entry in manifest.get("trains", []):
+        lines.append(
+            f"| `{entry['form']}` {entry['name']} | {entry['status']} | "
+            f"{entry['domain']} | {entry['behavior']} |"
+        )
+
+    lines.extend(
+        [
+            "",
             "## Dense mapping modifiers",
             "",
             "| Modifier | Status | Domain | Behavior |",

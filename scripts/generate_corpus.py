@@ -591,6 +591,111 @@ def make_programs() -> list[dict[str, Any]]:
             atol=5e-12,
         )
 
+    train_mean = dyadic("÷", fold("+", x), monadic("≠", x))
+    train_reverse_add = dyadic("+", x, monadic("⌽", x))
+    dense_trains = [
+        {
+            "name": "reverse_add",
+            "expression": train_reverse_add,
+            "source": "{(⊢+⌽)𝕩}",
+            "arity": 1,
+            "mode": "monadic_vector",
+            "tags": ["3-train"],
+        },
+        {
+            "name": "mean",
+            "expression": train_mean,
+            "source": "{(+´÷≠)𝕩}",
+            "arity": 1,
+            "mode": "monadic_vector",
+            "tags": ["3-train", "reduction"],
+        },
+        {
+            "name": "l1_mean",
+            "expression": dyadic(
+                "÷", fold("+", monadic("|", x)), monadic("≠", x)
+            ),
+            "source": "{(+´∘|÷≠)𝕩}",
+            "arity": 1,
+            "mode": "monadic_vector",
+            "tags": ["3-train", "combinator", "reduction"],
+        },
+        {
+            "name": "centered",
+            "expression": dyadic("-", x, train_mean),
+            "source": "{(⊢-+´÷≠)𝕩}",
+            "arity": 1,
+            "mode": "monadic_vector",
+            "tags": ["long-train", "reduction"],
+        },
+        {
+            "name": "even_reverse_centered",
+            "expression": monadic("⌽", dyadic("-", x, monadic("≠", x))),
+            "source": "{(⌽⊢-≠)𝕩}",
+            "arity": 1,
+            "mode": "monadic_vector",
+            "tags": ["2-train", "long-train", "structural"],
+        },
+        {
+            "name": "reverse_length_offset",
+            "expression": dyadic(
+                "+", x, dyadic("-", monadic("⌽", x), monadic("≠", x))
+            ),
+            "source": "{(⊢+⌽-≠)𝕩}",
+            "arity": 1,
+            "mode": "monadic_vector",
+            "tags": ["long-train", "structural"],
+        },
+        {
+            "name": "nested_scaled_reverse_add",
+            "expression": dyadic("×", train_reverse_add, monadic("≠", x)),
+            "source": "{((⊢+⌽)×≠)𝕩}",
+            "arity": 1,
+            "mode": "monadic_vector",
+            "tags": ["nested-train", "structural"],
+        },
+        {
+            "name": "reverse_transpose",
+            "expression": monadic("⌽", monadic("⍉", x)),
+            "source": "{(⌽⍉)𝕩}",
+            "arity": 1,
+            "mode": "monadic_matrix",
+            "tags": ["2-train", "structural"],
+        },
+        {
+            "name": "plus_minus_pair",
+            "expression": dyadic("⋈", dyadic("+", w, x), dyadic("-", w, x)),
+            "source": "{𝕨(+⋈-)𝕩}",
+            "arity": 2,
+            "mode": "dyadic_atoms",
+            "tags": ["3-train", "dyadic"],
+        },
+        {
+            "name": "sum_times_l1",
+            "expression": dyadic(
+                "×", fold("+", x), fold("+", monadic("|", x))
+            ),
+            "source": "{(+´×+´∘|)𝕩}",
+            "arity": 1,
+            "mode": "monadic_vector",
+            "tags": ["3-train", "combinator", "reduction"],
+        },
+    ]
+    for item in dense_trains:
+        add(
+            f"dense.train.{item['name']}",
+            "dense-train",
+            "idiomatic",
+            item["expression"],
+            item["arity"],
+            item["mode"],
+            {name: "signed" for name in ("w", "x")[-item["arity"] :]},
+            ["dense", "train", *item["tags"]],
+            source=item["source"],
+            rtol=5e-12,
+            atol=5e-12,
+        )
+
     dense_mapping = [
         {
             "name": "each_negate",

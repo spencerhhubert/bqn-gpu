@@ -18,6 +18,7 @@ def test_typed_generation_is_reproducible_and_unique() -> None:
         "grammar",
         "mutation",
         "combinator",
+        "train",
     }
     assert all(program.steps >= 6 for program in first)
 
@@ -58,3 +59,25 @@ def test_combinator_generation_is_compact_and_equivalent(backend, cbqn) -> None:
         expected = cbqn.call(program.equivalent_to_bqn, value)
         assert cbqn.call(program.bqn, value) == expected
         assert compile_bqn(program.bqn).execute(backend, x=value) == expected
+
+
+def test_train_generation_is_compact_and_equivalent(backend, cbqn) -> None:
+    programs = generate_programs(
+        seed=43,
+        count=14,
+        min_steps=4,
+        max_steps=8,
+        strategies=("train",),
+    )
+    value = HostValue.from_array((math.sin(index) for index in range(17)), (17,))
+    assert all("train" in program.features for program in programs)
+    for program in programs:
+        expected = cbqn.call(program.equivalent_to_bqn, value)
+        assert cbqn.call(program.bqn, value) == expected
+        actual = compile_bqn(program.bqn).execute(backend, x=value)
+        assert actual.atom == expected.atom
+        assert actual.shape == expected.shape
+        assert all(
+            math.isclose(got, wanted, rel_tol=1e-11, abs_tol=1e-11)
+            for got, wanted in zip(actual.data, expected.data, strict=True)
+        )

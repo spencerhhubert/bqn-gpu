@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping
 
-from .ir import Expression, expand_combinator, monadic, render_bqn
+from .ir import Expression, expand_combinator, expand_train, monadic, render_bqn
 
 
 @dataclass(frozen=True)
@@ -45,6 +45,20 @@ def optimize(
                 )
             )
             return visit(replacement)
+        if operation == "train":
+            rewritten = {
+                **node,
+                "arguments": [visit(child) for child in node["arguments"]],
+            }
+            replacement = expand_train(rewritten)
+            events.append(
+                OptimizationEvent(
+                    rule="inline-function-train",
+                    before=render_bqn(rewritten),
+                    after=render_bqn(replacement),
+                )
+            )
+            return visit(replacement)
         if operation == "call":
             rewritten = {
                 **node,
@@ -79,6 +93,8 @@ def infer_rank(expression: Expression, argument_ranks: Mapping[str, int]) -> int
     operation = expression["op"]
     if operation == "combinator":
         return infer_rank(expand_combinator(expression), argument_ranks)
+    if operation == "train":
+        return infer_rank(expand_train(expression), argument_ranks)
     if operation == "map":
         return None
     if operation == "argument":

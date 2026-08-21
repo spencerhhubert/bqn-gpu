@@ -18,6 +18,7 @@
         "dense.insert_sum.matrix",
         "dense.scan_sum.vector",
         "dense.combinator.atop_l1_distance",
+        "dense.train.centered",
         "dense.mapping.rank_matrix_vector",
         "dense.pair.double_reverse.naive",
         "dense.pair.double_reverse.idiomatic",

@@ -114,6 +114,8 @@ def _input_shapes(mode: str, size: int) -> dict[str, tuple[int, ...] | None]:
         return {"x": (0, 3)}
     if mode == "dyadic_same":
         return {"w": (size,), "x": (size,)}
+    if mode == "dyadic_atoms":
+        return {"w": None, "x": None}
     if mode in {"matrix_vector", "table_vectors"}:
         rows = max(1, min(32, math.isqrt(size)))
         columns = max(1, (size + rows - 1) // rows)

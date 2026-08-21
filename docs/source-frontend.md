@@ -13,13 +13,16 @@ The accepted subset is deliberately narrower than BQN. It includes:
 - Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜` over supported primitive or reduction operands, including numeric literal Bind operands;
 - dense uniform-result Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜`, with
   literal numeric Rank specifications;
+- parenthesized two-, three-, long-, and nested function trains over supported
+  primitive or derived functions, including numeric subjects in argument slots;
 - local subject assignment with `←`;
 - newline, `⋄`, and comma statement separators; and
 - `#` line comments.
 
-The frontend does not yet compile general array notation, trains, block headers,
-parenthesized or nested function values, the remaining modifiers, strings or
-characters, namespaces, system values, recursion, mutation, or control flow.
+The frontend does not yet compile general array notation, standalone
+function-valued programs, block headers, computed or named function values, the
+remaining modifiers, strings or characters, namespaces, system values,
+recursion, mutation, or control flow.
 An unsupported token or construct has a line-and-column diagnostic. By default
 the CLI reports that diagnostic on stderr and delegates to cBQN when its shared
 library is available and the result fits the current dense-real numeric

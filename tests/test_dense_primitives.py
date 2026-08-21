@@ -158,6 +158,40 @@ def test_dense_combinators_match_cbqn(
 @pytest.mark.parametrize(
     ("source", "arguments"),
     [
+        ("{(⊢+⌽)𝕩}", {"x": V}),
+        ("{(⌽⍉)𝕩}", {"x": M}),
+        ("{(+´÷≠)𝕩}", {"x": V}),
+        ("{(+´∘|÷≠)𝕩}", {"x": V}),
+        ("{(⊢-+´÷≠)𝕩}", {"x": V}),
+        ("{(⌽⊢-≠)𝕩}", {"x": V}),
+        ("{(⊢+⌽-≠)𝕩}", {"x": V}),
+        ("{((⊢+⌽)×≠)𝕩}", {"x": V}),
+        ("{(1+⊢)𝕩}", {"x": V}),
+        (
+            "{𝕨(+⋈-)𝕩}",
+            {"w": HostValue.from_atom(10), "x": HostValue.from_atom(3)},
+        ),
+    ],
+)
+def test_dense_function_trains_match_cbqn(
+    source: str,
+    arguments: dict[str, HostValue],
+    dense_backend: Any,
+    cbqn: CBQN,
+) -> None:
+    compiled = compile_bqn(source)
+    actual = compiled.execute(dense_backend, **arguments)
+    oracle_arguments = (
+        (arguments["w"], arguments["x"])
+        if compiled.arity == 2
+        else (arguments["x"],)
+    )
+    assert actual == cbqn.call(source, *oracle_arguments)
+
+
+@pytest.mark.parametrize(
+    ("source", "arguments"),
+    [
         ("{+¨𝕩}", {"x": HostValue.from_atom(3)}),
         ("{-¨𝕩}", {"x": M}),
         (

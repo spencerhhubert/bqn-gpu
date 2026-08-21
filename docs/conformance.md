@@ -30,7 +30,7 @@ Additional adapter: **PyTorch** `>=2.7`, using `float64` on `CPU`, `CUDA`; teste
 | `∧` Sort Up / Logical And | supported | supported | `tests/test_dense_primitives.py` |
 | `∨` Sort Down / Logical Or | supported | supported | `tests/test_dense_primitives.py` |
 | `¬` Not / Span | supported | supported | `tests/test_dense_primitives.py`<br>`tests/test_source_frontend.py` |
-| `⊓` Identity / Left | supported | supported | `tests/test_dense_primitives.py` |
+| `⊣` Identity / Left | supported | supported | `tests/test_dense_primitives.py` |
 | `⊢` Identity / Right | supported | supported | `tests/test_dense_primitives.py` |
 | `⥊` Deshape / Reshape | supported | supported | `tests/test_dense_primitives.py`<br>`tests/test_source_frontend.py` |
 | `∾` Join / Join To | unsupported | supported | `tests/test_dense_primitives.py` |
@@ -571,7 +571,7 @@ Computes one plus the left argument minus the right argument element-wise.
 - Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
-## `⊓` — Identity / Left
+## `⊣` — Identity / Left
 
 ### Monadic
 
@@ -1134,6 +1134,15 @@ Returns the uniform dense array of sliding windows.
 | `⊸` Before / Bind Left | supported | Supported primitive operands or a numeric literal left operand, with a dense-real result. | The left operand transforms the left argument (or the duplicated right argument monadically) before the right operand receives it and the original right argument. |
 | `⟜` After / Bind Right | supported | Supported primitive operands or a numeric literal right operand, with a dense-real result. | The right operand transforms the right argument before the left operand receives the original left argument and transformed right argument. |
 
+## Function trains
+
+| Form | Status | Domain | Behavior |
+|---|---|---|---|
+| `2-train` Composition train | supported | Parenthesized supported function components whose expansion remains within the dense-real backend domain. | Calls the right component at the original valence and passes its result monadically to the left component. |
+| `3-train` Fork train | supported | Parenthesized supported function components, with numeric subjects allowed in argument positions, whose expansion remains within the dense-real backend domain. | Calls the outer components at the original valence and passes their results dyadically to the middle component. |
+| `long train` Right-associated train | supported | Four or more supported components following BQN train role rules, including reduction and combinator-derived functions. | Associates from the right into two- and three-trains according to BQN train semantics, then specializes the expanded tensor expression. |
+| `nested train` Nested train | supported | Parenthesized trains used as components of another parenthesized train, with a final dense-real result. | Retains each nested train in semantic IR and recursively inlines it before backend execution planning. |
+
 ## Dense mapping modifiers
 
 | Modifier | Status | Domain | Behavior |
@@ -1158,7 +1167,8 @@ Both `.bqn` files and BQN strings compile to the same backend-neutral expression
 | Fold `´`, Insert `˝`, and Scan `` ` `` | supported | Prefix use with the supported dyadic function operands and no dyadic initial value. |
 | Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜` | supported | Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization. |
 | Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜` | supported | Dense uniform-result mapping. Rank accepts literal numeric atoms or strands; general computed rank operands and empty generic frames are not compiled yet. |
-| General BQN syntax | unsupported | General array notation, trains, headers, parenthesized or nested function values, remaining modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
+| Parenthesized function trains | supported | Two-, three-, long-, and nested trains over supported primitive or derived functions, including numeric subjects in train argument positions. The train must be applied within the accepted program body. |
+| General BQN syntax | unsupported | General array notation, standalone function-valued programs, headers, computed or named function values, remaining modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
 
 Source frontend tests:
 

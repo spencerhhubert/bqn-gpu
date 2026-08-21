@@ -357,6 +357,22 @@ def capability_record(
                 "evidence": entry.get("tests", []),
             }
         )
+    supported_trains = 0
+    for index, entry in enumerate(manifest.get("trains", [])):
+        if entry["status"] == "supported":
+            supported_trains += 1
+        features.append(
+            {
+                "id": f"train.{index:03d}",
+                "glyph": entry["form"],
+                "name": entry["name"],
+                "valence": "function-train",
+                "status": entry["status"],
+                "domain": entry.get("domain"),
+                "behavior": entry.get("behavior"),
+                "evidence": entry.get("tests", []),
+            }
+        )
     return {
         "backend": manifest["backend"]["name"],
         "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
@@ -379,6 +395,7 @@ def capability_record(
             "scans_supported": modifier_counts["scan"],
             "combinators_supported": supported_combinators,
             "mapping_modifiers_supported": supported_mapping_modifiers,
+            "train_forms_supported": supported_trains,
         },
     }
 

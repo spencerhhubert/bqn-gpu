@@ -52,7 +52,7 @@ def generate_programs(
     count: int,
     min_steps: int = 8,
     max_steps: int = 32,
-    strategies: Iterable[str] = ("grammar", "mutation", "combinator"),
+    strategies: Iterable[str] = ("grammar", "mutation", "combinator", "train"),
 ) -> list[GeneratedProgram]:
     """Generate unique, typed dense-list programs from stable per-case seeds."""
 
@@ -62,9 +62,11 @@ def generate_programs(
         raise ValueError("step bounds must satisfy 1 <= min_steps <= max_steps")
     enabled = tuple(strategies)
     if not enabled or any(
-        item not in {"grammar", "mutation", "combinator"} for item in enabled
+        item not in {"grammar", "mutation", "combinator", "train"} for item in enabled
     ):
-        raise ValueError("strategies must contain grammar, mutation, and/or combinator")
+        raise ValueError(
+            "strategies must contain grammar, mutation, combinator, and/or train"
+        )
 
     programs: list[GeneratedProgram] = []
     seen: set[str] = set()
@@ -116,6 +118,11 @@ def _generate_one(
         equivalent_to = function_source(expression)
         bqn_override = "{" + body + "}"
         features.update(("combinator", feature))
+    elif strategy == "train":
+        expression, body, feature = _train_candidate(randomizer, expression)
+        equivalent_to = function_source(expression)
+        bqn_override = "{" + body + "}"
+        features.update(("train", feature))
     elif randomizer.random() < 0.35:
         expression = fold(randomizer.choice(("+", "⌊", "⌈")), expression)
         features.add("fold")
@@ -216,6 +223,54 @@ def _combinator_candidate(
         fold("+", monadic("|", monadic("-", operand))),
         f"+´∘|∘-{rendered}",
         "atop-chain",
+    )
+
+
+def _train_candidate(
+    randomizer: random.Random,
+    operand: Expression,
+) -> tuple[Expression, str, str]:
+    rendered = render_bqn(operand)
+    choice = randomizer.choice(
+        (
+            "composition",
+            "fork",
+            "mean",
+            "centered",
+            "constant-subject",
+            "nested",
+            "derived-fork",
+        )
+    )
+    length = monadic("≠", operand)
+    total = fold("+", operand)
+    if choice == "composition":
+        return monadic("⌽", monadic("|", operand)), f"(⌽|){rendered}", "2-train"
+    if choice == "fork":
+        return (
+            dyadic("+", operand, monadic("⌽", operand)),
+            f"(⊢+⌽){rendered}",
+            "3-train",
+        )
+    if choice == "mean":
+        return dyadic("÷", total, length), f"(+´÷≠){rendered}", "3-train"
+    if choice == "centered":
+        mean = dyadic("÷", total, length)
+        return dyadic("-", operand, mean), f"(⊢-+´÷≠){rendered}", "long-train"
+    if choice == "constant-subject":
+        return dyadic("+", constant(1), operand), f"(1+⊢){rendered}", "subject-train"
+    if choice == "nested":
+        reverse_add = dyadic("+", operand, monadic("⌽", operand))
+        return (
+            dyadic("×", reverse_add, length),
+            f"((⊢+⌽)×≠){rendered}",
+            "nested-train",
+        )
+    l1_total = fold("+", monadic("|", operand))
+    return (
+        dyadic("÷", l1_total, length),
+        f"(+´∘|÷≠){rendered}",
+        "derived-train",
     )
 
 

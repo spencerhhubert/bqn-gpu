@@ -142,6 +142,22 @@ def test_combinator_is_inlined_before_jit_capture(backend: TinygradBackend) -> N
     assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
 
 
+def test_function_train_is_inlined_before_jit_capture(
+    backend: TinygradBackend,
+) -> None:
+    expression = compile_bqn("{(⊢-+´÷≠)𝕩}").expression
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([1, 2, 3, 4], (4,)))
+    }
+    optimization = backend.optimize(expression, arguments)
+    assert optimization.events[0].rule == "inline-function-train"
+    executable = backend.compile(expression, arguments)
+    assert executable(arguments).to_host() == HostValue.from_array(
+        [-1.5, -0.5, 0.5, 1.5], (4,)
+    )
+    assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
+
+
 def test_ranked_matrix_vector_product_is_jit_captured(
     backend: TinygradBackend,
 ) -> None:

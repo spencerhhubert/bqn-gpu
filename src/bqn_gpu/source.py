@@ -19,6 +19,7 @@ from .ir import (
     evaluate,
     modified_function,
     primitive_function,
+    train_function,
 )
 from .protocol import ExecutionBackend, ValueT
 
@@ -43,6 +44,10 @@ _TWO_MODIFIERS = {
     "AFTER": "⟜",
     "RANK_MODIFIER": "⎉",
 }
+
+
+class _NotFunction(Exception):
+    """Signal that an ambiguous parenthesized form has a subject role."""
 
 
 @dataclass(frozen=True)
@@ -195,17 +200,29 @@ class _Parser:
             pass
 
     def _expression(self) -> Expression:
-        if self.current.kind == "GLYPH" or self._starts_literal_bound_function():
-            function = self._function()
+        function = self._try_function()
+        if function is not None:
             if self.current.kind in {"EOF", "RBRACE", "RPAREN", "SEP"}:
                 self.fail("derived BQN function requires an argument")
             return apply_function(function, [self._expression()])
 
         left = self._subject()
-        if self.current.kind == "GLYPH":
-            function = self._function()
+        function = self._try_function()
+        if function is not None:
             return apply_function(function, [left, self._expression()])
         return left
+
+    def _try_function(self) -> FunctionExpression | None:
+        if self.current.kind == "GLYPH" or self._starts_literal_bound_function():
+            return self._function()
+        if self.current.kind != "LPAREN":
+            return None
+        start = self.index
+        try:
+            return self._function()
+        except _NotFunction:
+            self.index = start
+            return None
 
     def _function(self) -> FunctionExpression:
         function = self._function_operand()
@@ -227,6 +244,25 @@ class _Parser:
             return function
 
     def _function_operand(self) -> FunctionExpression:
+        if self.match("LPAREN"):
+            functions: list[FunctionExpression] = []
+            while self.current.kind != "RPAREN":
+                if self.current.kind in {"EOF", "RBRACE", "SEP"}:
+                    self.fail("expected ')' to close function train")
+                if self.current.kind not in {"GLYPH", "NUMBER", "LPAREN"}:
+                    raise _NotFunction
+                functions.append(self._function())
+            self.advance()
+            if not functions:
+                self.fail("a parenthesized function cannot be empty")
+            if len(functions) == 1:
+                if functions[0]["kind"] == "constant":
+                    raise _NotFunction
+                return functions[0]
+            try:
+                return train_function(functions)
+            except ValueError as error:
+                self.fail(str(error))
         if self.current.kind == "GLYPH":
             glyph = self.advance().text
             if self.current.kind in {"FOLD", "INSERT", "SCAN"}:
@@ -400,6 +436,13 @@ def _argument_names(expression: Mapping[str, object]) -> set[str]:
         if "right" in expression:
             result.update(_function_argument_names(expression["right"]))  # type: ignore[arg-type]
         return result
+    if operation == "train":
+        result: set[str] = set()
+        for child in expression["arguments"]:  # type: ignore[union-attr]
+            result.update(_argument_names(child))
+        for function in expression["functions"]:  # type: ignore[union-attr]
+            result.update(_function_argument_names(function))
+        return result
     if operation == "map":
         result: set[str] = set()
         for child in expression["arguments"]:  # type: ignore[union-attr]
@@ -416,5 +459,10 @@ def _function_argument_names(function: Mapping[str, object]) -> set[str]:
         result = _function_argument_names(function["left"])  # type: ignore[arg-type]
         if "right" in function:
             result.update(_function_argument_names(function["right"]))  # type: ignore[arg-type]
+        return result
+    if function["kind"] == "train":
+        result: set[str] = set()
+        for child in function["functions"]:  # type: ignore[union-attr]
+            result.update(_function_argument_names(child))
         return result
     return set()
