@@ -75,6 +75,21 @@ class TinygradBackend:
 
     def _call_monadic(self, glyph: str, x: TinygradValue) -> TinygradValue:
         self._check_device(x)
+        if glyph == "=":
+            return self.atom(len(x.shape))
+        if glyph == "≠":
+            return self.atom(1 if len(x.shape) == 0 else x.shape[0])
+        if glyph == "≢":
+            return self.array(x.shape, (len(x.shape),))
+        if glyph == "↕":
+            if not x.atom:
+                raise DomainError("Range is currently supported only for a natural atom")
+            count_value = float(x.tensor.item())
+            count = int(count_value)
+            if count_value != count or count < 0:
+                raise DomainError("Range requires a natural-number atom")
+            tensor = Tensor.arange(count, device=self.device).cast(dtypes.float64)
+            return TinygradValue(tensor=tensor, atom=False)
         if glyph == "+":
             tensor = x.tensor
         elif glyph == "-":
@@ -202,6 +217,22 @@ class TinygradBackend:
             return TinygradValue(tensor=tensor, atom=output_atom[0])
 
         return execute_compiled
+
+    @staticmethod
+    def can_compile(expression: Expression) -> bool:
+        """Whether output shape is fixed by the input tensor signatures."""
+
+        operation = expression["op"]
+        if operation == "call":
+            if expression["glyph"] == "↕":
+                return False
+            return all(
+                TinygradBackend.can_compile(child)
+                for child in expression["arguments"]
+            )
+        if operation == "fold":
+            return TinygradBackend.can_compile(expression["argument"])
+        return True
 
     def _check_device(self, value: TinygradValue) -> None:
         if value.tensor.device != self.device:

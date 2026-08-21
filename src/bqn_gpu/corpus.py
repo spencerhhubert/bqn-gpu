@@ -93,6 +93,18 @@ def assert_close(actual: HostValue, expected: HostValue, program: Program) -> No
 def _input_shapes(mode: str, size: int) -> dict[str, tuple[int, ...] | None]:
     if mode == "monadic_vector":
         return {"x": (size,)}
+    if mode == "monadic_atom":
+        return {"x": None}
+    if mode == "monadic_rank_zero":
+        return {"x": ()}
+    if mode == "monadic_matrix":
+        rows = max(1, min(32, math.isqrt(size)))
+        columns = max(1, (size + rows - 1) // rows)
+        return {"x": (rows, columns)}
+    if mode == "monadic_empty_vector":
+        return {"x": (0,)}
+    if mode == "monadic_empty_matrix":
+        return {"x": (0, 3)}
     if mode == "dyadic_same":
         return {"w": (size,), "x": (size,)}
     if mode == "left_atom":
@@ -123,4 +135,6 @@ def _number(randomizer: random.Random, domain: str) -> float:
         return magnitude if randomizer.choice((True, False)) else -magnitude
     if domain == "fractional":
         return randomizer.uniform(-3.0, 3.0) + 0.125
+    if domain == "count":
+        return float(randomizer.randint(0, 64))
     raise ValueError(f"unknown input domain {domain!r}")

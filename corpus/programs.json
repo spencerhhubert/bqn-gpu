@@ -4,9 +4,9 @@
     "growth": "append durable cases as bugs, optimizations, and workloads are discovered",
     "initial_floor": 100,
     "categories": {
-      "glyph": 84,
+      "glyph": 103,
       "paired": 24,
-      "phrase": 52,
+      "phrase": 55,
       "program": 5,
       "reduction": 13
     }
@@ -2690,6 +2690,445 @@
         "comparison",
         "greater_equal",
         "phrase"
+      ]
+    },
+    {
+      "id": "glyph.rank.monadic_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(=𝕩)}",
+      "input_mode": "monadic_atom",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_atom",
+        "rank",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.rank.monadic_rank_zero",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(=𝕩)}",
+      "input_mode": "monadic_rank_zero",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_rank_zero",
+        "rank",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.rank.monadic_vector",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(=𝕩)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_vector",
+        "rank",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.rank.monadic_matrix",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(=𝕩)}",
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_matrix",
+        "rank",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.rank.monadic_empty_vector",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(=𝕩)}",
+      "input_mode": "monadic_empty_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_empty_vector",
+        "rank",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.rank.monadic_empty_matrix",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(=𝕩)}",
+      "input_mode": "monadic_empty_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_empty_matrix",
+        "rank",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.length.monadic_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≠𝕩)}",
+      "input_mode": "monadic_atom",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "length",
+        "monadic",
+        "monadic_atom",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.length.monadic_rank_zero",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≠𝕩)}",
+      "input_mode": "monadic_rank_zero",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "length",
+        "monadic",
+        "monadic_rank_zero",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.length.monadic_vector",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≠𝕩)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "length",
+        "monadic",
+        "monadic_vector",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.length.monadic_matrix",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≠𝕩)}",
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "length",
+        "monadic",
+        "monadic_matrix",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.length.monadic_empty_vector",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≠𝕩)}",
+      "input_mode": "monadic_empty_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "length",
+        "monadic",
+        "monadic_empty_vector",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.length.monadic_empty_matrix",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≠𝕩)}",
+      "input_mode": "monadic_empty_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "length",
+        "monadic",
+        "monadic_empty_matrix",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.shape.monadic_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≢𝕩)}",
+      "input_mode": "monadic_atom",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_atom",
+        "shape",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.shape.monadic_rank_zero",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≢𝕩)}",
+      "input_mode": "monadic_rank_zero",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_rank_zero",
+        "shape",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.shape.monadic_vector",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≢𝕩)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_vector",
+        "shape",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.shape.monadic_matrix",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≢𝕩)}",
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_matrix",
+        "shape",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.shape.monadic_empty_vector",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≢𝕩)}",
+      "input_mode": "monadic_empty_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_empty_vector",
+        "shape",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.shape.monadic_empty_matrix",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≢𝕩)}",
+      "input_mode": "monadic_empty_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "monadic_empty_matrix",
+        "shape",
+        "structural"
+      ]
+    },
+    {
+      "id": "glyph.range.natural_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(↕𝕩)}",
+      "input_mode": "monadic_atom",
+      "domains": {
+        "x": "count"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "glyph",
+        "monadic",
+        "range",
+        "structural"
+      ]
+    },
+    {
+      "id": "phrase.major_cell_indices.monadic_vector",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(↕(≠𝕩))}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "length",
+        "monadic_vector",
+        "phrase",
+        "range",
+        "structural"
+      ]
+    },
+    {
+      "id": "phrase.major_cell_indices.monadic_matrix",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(↕(≠𝕩))}",
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "length",
+        "monadic_matrix",
+        "phrase",
+        "range",
+        "structural"
+      ]
+    },
+    {
+      "id": "phrase.major_cell_indices.monadic_empty_vector",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(↕(≠𝕩))}",
+      "input_mode": "monadic_empty_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "length",
+        "monadic_empty_vector",
+        "phrase",
+        "range",
+        "structural"
       ]
     },
     {

@@ -208,8 +208,11 @@ def benchmark_backend(
 ) -> dict[str, Any]:
     device_inputs = {key: backend.from_host(value) for key, value in inputs.items()}
     compiler = getattr(backend, "compile", None)
+    can_compile = getattr(backend, "can_compile", lambda expression: True)
     executable = (
-        compiler(compiled.expression, device_inputs) if compiler is not None else None
+        compiler(compiled.expression, device_inputs)
+        if compiler is not None and can_compile(compiled.expression)
+        else None
     )
 
     def run_once() -> tuple[Any, int]:

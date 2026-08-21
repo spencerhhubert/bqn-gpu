@@ -166,9 +166,9 @@
       "glyph": "=",
       "name": "Rank / Equals",
       "monadic": {
-        "status": "unsupported",
-        "domain": "No monadic Rank domain is claimed yet.",
-        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays of any tested shape, including rank-0 and empty arrays.",
+        "behavior": "Returns the number of axes as a numeric atom."
       },
       "dyadic": {
         "status": "supported",
@@ -181,9 +181,9 @@
       "glyph": "≠",
       "name": "Length / Not Equals",
       "monadic": {
-        "status": "unsupported",
-        "domain": "No monadic Length domain is claimed yet.",
-        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays of any tested shape, including rank-0 and empty arrays.",
+        "behavior": "Returns the first-axis length, or one for an atom or rank-0 array."
       },
       "dyadic": {
         "status": "supported",
@@ -249,6 +249,36 @@
         "status": "supported",
         "domain": "Real arguments satisfying BQN leading-axis agreement.",
         "behavior": "Element-wise numeric greater-than-or-equal, producing numeric zero or one."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "≢",
+      "name": "Shape / Not Match",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays of any tested shape, including rank-0 and empty arrays.",
+        "behavior": "Returns the shape as a numeric list; units produce an empty list."
+      },
+      "dyadic": {
+        "status": "unsupported",
+        "domain": "No dyadic Not Match domain is claimed yet.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "↕",
+      "name": "Range / Windows",
+      "monadic": {
+        "status": "supported",
+        "domain": "Natural-number atoms only.",
+        "behavior": "Returns the float64 list of natural numbers below the argument. List Range, whose result is nested, is outside the current value boundary."
+      },
+      "dyadic": {
+        "status": "unsupported",
+        "domain": "No dyadic Windows domain is claimed yet.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
       },
       "tests": ["tests/test_corpus.py"]
     }

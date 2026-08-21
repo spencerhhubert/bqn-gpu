@@ -245,6 +245,50 @@ def make_programs() -> list[dict[str, Any]]:
             ["phrase", "comparison", "boundary", name],
         )
 
+    structural_glyphs = (("rank", "="), ("length", "≠"), ("shape", "≢"))
+    structural_modes = (
+        "monadic_atom",
+        "monadic_rank_zero",
+        "monadic_vector",
+        "monadic_matrix",
+        "monadic_empty_vector",
+        "monadic_empty_matrix",
+    )
+    for name, glyph in structural_glyphs:
+        for mode in structural_modes:
+            add(
+                f"glyph.{name}.{mode}",
+                "glyph",
+                "primitive",
+                monadic(glyph, x),
+                1,
+                mode,
+                {"x": "signed"},
+                ["glyph", "monadic", "structural", name, mode],
+            )
+
+    add(
+        "glyph.range.natural_atom",
+        "glyph",
+        "primitive",
+        monadic("↕", x),
+        1,
+        "monadic_atom",
+        {"x": "count"},
+        ["glyph", "monadic", "structural", "range"],
+    )
+    for mode in ("monadic_vector", "monadic_matrix", "monadic_empty_vector"):
+        add(
+            f"phrase.major_cell_indices.{mode}",
+            "phrase",
+            "composed",
+            monadic("↕", monadic("≠", x)),
+            1,
+            mode,
+            {"x": "signed"},
+            ["phrase", "structural", "range", "length", mode],
+        )
+
     def naive_source(steps: list[tuple[str, str, int | None]]) -> str:
         names = iter(string.ascii_lowercase)
         previous = next(names)

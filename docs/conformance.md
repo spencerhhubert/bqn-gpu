@@ -19,12 +19,14 @@ Additional adapter: **PyTorch** `>=2.7`, using `float64` on `CPU`, `CUDA`; teste
 | `⌊` Floor / Minimum | supported | supported | `tests/test_corpus.py` |
 | `⌈` Ceiling / Maximum | supported | supported | `tests/test_corpus.py` |
 | `|` Absolute Value / Modulus | supported | supported | `tests/test_corpus.py` |
-| `=` Rank / Equals | unsupported | supported | `tests/test_corpus.py` |
-| `≠` Length / Not Equals | unsupported | supported | `tests/test_corpus.py` |
+| `=` Rank / Equals | supported | supported | `tests/test_corpus.py` |
+| `≠` Length / Not Equals | supported | supported | `tests/test_corpus.py` |
 | `<` Enclose / Less Than | unsupported | supported | `tests/test_corpus.py` |
 | `>` Merge / Greater Than | unsupported | supported | `tests/test_corpus.py` |
 | `≤` Mark Firsts / Less Than or Equal | unsupported | supported | `tests/test_corpus.py` |
 | `≥` Occurrence Count / Greater Than or Equal | unsupported | supported | `tests/test_corpus.py` |
+| `≢` Shape / Not Match | supported | unsupported | `tests/test_corpus.py` |
+| `↕` Range / Windows | supported | unsupported | `tests/test_corpus.py` |
 
 ## `+` — Conjugate / Add
 
@@ -264,11 +266,11 @@ BQN modulus, implemented as x minus w times floor(x divided by w).
 
 ### Monadic
 
-Status: **unsupported**
+Status: **supported**
 
-Domain: No monadic Rank domain is claimed yet.
+Domain: Real numeric atoms and dense arrays of any tested shape, including rank-0 and empty arrays.
 
-Delegated to cBQN by the CLI or rejected in strict mode.
+Returns the number of axes as a numeric atom.
 
 ### Dyadic
 
@@ -290,11 +292,11 @@ Element-wise atomic equality, producing numeric zero or one.
 
 ### Monadic
 
-Status: **unsupported**
+Status: **supported**
 
-Domain: No monadic Length domain is claimed yet.
+Domain: Real numeric atoms and dense arrays of any tested shape, including rank-0 and empty arrays.
 
-Delegated to cBQN by the CLI or rejected in strict mode.
+Returns the first-axis length, or one for an atom or rank-0 array.
 
 ### Dyadic
 
@@ -407,6 +409,58 @@ Status: **supported**
 Domain: Real arguments satisfying BQN leading-axis agreement.
 
 Element-wise numeric greater-than-or-equal, producing numeric zero or one.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `≢` — Shape / Not Match
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric atoms and dense arrays of any tested shape, including rank-0 and empty arrays.
+
+Returns the shape as a numeric list; units produce an empty list.
+
+### Dyadic
+
+Status: **unsupported**
+
+Domain: No dyadic Not Match domain is claimed yet.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `↕` — Range / Windows
+
+### Monadic
+
+Status: **supported**
+
+Domain: Natural-number atoms only.
+
+Returns the float64 list of natural numbers below the argument. List Range, whose result is nested, is outside the current value boundary.
+
+### Dyadic
+
+Status: **unsupported**
+
+Domain: No dyadic Windows domain is claimed yet.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
 
 ### Limitations
 

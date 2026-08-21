@@ -76,6 +76,23 @@ class TorchBackend:
 
     def _call_monadic(self, glyph: str, x: TorchValue) -> TorchValue:
         self._check_device(x)
+        if glyph == "=":
+            return self.atom(len(x.shape))
+        if glyph == "≠":
+            return self.atom(1 if len(x.shape) == 0 else x.shape[0])
+        if glyph == "≢":
+            return self.array(x.shape, (len(x.shape),))
+        if glyph == "↕":
+            if not x.atom:
+                raise DomainError("Range is currently supported only for a natural atom")
+            count_value = float(x.tensor.item())
+            count = int(count_value)
+            if count_value != count or count < 0:
+                raise DomainError("Range requires a natural-number atom")
+            tensor = torch.arange(
+                count, dtype=torch.float64, device=self.torch_device
+            )
+            return TorchValue(tensor=tensor, atom=False)
         operations = {
             "+": lambda tensor: tensor,
             "-": torch.neg,
