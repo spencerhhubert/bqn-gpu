@@ -44,6 +44,14 @@ class TinygradValue:
         return HostValue.from_array(data, self.shape)
 
 
+@dataclass(frozen=True)
+class ExecutionPlan:
+    """An explainable dispatch choice for one specialized expression."""
+
+    mode: str
+    reason: str
+
+
 class TinygradBackend:
     """Execute the supported BQN primitive surface with tinygrad."""
 
@@ -647,6 +655,7 @@ class TinygradBackend:
         atom_kinds = tuple(arguments[name].atom for name in names)
         optimization = self.optimize(expression, arguments)
         optimized_expression = optimization.expression
+        plan = self.execution_plan(optimized_expression)
         output_atom: list[bool] = []
         for argument in arguments.values():
             argument.tensor.realize()
@@ -661,14 +670,30 @@ class TinygradBackend:
                 output_atom.append(result.atom)
             return result.tensor
 
-        if not has_tensor_compute(optimized_expression):
+        if plan.mode == "optimized-noop":
             def execute_simplified(
                 supplied: Mapping[str, TinygradValue],
             ) -> TinygradValue:
                 return evaluate(optimized_expression, self, supplied)
 
             execute_simplified.execution_mode = "optimized-noop"  # type: ignore[attr-defined]
+            execute_simplified.execution_reason = plan.reason  # type: ignore[attr-defined]
             return execute_simplified
+
+        if plan.mode == "specialized-eager":
+            def execute_specialized(
+                supplied: Mapping[str, TinygradValue],
+            ) -> TinygradValue:
+                if tuple(sorted(supplied)) != names:
+                    raise DomainError(
+                        f"specialized program expected arguments {names}, "
+                        f"got {tuple(sorted(supplied))}"
+                    )
+                return evaluate(optimized_expression, self, supplied)
+
+            execute_specialized.execution_mode = "specialized-eager"  # type: ignore[attr-defined]
+            execute_specialized.execution_reason = plan.reason  # type: ignore[attr-defined]
+            return execute_specialized
 
         jitted = TinyJit(execute_tensors)
 
@@ -683,7 +708,48 @@ class TinygradBackend:
             return TinygradValue(tensor=tensor, atom=output_atom[0])
 
         execute_compiled.execution_mode = "jit-captured"  # type: ignore[attr-defined]
+        execute_compiled.execution_reason = plan.reason  # type: ignore[attr-defined]
         return execute_compiled
+
+    @staticmethod
+    def execution_plan(expression: Expression) -> ExecutionPlan:
+        """Choose the least-overhead execution strategy for specialized IR."""
+
+        if not has_tensor_compute(expression):
+            return ExecutionPlan(
+                mode="optimized-noop",
+                reason="specialization-erased-all-data-dependent-work",
+            )
+        if TinygradBackend._is_layout_only(expression):
+            return ExecutionPlan(
+                mode="specialized-eager",
+                reason="layout-only-expression-is-cheaper-without-jit-replay",
+            )
+        return ExecutionPlan(
+            mode="jit-captured",
+            reason="fixed-shape-tensor-compute-benefits-from-graph-replay",
+        )
+
+    @staticmethod
+    def _is_layout_only(expression: Expression) -> bool:
+        """Whether evaluation only constructs dense views of existing values."""
+
+        operation = expression["op"]
+        if operation in {"argument", "constant", "array"}:
+            return True
+        if operation == "static_call":
+            return (
+                expression["glyph"] == "↓"
+                and TinygradBackend._is_layout_only(expression["argument"])
+            )
+        if operation != "call":
+            return False
+        children = expression["arguments"]
+        return (
+            len(children) == 1
+            and expression["glyph"] in {"⥊", "≍", "⌽", "⍉", "⊣", "⊢"}
+            and TinygradBackend._is_layout_only(children[0])
+        )
 
     @staticmethod
     def optimize(

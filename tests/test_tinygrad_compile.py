@@ -94,3 +94,30 @@ def test_compiled_double_reverse_is_erased(backend: TinygradBackend) -> None:
     executable = backend.compile(program.expression, arguments)
     assert executable(arguments) is arguments["x"]
     assert executable.execution_mode == "optimized-noop"  # type: ignore[attr-defined]
+
+
+def test_layout_only_programs_avoid_jit_replay(backend: TinygradBackend) -> None:
+    vector_arguments = {
+        "x": backend.from_host(HostValue.from_array([1, 2, 3, 4], (4,)))
+    }
+    matrix_arguments = {
+        "x": backend.from_host(HostValue.from_array([1, 2, 3, 4], (2, 2)))
+    }
+    for source, arguments in (
+        ("{1↓𝕩}", vector_arguments),
+        ("{⌽𝕩}", vector_arguments),
+        ("{⍉𝕩}", matrix_arguments),
+    ):
+        executable = backend.compile(compile_bqn(source).expression, arguments)
+        expected = evaluate(compile_bqn(source).expression, backend, arguments).to_host()
+        assert executable(arguments).to_host() == expected
+        assert executable.execution_mode == "specialized-eager"  # type: ignore[attr-defined]
+        assert "without-jit" in executable.execution_reason  # type: ignore[attr-defined]
+
+
+def test_tensor_consumers_still_use_jit_replay(backend: TinygradBackend) -> None:
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([1, 2, 3, 4], (2, 2)))
+    }
+    executable = backend.compile(compile_bqn("{1+⍉𝕩}").expression, arguments)
+    assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]

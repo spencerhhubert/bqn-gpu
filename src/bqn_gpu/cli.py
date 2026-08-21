@@ -151,6 +151,8 @@ def _explain(source: str, x_specification: str | None, w_specification: str | No
     optimized = optimize(program.expression, ranks)
     from .tinygrad_backend import TinygradBackend
 
+    execution_plan = TinygradBackend.execution_plan(optimized.expression)
+
     document = {
         "schema_version": 1,
         "source": source,
@@ -181,6 +183,10 @@ def _explain(source: str, x_specification: str | None, w_specification: str | No
             "tinygrad_fixed_output_shape": TinygradBackend._fixed_output_shape(
                 optimized.expression
             ),
+            "tinygrad_execution_plan": {
+                "mode": execution_plan.mode,
+                "reason": execution_plan.reason,
+            },
         },
     }
     print(json.dumps(document, ensure_ascii=False, indent=2))

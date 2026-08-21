@@ -393,12 +393,19 @@ def benchmark_backend(
         if executable is not None
         else "eager-dispatch"
     )
+    if executable is not None and hasattr(executable, "execution_reason"):
+        result["execution_reason"] = executable.execution_reason
     result["timing_scope"] = "resident-compute"
     optimizer = getattr(backend, "optimize", None)
     if optimizer is not None:
         optimization = optimizer(compiled.expression, device_inputs)
+        execution_plan = backend.execution_plan(optimization.expression)
         result["optimization"] = {
             "optimized_bqn": render_bqn(optimization.expression),
+            "execution_plan": {
+                "mode": execution_plan.mode,
+                "reason": execution_plan.reason,
+            },
             "rewrites": [
                 {
                     "rule": event.rule,
