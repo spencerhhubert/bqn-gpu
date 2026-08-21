@@ -31,12 +31,13 @@ Put a development-only `BENCHMARK_INGEST_TOKEN` in `site/.dev.vars`. The file is
 
 ## Deployment
 
-Pushes and pull requests verify the site. Tags matching `site-v*` apply pending D1 migrations and deploy the Worker, static assets, and required ingestion secret with GitHub Actions. For example:
+Pushes and pull requests verify the site. Tags matching `site-v*` apply pending D1 migrations and deploy the Worker, static assets, and required ingestion secret with GitHub Actions. From a clean, pushed `main`, the release helper runs the full site check, derives the next patch tag, creates it, and pushes it:
 
 ```sh
-git tag -a site-v0.1.0 -m "Deploy website v0.1.0"
-git push origin site-v0.1.0
+python scripts/release_site.py
 ```
+
+Use `--dry-run` to perform all checks and print the tag without creating it.
 
 The GitHub environment contains an account-scoped Cloudflare token limited to Workers Scripts Write, D1 Write, and Account Settings Read. The benchmark ingestion token is separate and has no Cloudflare API permissions.
 
