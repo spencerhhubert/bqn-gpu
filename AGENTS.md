@@ -4,7 +4,7 @@
 
 This repository is private during early development but is intended to become public. Treat every tracked file, commit message, issue, test artifact, and piece of documentation as public material.
 
-Do not commit credentials, tokens, private URLs, machine-specific paths, internal infrastructure details, personal data, or anything else specific to a contributor's environment. Put local-only notes in `AGENTS.local.md`, which is intentionally ignored by Git.
+Do not commit credentials, tokens, private URLs, machine-specific paths, internal infrastructure details, personal data, or anything else specific to a contributor's environment. Put local-only instructions in `AGENTS.local.md` and longer-lived local context in `agents-notes-local/`; both are intentionally ignored by Git.
 
 We are building a GPU/CUDA backend for the BQN programming language, specifically in relation to cBQN. The backend should be:
 
@@ -42,4 +42,4 @@ Do not describe a feature as supported until its behavior is covered by automate
 
 ## Local instructions
 
-Read `AGENTS.local.md` when it exists. It may contain machine-specific build or GPU details and must remain untracked.
+Read `AGENTS.local.md` and `agents-notes-local/` when they exist. They may contain machine-specific instructions, research, decisions, or project context and must remain untracked.
