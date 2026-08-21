@@ -34,7 +34,14 @@ def test_tracked_corpus_is_current_and_grows_beyond_its_initial_floor() -> None:
 
 def test_corpus_has_glyph_phrase_pair_reduction_and_long_program_layers() -> None:
     categories = {program.category for program in PROGRAMS}
-    assert categories == {"glyph", "phrase", "paired", "reduction", "program"}
+    assert {"glyph", "phrase", "paired", "reduction", "program"} <= categories
+    assert {
+        "dense-primitive",
+        "dense-structural",
+        "dense-modifier",
+        "dense-phrase",
+        "dense-paired",
+    } <= categories
     assert sum(len("".join(program.bqn.split())) >= 40 for program in PROGRAMS) >= 20
     assert sum(len("".join(program.bqn.split())) >= 80 for program in PROGRAMS) >= 5
 

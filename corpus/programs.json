@@ -4,6 +4,11 @@
     "growth": "append durable cases as bugs, optimizations, and workloads are discovered",
     "initial_floor": 100,
     "categories": {
+      "dense-modifier": 12,
+      "dense-paired": 10,
+      "dense-phrase": 10,
+      "dense-primitive": 34,
+      "dense-structural": 10,
       "glyph": 103,
       "paired": 24,
       "phrase": 55,
@@ -7654,6 +7659,2690 @@
         "monadic_empty_vector",
         "phrase",
         "range",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.sort_up.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(∧𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∧",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x).sort(dim=0, descending=False))[0]",
+        "torch": "lambda x: ((x).sort(dim=0, descending=False)).values"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_vector",
+        "sort_up"
+      ]
+    },
+    {
+      "id": "dense.sort_down.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(∨𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∨",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x).sort(dim=0, descending=True))[0]",
+        "torch": "lambda x: ((x).sort(dim=0, descending=True)).values"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_vector",
+        "sort_down"
+      ]
+    },
+    {
+      "id": "dense.not.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(¬𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "¬",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (1.0 - (x))",
+        "torch": "lambda x: (1.0 - (x))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_vector",
+        "not"
+      ]
+    },
+    {
+      "id": "dense.depth.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≡𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "≡",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: Tensor((0.0 if len((x).shape) == 0 else 1.0), dtype=dtypes.float64, device=(x).device)",
+        "torch": "lambda x: torch.tensor((0.0 if len((x).shape) == 0 else 1.0), dtype=torch.float64, device=(x).device)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "depth",
+        "glyph",
+        "monadic",
+        "monadic_vector"
+      ]
+    },
+    {
+      "id": "dense.identity_left.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⊣𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊣",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x)",
+        "torch": "lambda x: (x)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "identity_left",
+        "monadic",
+        "monadic_vector"
+      ]
+    },
+    {
+      "id": "dense.identity_right.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⊢𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊢",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x)",
+        "torch": "lambda x: (x)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "identity_right",
+        "monadic",
+        "monadic_vector"
+      ]
+    },
+    {
+      "id": "dense.deshape.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⥊𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⥊",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).reshape((-1,))",
+        "torch": "lambda x: (x).reshape((-1,))"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "deshape",
+        "glyph",
+        "monadic",
+        "monadic_matrix"
+      ]
+    },
+    {
+      "id": "dense.solo.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(≍𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "≍",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).reshape((1,) + tuple((x).shape))",
+        "torch": "lambda x: (x).reshape((1,) + tuple((x).shape))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_vector",
+        "solo"
+      ]
+    },
+    {
+      "id": "dense.reverse_vector.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⌽𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⌽",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).flip(0)",
+        "torch": "lambda x: torch.flip((x), dims=(0,))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_vector",
+        "reverse_vector"
+      ]
+    },
+    {
+      "id": "dense.reverse_matrix.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⌽𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⌽",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).flip(0)",
+        "torch": "lambda x: torch.flip((x), dims=(0,))"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_matrix",
+        "reverse_matrix"
+      ]
+    },
+    {
+      "id": "dense.transpose.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⍉𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⍉",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).permute((tuple(range(1, len((x).shape))) + (0,)))",
+        "torch": "lambda x: (x).permute((tuple(range(1, len((x).shape))) + (0,)))"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_matrix",
+        "transpose"
+      ]
+    },
+    {
+      "id": "dense.grade_up.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⍋𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⍋",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).argsort(dim=0, descending=False)",
+        "torch": "lambda x: (x).argsort(dim=0, descending=False)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "grade_up",
+        "monadic",
+        "monadic_vector"
+      ]
+    },
+    {
+      "id": "dense.grade_down.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⍒𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⍒",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).argsort(dim=0, descending=True)",
+        "torch": "lambda x: (x).argsort(dim=0, descending=True)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "grade_down",
+        "monadic",
+        "monadic_vector"
+      ]
+    },
+    {
+      "id": "dense.first_cell.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⊏𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊏",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x)[0]",
+        "torch": "lambda x: (x)[0]"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "first_cell",
+        "glyph",
+        "monadic",
+        "monadic_matrix"
+      ]
+    },
+    {
+      "id": "dense.first.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⊑𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊑",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).reshape((-1,))[0]",
+        "torch": "lambda x: (x).reshape((-1,))[0]"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "first",
+        "glyph",
+        "monadic",
+        "monadic_vector"
+      ]
+    },
+    {
+      "id": "dense.and.dyadic_same",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∧𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∧",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) * (x))",
+        "torch": "lambda w, x: ((w) * (x))"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "and",
+        "dense",
+        "dyadic",
+        "dyadic_same",
+        "glyph"
+      ]
+    },
+    {
+      "id": "dense.and.left_atom",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∧𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∧",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) * (x))",
+        "torch": "lambda w, x: ((w) * (x))"
+      },
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "and",
+        "dense",
+        "dyadic",
+        "glyph",
+        "left_atom"
+      ]
+    },
+    {
+      "id": "dense.and.right_atom",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∧𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∧",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) * (x))",
+        "torch": "lambda w, x: ((w) * (x))"
+      },
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "and",
+        "dense",
+        "dyadic",
+        "glyph",
+        "right_atom"
+      ]
+    },
+    {
+      "id": "dense.and.leading_left",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∧𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∧",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w.reshape(w.shape + (1,))) * (x))",
+        "torch": "lambda w, x: ((w.reshape(w.shape + (1,))) * (x))"
+      },
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "and",
+        "dense",
+        "dyadic",
+        "glyph",
+        "leading_left"
+      ]
+    },
+    {
+      "id": "dense.and.leading_right",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∧𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∧",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) * (x.reshape(x.shape + (1,))))",
+        "torch": "lambda w, x: ((w) * (x.reshape(x.shape + (1,))))"
+      },
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "and",
+        "dense",
+        "dyadic",
+        "glyph",
+        "leading_right"
+      ]
+    },
+    {
+      "id": "dense.or.dyadic_same",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∨𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∨",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) + (x) - (w) * (x))",
+        "torch": "lambda w, x: ((w) + (x) - (w) * (x))"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "dyadic_same",
+        "glyph",
+        "or"
+      ]
+    },
+    {
+      "id": "dense.or.left_atom",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∨𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∨",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) + (x) - (w) * (x))",
+        "torch": "lambda w, x: ((w) + (x) - (w) * (x))"
+      },
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "left_atom",
+        "or"
+      ]
+    },
+    {
+      "id": "dense.or.right_atom",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∨𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∨",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) + (x) - (w) * (x))",
+        "torch": "lambda w, x: ((w) + (x) - (w) * (x))"
+      },
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "or",
+        "right_atom"
+      ]
+    },
+    {
+      "id": "dense.or.leading_left",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∨𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∨",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w.reshape(w.shape + (1,))) + (x) - (w.reshape(w.shape + (1,))) * (x))",
+        "torch": "lambda w, x: ((w.reshape(w.shape + (1,))) + (x) - (w.reshape(w.shape + (1,))) * (x))"
+      },
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "leading_left",
+        "or"
+      ]
+    },
+    {
+      "id": "dense.or.leading_right",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨∨𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∨",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) + (x.reshape(x.shape + (1,))) - (w) * (x.reshape(x.shape + (1,))))",
+        "torch": "lambda w, x: ((w) + (x.reshape(x.shape + (1,))) - (w) * (x.reshape(x.shape + (1,))))"
+      },
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "leading_right",
+        "or"
+      ]
+    },
+    {
+      "id": "dense.span.dyadic_same",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨¬𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "¬",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (1.0 + (w) - (x))",
+        "torch": "lambda w, x: (1.0 + (w) - (x))"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "dyadic_same",
+        "glyph",
+        "span"
+      ]
+    },
+    {
+      "id": "dense.span.left_atom",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨¬𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "¬",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (1.0 + (w) - (x))",
+        "torch": "lambda w, x: (1.0 + (w) - (x))"
+      },
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "left_atom",
+        "span"
+      ]
+    },
+    {
+      "id": "dense.span.right_atom",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨¬𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "¬",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (1.0 + (w) - (x))",
+        "torch": "lambda w, x: (1.0 + (w) - (x))"
+      },
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "right_atom",
+        "span"
+      ]
+    },
+    {
+      "id": "dense.span.leading_left",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨¬𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "¬",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (1.0 + (w.reshape(w.shape + (1,))) - (x))",
+        "torch": "lambda w, x: (1.0 + (w.reshape(w.shape + (1,))) - (x))"
+      },
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "leading_left",
+        "span"
+      ]
+    },
+    {
+      "id": "dense.span.leading_right",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨¬𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "¬",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (1.0 + (w) - (x.reshape(x.shape + (1,))))",
+        "torch": "lambda w, x: (1.0 + (w) - (x.reshape(x.shape + (1,))))"
+      },
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 2e-15,
+      "atol": 2e-15,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "leading_right",
+        "span"
+      ]
+    },
+    {
+      "id": "dense.match_self",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(𝕩≡𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "≡",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((((x) == (x)).all())).cast(dtypes.float64)",
+        "torch": "lambda x: ((((x) == (x)).all())).to(torch.float64)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "match"
+      ]
+    },
+    {
+      "id": "dense.not_match_self",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(𝕩≢𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "≢",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (1.0 - (((((x) == (x)).all())).cast(dtypes.float64)))",
+        "torch": "lambda x: (1.0 - (((((x) == (x)).all())).to(torch.float64)))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "match"
+      ]
+    },
+    {
+      "id": "dense.identity_left.dyadic_same",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨⊣𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊣",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (w)",
+        "torch": "lambda w, x: (w)"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "identity"
+      ]
+    },
+    {
+      "id": "dense.identity_right.dyadic_same",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨⊢𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊢",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (x)",
+        "torch": "lambda w, x: (x)"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "dyadic",
+        "glyph",
+        "identity"
+      ]
+    },
+    {
+      "id": "dense.join_self",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(𝕩∾𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∾",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).cat((x), dim=0)",
+        "torch": "lambda x: torch.cat(((x), (x)), dim=0)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "join_self",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.couple_self",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(𝕩≍𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "≍",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).stack((x), dim=0)",
+        "torch": "lambda x: torch.stack(((x), (x)), dim=0)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "couple_self",
+        "dense",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.drop_first.monadic_vector",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(1↓𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "↓",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": 1
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x)[1:]",
+        "torch": "lambda x: (x)[1:]"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "drop_first",
+        "monadic_vector",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.take_last.monadic_vector",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(¯1↑𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "↑",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": -1
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x)[-1:]",
+        "torch": "lambda x: (x)[-1:]"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "monadic_vector",
+        "structural",
+        "take_last"
+      ]
+    },
+    {
+      "id": "dense.rotate_one.monadic_vector",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(1⌽𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⌽",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": 1
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).roll((-1,), dims=(0,))",
+        "torch": "lambda x: (x).roll((-1,), dims=(0,))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "monadic_vector",
+        "rotate_one",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.replicate_two.monadic_vector",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(2/𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "/",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": 2
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).repeat_interleave(2, dim=0)",
+        "torch": "lambda x: (x).repeat_interleave(2, dim=0)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "monadic_vector",
+        "replicate_two",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.windows_three.monadic_vector",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(3↕𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "↕",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": 3
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).unfold(0, 3, 1)",
+        "torch": "lambda x: (x).unfold(0, 3, 1)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "monadic_vector",
+        "structural",
+        "windows_three"
+      ]
+    },
+    {
+      "id": "dense.select_permutation.monadic_vector",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(2‿0‿1⊏𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊏",
+          "arguments": [
+            {
+              "op": "array",
+              "values": [
+                2,
+                0,
+                1
+              ],
+              "shape": [
+                3
+              ]
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x)[Tensor([2, 0, 1], dtype=dtypes.int32, device=(x).device)]",
+        "torch": "lambda x: (x)[torch.tensor([2, 0, 1], dtype=torch.int64, device=(x).device)]"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "monadic_vector",
+        "select_permutation",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pick_first.monadic_vector",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(0⊑𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊑",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": 0
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x)[(0,)]",
+        "torch": "lambda x: (x)[(0,)]"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "monadic_vector",
+        "pick_first",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.transpose_axes.monadic_matrix",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(1‿0⍉𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⍉",
+          "arguments": [
+            {
+              "op": "array",
+              "values": [
+                1,
+                0
+              ],
+              "shape": [
+                2
+              ]
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (x).permute((1, 0))",
+        "torch": "lambda x: (x).permute((1, 0))"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "monadic_matrix",
+        "structural",
+        "transpose_axes"
+      ]
+    },
+    {
+      "id": "dense.insert_sum.matrix",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(+˝𝕩)}",
+      "native": {
+        "expression": {
+          "op": "insert",
+          "glyph": "+",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (x).sum(axis=0)",
+        "torch": "lambda x: (x).sum(axis=0)"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "insert",
+        "modifier",
+        "sum"
+      ]
+    },
+    {
+      "id": "dense.scan_sum.vector",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(+`𝕩)}",
+      "native": {
+        "expression": {
+          "op": "scan",
+          "glyph": "+",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (x).cumsum(axis=0)",
+        "torch": "lambda x: (x).cumsum(axis=0)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "modifier",
+        "scan",
+        "sum"
+      ]
+    },
+    {
+      "id": "dense.insert_product.matrix",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(×˝𝕩)}",
+      "native": {
+        "expression": {
+          "op": "insert",
+          "glyph": "×",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (x).prod(axis=0)",
+        "torch": "lambda x: (x).prod(axis=0)"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "positive"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "insert",
+        "modifier",
+        "product"
+      ]
+    },
+    {
+      "id": "dense.scan_product.vector",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(×`𝕩)}",
+      "native": {
+        "expression": {
+          "op": "scan",
+          "glyph": "×",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (x).cumprod(axis=0)",
+        "torch": "lambda x: (x).cumprod(axis=0)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "positive"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "modifier",
+        "product",
+        "scan"
+      ]
+    },
+    {
+      "id": "dense.insert_and.matrix",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(∧˝𝕩)}",
+      "native": {
+        "expression": {
+          "op": "insert",
+          "glyph": "∧",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (x).prod(axis=0)",
+        "torch": "lambda x: (x).prod(axis=0)"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "positive"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "and",
+        "dense",
+        "insert",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.scan_and.vector",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(∧`𝕩)}",
+      "native": {
+        "expression": {
+          "op": "scan",
+          "glyph": "∧",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (x).cumprod(axis=0)",
+        "torch": "lambda x: (x).cumprod(axis=0)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "positive"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "and",
+        "dense",
+        "modifier",
+        "scan"
+      ]
+    },
+    {
+      "id": "dense.insert_or.matrix",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(∨˝𝕩)}",
+      "native": {
+        "expression": {
+          "op": "insert",
+          "glyph": "∨",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (1.0 - (1.0 - (x)).prod(axis=0))",
+        "torch": "lambda x: (1.0 - (1.0 - (x)).prod(axis=0))"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "positive"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "insert",
+        "modifier",
+        "or"
+      ]
+    },
+    {
+      "id": "dense.scan_or.vector",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(∨`𝕩)}",
+      "native": {
+        "expression": {
+          "op": "scan",
+          "glyph": "∨",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (1.0 - (1.0 - (x)).cumprod(axis=0))",
+        "torch": "lambda x: (1.0 - (1.0 - (x)).cumprod(axis=0))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "positive"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "modifier",
+        "or",
+        "scan"
+      ]
+    },
+    {
+      "id": "dense.insert_minimum.matrix",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⌊˝𝕩)}",
+      "native": {
+        "expression": {
+          "op": "insert",
+          "glyph": "⌊",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (x).min(axis=0)",
+        "torch": "lambda x: ((x).min(axis=0)).values"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "insert",
+        "minimum",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.scan_minimum.vector",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⌊`𝕩)}",
+      "native": {
+        "expression": {
+          "op": "scan",
+          "glyph": "⌊",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (-(-(x)).cummax(axis=0)[0])",
+        "torch": "lambda x: ((x).cummin(axis=0)).values"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "minimum",
+        "modifier",
+        "scan"
+      ]
+    },
+    {
+      "id": "dense.insert_maximum.matrix",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⌈˝𝕩)}",
+      "native": {
+        "expression": {
+          "op": "insert",
+          "glyph": "⌈",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: (x).max(axis=0)",
+        "torch": "lambda x: ((x).max(axis=0)).values"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "insert",
+        "maximum",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.scan_maximum.vector",
+      "category": "dense-modifier",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⌈`𝕩)}",
+      "native": {
+        "expression": {
+          "op": "scan",
+          "glyph": "⌈",
+          "argument": {
+            "op": "argument",
+            "name": "x"
+          }
+        },
+        "tinygrad": "lambda x: ((x).cummax(axis=0))[0]",
+        "torch": "lambda x: ((x).cummax(axis=0)).values"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 3e-12,
+      "atol": 3e-12,
+      "tags": [
+        "dense",
+        "maximum",
+        "modifier",
+        "scan"
+      ]
+    },
+    {
+      "id": "dense.phrase.sum_reverse",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(+´(⌽𝕩))}",
+      "native": {
+        "expression": {
+          "op": "fold",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "⌽",
+            "arguments": [
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: ((x).flip(0)).sum()",
+        "torch": "lambda x: (torch.flip((x), dims=(0,))).sum()"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "phrase",
+        "structural",
+        "sum_reverse"
+      ]
+    },
+    {
+      "id": "dense.phrase.sum_sort",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(+´(∧𝕩))}",
+      "native": {
+        "expression": {
+          "op": "fold",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "∧",
+            "arguments": [
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: (((x).sort(dim=0, descending=False))[0]).sum()",
+        "torch": "lambda x: (((x).sort(dim=0, descending=False)).values).sum()"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "phrase",
+        "structural",
+        "sum_sort"
+      ]
+    },
+    {
+      "id": "dense.phrase.sum_deshape",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(+´(⥊𝕩))}",
+      "native": {
+        "expression": {
+          "op": "fold",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "⥊",
+            "arguments": [
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: ((x).reshape((-1,))).sum()",
+        "torch": "lambda x: ((x).reshape((-1,))).sum()"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "phrase",
+        "structural",
+        "sum_deshape"
+      ]
+    },
+    {
+      "id": "dense.phrase.insert_transpose",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(+˝(⍉𝕩))}",
+      "native": {
+        "expression": {
+          "op": "insert",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "⍉",
+            "arguments": [
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: ((x).permute((tuple(range(1, len((x).shape))) + (0,)))).sum(axis=0)",
+        "torch": "lambda x: ((x).permute((tuple(range(1, len((x).shape))) + (0,)))).sum(axis=0)"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "insert_transpose",
+        "phrase",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.phrase.reverse_scan",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(⌽(+`𝕩))}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⌽",
+          "arguments": [
+            {
+              "op": "scan",
+              "glyph": "+",
+              "argument": {
+                "op": "argument",
+                "name": "x"
+              }
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x).cumsum(axis=0)).flip(0)",
+        "torch": "lambda x: torch.flip(((x).cumsum(axis=0)), dims=(0,))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "phrase",
+        "reverse_scan",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.phrase.scan_reverse",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(+`(⌽𝕩))}",
+      "native": {
+        "expression": {
+          "op": "scan",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "⌽",
+            "arguments": [
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: ((x).flip(0)).cumsum(axis=0)",
+        "torch": "lambda x: (torch.flip((x), dims=(0,))).cumsum(axis=0)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "phrase",
+        "scan_reverse",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.phrase.sum_drop_first",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(+´(1↓𝕩))}",
+      "native": {
+        "expression": {
+          "op": "fold",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "↓",
+            "arguments": [
+              {
+                "op": "constant",
+                "value": 1
+              },
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: ((x)[1:]).sum()",
+        "torch": "lambda x: ((x)[1:]).sum()"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "phrase",
+        "structural",
+        "sum_drop_first"
+      ]
+    },
+    {
+      "id": "dense.phrase.sum_replicate",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(+´(2/𝕩))}",
+      "native": {
+        "expression": {
+          "op": "fold",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "/",
+            "arguments": [
+              {
+                "op": "constant",
+                "value": 2
+              },
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: ((x).repeat_interleave(2, dim=0)).sum()",
+        "torch": "lambda x: ((x).repeat_interleave(2, dim=0)).sum()"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "phrase",
+        "structural",
+        "sum_replicate"
+      ]
+    },
+    {
+      "id": "dense.phrase.insert_windows",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(+˝(3↕𝕩))}",
+      "native": {
+        "expression": {
+          "op": "insert",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "↕",
+            "arguments": [
+              {
+                "op": "constant",
+                "value": 3
+              },
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: ((x).unfold(0, 3, 1)).sum(axis=0)",
+        "torch": "lambda x: ((x).unfold(0, 3, 1)).sum(axis=0)"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "insert_windows",
+        "phrase",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.phrase.count_nonzero",
+      "category": "dense-phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(+´(¬(𝕩=0)))}",
+      "native": {
+        "expression": {
+          "op": "fold",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "¬",
+            "arguments": [
+              {
+                "op": "call",
+                "glyph": "=",
+                "arguments": [
+                  {
+                    "op": "argument",
+                    "name": "x"
+                  },
+                  {
+                    "op": "constant",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: ((1.0 - (((x) == (0.0)).cast(dtypes.float64)))).sum()",
+        "torch": "lambda x: ((1.0 - (((x) == (0.0)).to(torch.float64)))).sum()"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "count_nonzero",
+        "dense",
+        "phrase",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.double_reverse.naive",
+      "category": "dense-paired",
+      "variant": "naive",
+      "arity": 1,
+      "bqn": "{⌽⌽𝕩}",
+      "native": {
+        "expression": {
+          "op": "argument",
+          "name": "x"
+        },
+        "tinygrad": "lambda x: x",
+        "torch": "lambda x: x"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "double_reverse",
+        "paired",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.double_reverse.idiomatic",
+      "category": "dense-paired",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{𝕩}",
+      "native": {
+        "expression": {
+          "op": "argument",
+          "name": "x"
+        },
+        "tinygrad": "lambda x: x",
+        "torch": "lambda x: x"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "double_reverse",
+        "paired",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.cancel_rotate.naive",
+      "category": "dense-paired",
+      "variant": "naive",
+      "arity": 1,
+      "bqn": "{1⌽¯1⌽𝕩}",
+      "native": {
+        "expression": {
+          "op": "argument",
+          "name": "x"
+        },
+        "tinygrad": "lambda x: x",
+        "torch": "lambda x: x"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "cancel_rotate",
+        "dense",
+        "paired",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.cancel_rotate.idiomatic",
+      "category": "dense-paired",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{𝕩}",
+      "native": {
+        "expression": {
+          "op": "argument",
+          "name": "x"
+        },
+        "tinygrad": "lambda x: x",
+        "torch": "lambda x: x"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "cancel_rotate",
+        "dense",
+        "paired",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.double_transpose.naive",
+      "category": "dense-paired",
+      "variant": "naive",
+      "arity": 1,
+      "bqn": "{⍉⍉𝕩}",
+      "native": {
+        "expression": {
+          "op": "argument",
+          "name": "x"
+        },
+        "tinygrad": "lambda x: x",
+        "torch": "lambda x: x"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "double_transpose",
+        "paired",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.double_transpose.idiomatic",
+      "category": "dense-paired",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{𝕩}",
+      "native": {
+        "expression": {
+          "op": "argument",
+          "name": "x"
+        },
+        "tinygrad": "lambda x: x",
+        "torch": "lambda x: x"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "double_transpose",
+        "paired",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.sort_up.naive",
+      "category": "dense-paired",
+      "variant": "naive",
+      "arity": 1,
+      "bqn": "{⌽∨𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∧",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x).sort(dim=0, descending=False))[0]",
+        "torch": "lambda x: ((x).sort(dim=0, descending=False)).values"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "paired",
+        "sort_up",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.sort_up.idiomatic",
+      "category": "dense-paired",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(∧𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∧",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x).sort(dim=0, descending=False))[0]",
+        "torch": "lambda x: ((x).sort(dim=0, descending=False)).values"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "paired",
+        "sort_up",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.sort_down.naive",
+      "category": "dense-paired",
+      "variant": "naive",
+      "arity": 1,
+      "bqn": "{⌽∧𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∨",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x).sort(dim=0, descending=True))[0]",
+        "torch": "lambda x: ((x).sort(dim=0, descending=True)).values"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "paired",
+        "sort_down",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.pair.sort_down.idiomatic",
+      "category": "dense-paired",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(∨𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∨",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x).sort(dim=0, descending=True))[0]",
+        "torch": "lambda x: ((x).sort(dim=0, descending=True)).values"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "paired",
+        "sort_down",
         "structural"
       ]
     },

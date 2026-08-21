@@ -18,12 +18,15 @@ sys.path.insert(0, str(ROOT / "src"))
 from bqn_gpu.ir import (  # noqa: E402
     Expression,
     argument,
+    array_constant,
     constant,
     dyadic,
     fold,
     function_source,
+    insert,
     monadic,
     render_bqn,
+    scan,
 )
 from bqn_gpu.native_sources import render_native_source  # noqa: E402
 
@@ -297,6 +300,207 @@ def make_programs() -> list[dict[str, Any]]:
             mode,
             {"x": "signed"},
             ["phrase", "structural", "range", "length", mode],
+        )
+
+    dense_monads = [
+        ("sort_up", "∧", "monadic_vector"),
+        ("sort_down", "∨", "monadic_vector"),
+        ("not", "¬", "monadic_vector"),
+        ("depth", "≡", "monadic_vector"),
+        ("identity_left", "⊣", "monadic_vector"),
+        ("identity_right", "⊢", "monadic_vector"),
+        ("deshape", "⥊", "monadic_matrix"),
+        ("solo", "≍", "monadic_vector"),
+        ("reverse_vector", "⌽", "monadic_vector"),
+        ("reverse_matrix", "⌽", "monadic_matrix"),
+        ("transpose", "⍉", "monadic_matrix"),
+        ("grade_up", "⍋", "monadic_vector"),
+        ("grade_down", "⍒", "monadic_vector"),
+        ("first_cell", "⊏", "monadic_matrix"),
+        ("first", "⊑", "monadic_vector"),
+    ]
+    for name, glyph, mode in dense_monads:
+        add(
+            f"dense.{name}.{mode}",
+            "dense-primitive",
+            "primitive",
+            monadic(glyph, x),
+            1,
+            mode,
+            {"x": "signed"},
+            ["dense", "glyph", "monadic", name, mode],
+        )
+
+    for name, glyph in (("and", "∧"), ("or", "∨"), ("span", "¬")):
+        for mode in modes:
+            add(
+                f"dense.{name}.{mode}",
+                "dense-primitive",
+                "primitive",
+                dyadic(glyph, w, x),
+                2,
+                mode,
+                {"w": "signed", "x": "signed"},
+                ["dense", "glyph", "dyadic", name, mode],
+                rtol=2e-15 if glyph in {"∨", "¬"} else 0.0,
+                atol=2e-15 if glyph in {"∨", "¬"} else 0.0,
+            )
+
+    for name, glyph in (("match_self", "≡"), ("not_match_self", "≢")):
+        add(
+            f"dense.{name}",
+            "dense-primitive",
+            "primitive",
+            dyadic(glyph, x, x),
+            1,
+            "monadic_vector",
+            {"x": "signed"},
+            ["dense", "glyph", "dyadic", "match"],
+        )
+
+    for name, glyph in (("left", "⊣"), ("right", "⊢")):
+        add(
+            f"dense.identity_{name}.dyadic_same",
+            "dense-primitive",
+            "primitive",
+            dyadic(glyph, w, x),
+            2,
+            "dyadic_same",
+            {"w": "signed", "x": "signed"},
+            ["dense", "glyph", "dyadic", "identity"],
+        )
+
+    for name, glyph in (("join_self", "∾"), ("couple_self", "≍")):
+        add(
+            f"dense.{name}",
+            "dense-structural",
+            "primitive",
+            dyadic(glyph, x, x),
+            1,
+            "monadic_vector",
+            {"x": "signed"},
+            ["dense", "structural", name],
+        )
+
+    literal_structural = [
+        ("drop_first", dyadic("↓", constant(1), x), "monadic_vector"),
+        ("take_last", dyadic("↑", constant(-1), x), "monadic_vector"),
+        ("rotate_one", dyadic("⌽", constant(1), x), "monadic_vector"),
+        ("replicate_two", dyadic("/", constant(2), x), "monadic_vector"),
+        ("windows_three", dyadic("↕", constant(3), x), "monadic_vector"),
+        (
+            "select_permutation",
+            dyadic("⊏", array_constant([2, 0, 1]), x),
+            "monadic_vector",
+        ),
+        ("pick_first", dyadic("⊑", constant(0), x), "monadic_vector"),
+        (
+            "transpose_axes",
+            dyadic("⍉", array_constant([1, 0]), x),
+            "monadic_matrix",
+        ),
+    ]
+    for name, expression, mode in literal_structural:
+        add(
+            f"dense.{name}.{mode}",
+            "dense-structural",
+            "primitive",
+            expression,
+            1,
+            mode,
+            {"x": "signed"},
+            ["dense", "structural", name, mode],
+        )
+
+    for name, glyph in (
+        ("sum", "+"),
+        ("product", "×"),
+        ("and", "∧"),
+        ("or", "∨"),
+        ("minimum", "⌊"),
+        ("maximum", "⌈"),
+    ):
+        add(
+            f"dense.insert_{name}.matrix",
+            "dense-modifier",
+            "primitive",
+            insert(glyph, x),
+            1,
+            "monadic_matrix",
+            {"x": "positive" if glyph in {"×", "∧", "∨"} else "signed"},
+            ["dense", "modifier", "insert", name],
+            rtol=3e-12,
+            atol=3e-12,
+        )
+        add(
+            f"dense.scan_{name}.vector",
+            "dense-modifier",
+            "primitive",
+            scan(glyph, x),
+            1,
+            "monadic_vector",
+            {"x": "positive" if glyph in {"×", "∧", "∨"} else "signed"},
+            ["dense", "modifier", "scan", name],
+            rtol=3e-12,
+            atol=3e-12,
+        )
+
+    dense_phrases = [
+        ("sum_reverse", fold("+", monadic("⌽", x)), "monadic_vector"),
+        ("sum_sort", fold("+", monadic("∧", x)), "monadic_vector"),
+        ("sum_deshape", fold("+", monadic("⥊", x)), "monadic_matrix"),
+        ("insert_transpose", insert("+", monadic("⍉", x)), "monadic_matrix"),
+        ("reverse_scan", monadic("⌽", scan("+", x)), "monadic_vector"),
+        ("scan_reverse", scan("+", monadic("⌽", x)), "monadic_vector"),
+        ("sum_drop_first", fold("+", dyadic("↓", constant(1), x)), "monadic_vector"),
+        ("sum_replicate", fold("+", dyadic("/", constant(2), x)), "monadic_vector"),
+        ("insert_windows", insert("+", dyadic("↕", constant(3), x)), "monadic_vector"),
+        (
+            "count_nonzero",
+            fold("+", monadic("¬", dyadic("=", x, constant(0)))),
+            "monadic_vector",
+        ),
+    ]
+    for name, expression, mode in dense_phrases:
+        add(
+            f"dense.phrase.{name}",
+            "dense-phrase",
+            "composed",
+            expression,
+            1,
+            mode,
+            {"x": "signed"},
+            ["dense", "phrase", "structural", name],
+            rtol=5e-12,
+            atol=5e-12,
+        )
+
+    dense_pairs = [
+        ("double_reverse", x, "{⌽⌽𝕩}", "monadic_vector"),
+        ("cancel_rotate", x, "{1⌽¯1⌽𝕩}", "monadic_vector"),
+        ("double_transpose", x, "{⍉⍉𝕩}", "monadic_matrix"),
+        ("sort_up", monadic("∧", x), "{⌽∨𝕩}", "monadic_vector"),
+        ("sort_down", monadic("∨", x), "{⌽∧𝕩}", "monadic_vector"),
+    ]
+    for name, expression, naive, mode in dense_pairs:
+        common = {
+            "category": "dense-paired",
+            "expression": expression,
+            "arity": 1,
+            "input_mode": mode,
+            "domains": {"x": "signed"},
+            "tags": ["dense", "paired", "structural", name],
+        }
+        add(
+            f"dense.pair.{name}.naive",
+            variant="naive",
+            source=naive,
+            **common,
+        )
+        add(
+            f"dense.pair.{name}.idiomatic",
+            variant="idiomatic",
+            **common,
         )
 
     def naive_source(steps: list[tuple[str, str, int | None]]) -> str:
