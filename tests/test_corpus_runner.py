@@ -55,6 +55,13 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     assert next(
         result for result in report["results"] if result["backend"] == "cbqn"
     )["execution_mode"] == "embedding-resident"
+    compiled = next(
+        result
+        for result in report["results"]
+        if result["backend"] == "bqn-gpu-tinygrad"
+    )
+    assert compiled["optimization"]["optimized_bqn"]
+    assert isinstance(compiled["optimization"]["rewrites"], list)
 
     payload_path = tmp_path / "payload.json"
     subprocess.run(
@@ -82,6 +89,12 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     native = next(result for result in payload["results"] if result["backend"] == "native-torch")
     assert native["metadata"]["implementation_kind"] == "native-framework"
     assert payload["programs"][0]["metadata"]["native_implementations"]["torch"].startswith("lambda")
+    accelerated = next(
+        result
+        for result in payload["results"]
+        if result["backend"] == "bqn-gpu-tinygrad"
+    )
+    assert accelerated["metadata"]["optimization"]["optimized_bqn"]
 
 
 def test_development_profile_is_a_multi_size_certification_subset(tmp_path) -> None:

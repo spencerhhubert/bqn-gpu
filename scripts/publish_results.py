@@ -245,6 +245,7 @@ def result_record(result: dict[str, Any], versions: dict[str, str]) -> dict[str,
             "language": result.get("language"),
             "implementation_kind": result.get("implementation_kind"),
             "framework": result.get("framework"),
+            "optimization": result.get("optimization"),
         },
     }
 

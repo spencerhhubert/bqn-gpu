@@ -618,6 +618,7 @@ class TinygradBackend:
             ) -> TinygradValue:
                 return evaluate(optimized_expression, self, supplied)
 
+            execute_simplified.execution_mode = "optimized-noop"  # type: ignore[attr-defined]
             return execute_simplified
 
         jitted = TinyJit(execute_tensors)
@@ -632,6 +633,7 @@ class TinygradBackend:
             tensor = jitted(*(supplied[name].tensor for name in names))
             return TinygradValue(tensor=tensor, atom=output_atom[0])
 
+        execute_compiled.execution_mode = "jit-captured"  # type: ignore[attr-defined]
         return execute_compiled
 
     @staticmethod
@@ -645,12 +647,18 @@ class TinygradBackend:
         )
 
     @staticmethod
-    def can_compile(expression: Expression) -> bool:
+    def can_compile(
+        expression: Expression,
+        arguments: Mapping[str, TinygradValue] | None = None,
+    ) -> bool:
         """Whether the expression has fixed shape and launches tensor work."""
 
-        return TinygradBackend._fixed_output_shape(expression) and has_tensor_compute(
-            expression
+        candidate = (
+            TinygradBackend.optimize(expression, arguments).expression
+            if arguments is not None
+            else expression
         )
+        return TinygradBackend._fixed_output_shape(candidate) and has_tensor_compute(expression)
 
     @staticmethod
     def _fixed_output_shape(expression: Expression) -> bool:

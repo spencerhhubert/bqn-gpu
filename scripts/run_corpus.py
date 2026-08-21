@@ -30,7 +30,7 @@ from bqn_gpu.corpus import (  # noqa: E402
     generate_inputs,
     load_programs,
 )
-from bqn_gpu.ir import evaluate  # noqa: E402
+from bqn_gpu.ir import evaluate, render_bqn  # noqa: E402
 from bqn_gpu.errors import BQNGPUError  # noqa: E402
 from bqn_gpu.source import CompiledProgram, compile_bqn  # noqa: E402
 
@@ -361,10 +361,10 @@ def benchmark_backend(
 ) -> dict[str, Any]:
     device_inputs = {key: backend.from_host(value) for key, value in inputs.items()}
     compiler = getattr(backend, "compile", None)
-    can_compile = getattr(backend, "can_compile", lambda expression: True)
+    can_compile = getattr(backend, "can_compile", lambda expression, arguments: True)
     executable = (
         compiler(compiled.expression, device_inputs)
-        if compiler is not None and can_compile(compiled.expression)
+        if compiler is not None and can_compile(compiled.expression, device_inputs)
         else None
     )
 
@@ -389,9 +389,25 @@ def benchmark_backend(
     timings = [run_once()[1] for _ in range(repeat)]
     result = timing_result(program, name, str(backend.device).upper(), cold_ns, timings)
     result["execution_mode"] = (
-        "jit-captured" if executable is not None else "eager-dispatch"
+        getattr(executable, "execution_mode", "jit-captured")
+        if executable is not None
+        else "eager-dispatch"
     )
     result["timing_scope"] = "resident-compute"
+    optimizer = getattr(backend, "optimize", None)
+    if optimizer is not None:
+        optimization = optimizer(compiled.expression, device_inputs)
+        result["optimization"] = {
+            "optimized_bqn": render_bqn(optimization.expression),
+            "rewrites": [
+                {
+                    "rule": event.rule,
+                    "before": event.before,
+                    "after": event.after,
+                }
+                for event in optimization.events
+            ],
+        }
     return result
 
 

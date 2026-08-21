@@ -57,6 +57,17 @@ def test_shape_specialized_optimizer_explains_structural_rewrites() -> None:
     assert optimize(atom_reverse, {"x": 0}).expression == atom_reverse
 
 
+def test_compile_decision_follows_shape_specialized_rewrites(
+    backend: TinygradBackend,
+) -> None:
+    expression = compile_bqn("{1⌽¯1⌽𝕩}").expression
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([1, 2, 3], (3,)))
+    }
+    assert not backend.can_compile(expression)
+    assert backend.can_compile(expression, arguments)
+
+
 def test_compiled_double_reverse_is_erased(backend: TinygradBackend) -> None:
     program = compile_bqn("{⌽⌽𝕩}")
     arguments = {
@@ -67,3 +78,4 @@ def test_compiled_double_reverse_is_erased(backend: TinygradBackend) -> None:
 
     executable = backend.compile(program.expression, arguments)
     assert executable(arguments) is arguments["x"]
+    assert executable.execution_mode == "optimized-noop"  # type: ignore[attr-defined]
