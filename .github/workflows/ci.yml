@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-conformance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install compiler
+        run: sudo apt-get update && sudo apt-get install --yes clang
+      - name: Install project and test dependencies
+        run: python -m pip install -e '.[test]'
+      - name: Build pinned cBQN oracle
+        run: ./scripts/build_cbqn.sh
+      - name: Check generated conformance documentation
+        run: python scripts/render_conformance.py --check
+      - name: Differential tests on CPU
+        env:
+          BQN_GPU_TEST_DEVICE: CPU
+        run: python -m pytest

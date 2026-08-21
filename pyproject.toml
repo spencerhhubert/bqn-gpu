@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bqn-gpu"
+version = "0.0.1"
+description = "Experimental GPU execution backends for BQN"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "tinygrad @ git+https://github.com/tinygrad/tinygrad.git@2d48fe8b7bd9acfa00e91a7f89b28b3ded370c27",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

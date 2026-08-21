@@ -1,2 +1,8 @@
 AGENTS.local.md
 /agents-notes-local/
+/.build/
+/.pytest_cache/
+/.venv/
+__pycache__/
+*.egg-info/
+*.py[cod]

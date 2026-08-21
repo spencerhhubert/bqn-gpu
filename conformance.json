@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "reference": {
+    "implementation": "cBQN",
+    "revision_file": "deps/cbqn.rev"
+  },
+  "backend": {
+    "name": "tinygrad",
+    "revision": "2d48fe8b7bd9acfa00e91a7f89b28b3ded370c27",
+    "dtype": "float64",
+    "devices": ["CPU", "CUDA"]
+  },
+  "primitives": [
+    {
+      "glyph": "+",
+      "name": "Conjugate / Add",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense real numeric arrays of any rank and shape.",
+        "behavior": "Identity, matching current BQN Conjugate behavior for real numbers."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Pairs of real numeric atoms or dense real numeric arrays whose shapes satisfy BQN leading-axis agreement.",
+        "behavior": "Element-wise float64 addition with atom extension and leading-axis agreement."
+      },
+      "tests": [
+        "tests/test_add_conformance.py",
+        "tests/test_tinygrad_backend.py"
+      ],
+      "limitations": [
+        "Nested arrays and characters are not supported.",
+        "Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.",
+        "Signed-zero preservation is not claimed, consistent with the BQN documentation's portability guidance.",
+        "This primitive API is not yet a parser for arbitrary BQN source and is not transparently installed into cBQN."
+      ]
+    }
+  ]
+}
