@@ -58,6 +58,8 @@ python scripts/run_corpus.py --backend cbqn --backend tinygrad --backend torch \
 
 cBQN is always a CPU reference in this runner. Tensor inputs are transferred before timing and outputs afterward. tinygrad uses a reusable JIT-captured graph after two warmups; Torch currently uses eager dispatch. Every result records its execution mode, cold time, individual warm times, and median. Required device synchronization is inside the timed region, while host/device input and output transfer is excluded.
 
+Performance and capability history is published by the TypeScript Cloudflare Worker in [`site/`](site/). Its D1 schema keeps raw timings together with the tested commit, BQN source hashes, full input recipe, correctness result, and fingerprinted hardware/software environment. Tagged `site-v*` releases automatically deploy the dashboard and API; see [`site/README.md`](site/README.md) for the versioned ingestion contract and reproduction endpoints.
+
 ## Development
 
 Python 3.11 or newer is required.

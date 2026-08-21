@@ -6,3 +6,7 @@ AGENTS.local.md
 __pycache__/
 *.egg-info/
 *.py[cod]
+/site/.wrangler/
+/site/node_modules/
+/site/coverage/
+/site/.dev.vars

@@ -1,0 +1,22 @@
+{
+  "name": "bqn-gpu-observatory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "npm run types && npm run typecheck && npm test",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "migrate:local": "wrangler d1 migrations apply bqn-gpu-results --local",
+    "migrate:remote": "wrangler d1 migrations apply bqn-gpu-results --remote",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "types": "wrangler types"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.17",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11",
+    "wrangler": "4.125.0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bqn-gpu-observatory",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-21",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./public",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bqn-gpu-results",
+      "database_id": "76807205-e470-4a26-a2dd-92de4626d2db",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "secrets": {
+    "required": ["BENCHMARK_INGEST_TOKEN"]
+  }
+}
