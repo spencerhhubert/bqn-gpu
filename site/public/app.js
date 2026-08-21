@@ -1,4 +1,9 @@
-const BACKEND_COLORS = { tinygrad: "#2563eb", torch: "#d97706", cbqn: "#475569" };
+const BQN_GPU_BACKEND = "bqn-gpu-tinygrad";
+const REFERENCE_BACKENDS = [
+  { backend: "cbqn", label: "cBQN", color: "#475569" },
+  { backend: "native-tinygrad", label: "native tinygrad", color: "#16a34a" },
+  { backend: "native-torch", label: "native Torch", color: "#d97706" },
+];
 const PRIMITIVE_GLYPHS = new Set(Array.from("+-×÷|⌊⌈⋆√¬∧∨<≤=≥>≠≡≢⊣⊢⥊∾≍⋈↑↓↕⌽⍉/⍋⍒⊏⊑⊐⊒∊⍷⊔!˙˜˘¨⌜⁼´˝`"));
 const state = { summary: null, runs: [], performance: [], capability: [], programs: [], selectedProgram: null };
 
@@ -110,19 +115,18 @@ function renderContext(rows) {
   }
   const sizeCount = unique(rows.map((row) => row.input_size)).length;
   const hardware = hardwareName(latest);
-  $("#page-context").textContent = `${shortCommit(latest.project_commit)} · ${formatDate(latest.started_at)} · ${hardware} · ${sizeCount} input size${sizeCount === 1 ? "" : "s"}`;
+  const programCount = unique(rows.map((row) => row.program_id)).length;
+  $("#page-context").textContent = `${shortCommit(latest.project_commit)} · ${formatDate(latest.started_at)} · ${hardware} · ${programCount} programs · ${sizeCount} input size${sizeCount === 1 ? "" : "s"}`;
 }
 
 function renderMetrics(rows) {
-  const tinyVsCbqn = pairedRatios(rows, "tinygrad", "cbqn");
-  const tinyVsTorch = pairedRatios(rows, "tinygrad", "torch");
+  const vsCbqn = pairedRatios(rows, BQN_GPU_BACKEND, "cbqn");
+  const vsNativeTinygrad = pairedRatios(rows, BQN_GPU_BACKEND, "native-tinygrad");
+  const vsNativeTorch = pairedRatios(rows, BQN_GPU_BACKEND, "native-torch");
   const correct = rows.filter((row) => Boolean(row.correct)).length;
-  const programs = unique(rows.map((row) => row.program_id));
-  const sizes = unique(rows.map((row) => row.input_size));
-  $("#metric-cbqn").textContent = formatSpeedup(median(tinyVsCbqn.map((item) => item.ratio)));
-  $("#metric-torch").textContent = formatSpeedup(median(tinyVsTorch.map((item) => item.ratio)));
-  $("#metric-programs").textContent = formatInteger(programs.length);
-  $("#metric-conditions").textContent = `${sizes.length} size${sizes.length === 1 ? "" : "s"} · ${unique(rows.map((row) => row.backend)).length} backends`;
+  $("#metric-cbqn").textContent = formatSpeedup(median(vsCbqn.map((item) => item.ratio)));
+  $("#metric-native-tinygrad").textContent = formatSpeedup(median(vsNativeTinygrad.map((item) => item.ratio)));
+  $("#metric-native-torch").textContent = formatSpeedup(median(vsNativeTorch.map((item) => item.ratio)));
   $("#metric-correct").textContent = rows.length ? `${formatPercent(correct / rows.length)}` : "—";
   $("#metric-correct-detail").textContent = `${formatInteger(correct)} of ${formatInteger(rows.length)} results`;
 }
@@ -136,10 +140,12 @@ function renderDistribution(rows) {
   const datasets = [];
   for (const condition of definitions) {
     const conditionRows = rows.filter((row) => condition.matches(programById(row.program_id), row));
-    for (const backend of ["tinygrad", "torch"]) {
-      const values = pairedRatios(conditionRows, backend, "cbqn").map((item) => item.ratio).filter((value) => value > 0);
+    for (const reference of REFERENCE_BACKENDS) {
+      const comparisons = pairedRatios(conditionRows, BQN_GPU_BACKEND, reference.backend);
+      const values = comparisons.map((item) => item.ratio).filter((value) => value > 0);
       if (!values.length) continue;
-      datasets.push({ condition: condition.label, backend, values, p10: quantile(values, .1), p25: quantile(values, .25), median: median(values), p75: quantile(values, .75), p90: quantile(values, .9) });
+      const devices = unique(comparisons.map((item) => resultDevice(item.reference)));
+      datasets.push({ condition: condition.label, reference: { ...reference, label: `${reference.label} on ${devices.join("/")}` }, values, p10: quantile(values, .1), p25: quantile(values, .25), median: median(values), p75: quantile(values, .75), p90: quantile(values, .9) });
     }
   }
   const empty = $("#distribution-empty");
@@ -148,8 +154,8 @@ function renderDistribution(rows) {
   if (!datasets.length) return;
 
   const width = 1000;
-  const left = 215;
-  const right = 940;
+  const left = 300;
+  const right = 925;
   const top = 58;
   const rowHeight = 28;
   const bottom = top + datasets.length * rowHeight + 20;
@@ -171,22 +177,22 @@ function renderDistribution(rows) {
     chart.append(label);
   }
   const heading = svg("text", { x: left, y: 18, class: "chart-label" });
-  heading.textContent = "slower than cBQN";
+  heading.textContent = "bqn-gpu slower";
   chart.append(heading);
   const rightHeading = svg("text", { x: right, y: 18, "text-anchor": "end", class: "chart-label" });
-  rightHeading.textContent = "faster than cBQN";
+  rightHeading.textContent = "bqn-gpu faster";
   chart.append(rightHeading);
 
   datasets.forEach((dataset, index) => {
     const y = top + index * rowHeight;
     const label = svg("text", { x: left - 14, y: y + 4, "text-anchor": "end", class: "chart-label" });
-    label.textContent = `${dataset.condition} · ${dataset.backend}`;
+    label.textContent = `${dataset.condition} · vs ${dataset.reference.label}`;
     chart.append(label);
-    chart.append(svg("line", { x1: x(dataset.p10), x2: x(dataset.p90), y1: y, y2: y, stroke: BACKEND_COLORS[dataset.backend], class: "distribution-range" }));
-    chart.append(svg("line", { x1: x(dataset.p25), x2: x(dataset.p75), y1: y, y2: y, stroke: BACKEND_COLORS[dataset.backend], class: "distribution-iqr" }));
-    const dot = svg("circle", { cx: x(dataset.median), cy: y, r: 5, fill: BACKEND_COLORS[dataset.backend], class: "distribution-median" });
+    chart.append(svg("line", { x1: x(dataset.p10), x2: x(dataset.p90), y1: y, y2: y, stroke: dataset.reference.color, class: "distribution-range" }));
+    chart.append(svg("line", { x1: x(dataset.p25), x2: x(dataset.p75), y1: y, y2: y, stroke: dataset.reference.color, class: "distribution-iqr" }));
+    const dot = svg("circle", { cx: x(dataset.median), cy: y, r: 5, fill: dataset.reference.color, class: "distribution-median" });
     const title = svg("title");
-    title.textContent = `${dataset.condition} · ${dataset.backend}\nn=${dataset.values.length}\np10 ${formatSpeedup(dataset.p10)} · median ${formatSpeedup(dataset.median)} · p90 ${formatSpeedup(dataset.p90)}`;
+    title.textContent = `${dataset.condition} · bqn-gpu vs ${dataset.reference.label}\nn=${dataset.values.length}\np10 ${formatSpeedup(dataset.p10)} · median ${formatSpeedup(dataset.median)} · p90 ${formatSpeedup(dataset.p90)}`;
     dot.append(title);
     chart.append(dot);
     const count = svg("text", { x: right + 12, y: y + 4, class: "chart-label" });
@@ -195,7 +201,7 @@ function renderDistribution(rows) {
 
     const row = document.createElement("tr");
     const wins = dataset.values.filter((value) => value > 1).length / dataset.values.length;
-    row.innerHTML = `<td class="py-2 pr-4 font-sans">${escapeHtml(dataset.condition)}</td><td class="py-2 pr-4">${escapeHtml(dataset.backend)}</td><td class="py-2 text-right">${dataset.values.length}</td><td class="py-2 text-right">${formatSpeedup(dataset.p10)}</td><td class="py-2 text-right font-semibold">${formatSpeedup(dataset.median)}</td><td class="py-2 text-right">${formatSpeedup(dataset.p90)}</td><td class="py-2 text-right">${formatPercent(wins)}</td>`;
+    row.innerHTML = `<td class="py-2 pr-4 font-sans">${escapeHtml(dataset.condition)}</td><td class="py-2 pr-4">${escapeHtml(dataset.reference.label)}</td><td class="py-2 text-right">${dataset.values.length}</td><td class="py-2 text-right">${formatSpeedup(dataset.p10)}</td><td class="py-2 text-right font-semibold">${formatSpeedup(dataset.median)}</td><td class="py-2 text-right">${formatSpeedup(dataset.p90)}</td><td class="py-2 text-right">${formatPercent(wins)}</td>`;
     table.append(row);
   });
 }
@@ -250,7 +256,7 @@ function renderAggregateTable(target, rows, definitions) {
     const subset = rows.filter((row) => definition.matches(programById(row.program_id), row));
     const stats = aggregateStats(subset);
     const row = document.createElement("tr");
-    row.innerHTML = `<td class="py-3 pr-3 font-sans font-medium">${escapeHtml(definition.label)}</td><td class="py-3 text-right">${formatInteger(stats.programs)}</td><td class="py-3 text-right">${formatNs(stats.cbqn)}</td><td class="py-3 text-right">${formatNs(stats.tinygrad)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsCbqn)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsTorch)}</td>`;
+    row.innerHTML = `<td class="py-3 pr-3 font-sans font-medium">${escapeHtml(definition.label)}</td><td class="py-3 text-right">${formatInteger(stats.programs)}</td><td class="py-3 text-right">${formatNs(stats.bqnGpu)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsCbqn)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsNativeTinygrad)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsNativeTorch)}</td>`;
     target.append(row);
   }
   if (!definitions.length) target.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500">No matching data.</td></tr>';
@@ -262,20 +268,22 @@ function renderWorkloadTable(target, rows, definitions) {
     const subset = rows.filter((row) => definition.matches(programById(row.program_id), row));
     const stats = aggregateStats(subset);
     const row = document.createElement("tr");
-    row.innerHTML = `<td class="py-3 pr-3 font-sans font-medium">${escapeHtml(definition.label)}</td><td class="py-3 text-right">${formatInteger(stats.programs)}</td><td class="py-3 text-right">${formatNs(stats.cbqn)}</td><td class="py-3 text-right">${formatNs(stats.tinygrad)}</td><td class="py-3 text-right">${formatNs(stats.torch)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsCbqn)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsTorch)}</td>`;
+    row.innerHTML = `<td class="py-3 pr-3 font-sans font-medium">${escapeHtml(definition.label)}</td><td class="py-3 text-right">${formatInteger(stats.programs)}</td><td class="py-3 text-right">${formatNs(stats.cbqn)}</td><td class="py-3 text-right">${formatNs(stats.bqnGpu)}</td><td class="py-3 text-right">${formatNs(stats.nativeTinygrad)}</td><td class="py-3 text-right">${formatNs(stats.nativeTorch)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsCbqn)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsNativeTinygrad)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsNativeTorch)}</td>`;
     target.append(row);
   }
 }
 
 function aggregateStats(rows) {
-  const time = (backend) => median(rows.filter((row) => row.backend === backend).map((row) => row.median_ns).filter(Number.isFinite));
+  const time = (backend) => median(rows.filter((row) => backendKey(row) === backend).map((row) => row.median_ns).filter(Number.isFinite));
   return {
     programs: unique(rows.map((row) => row.program_id)).length,
     cbqn: time("cbqn"),
-    tinygrad: time("tinygrad"),
-    torch: time("torch"),
-    vsCbqn: median(pairedRatios(rows, "tinygrad", "cbqn").map((item) => item.ratio)),
-    vsTorch: median(pairedRatios(rows, "tinygrad", "torch").map((item) => item.ratio)),
+    bqnGpu: time(BQN_GPU_BACKEND),
+    nativeTinygrad: time("native-tinygrad"),
+    nativeTorch: time("native-torch"),
+    vsCbqn: median(pairedRatios(rows, BQN_GPU_BACKEND, "cbqn").map((item) => item.ratio)),
+    vsNativeTinygrad: median(pairedRatios(rows, BQN_GPU_BACKEND, "native-tinygrad").map((item) => item.ratio)),
+    vsNativeTorch: median(pairedRatios(rows, BQN_GPU_BACKEND, "native-torch").map((item) => item.ratio)),
   };
 }
 
@@ -284,7 +292,7 @@ function pairedRatios(rows, candidateBackend, referenceBackend) {
   for (const row of rows) {
     const key = [row.run_id, row.program_id, row.timing_scope, row.input_size, row.execution_mode === "unused" ? row.execution_mode : ""].join("\u0000");
     if (!groups.has(key)) groups.set(key, new Map());
-    groups.get(key).set(row.backend, row);
+    groups.get(key).set(backendKey(row), row);
   }
   const output = [];
   for (const backends of groups.values()) {
@@ -308,7 +316,7 @@ function renderCapability() {
     values.innerHTML = '<p class="col-span-2 text-sm text-slate-500">No capability snapshot.</p>';
     return;
   }
-  $("#capability-context").textContent = `${snapshot.backend} · ${shortCommit(snapshot.project_commit)} · ${formatInteger(snapshot.corpus_programs)} corpus programs`;
+  $("#capability-context").textContent = `${backendLabel(snapshot)} · ${shortCommit(snapshot.project_commit)} · ${formatInteger(snapshot.corpus_programs)} corpus programs`;
   const items = [
     ["Monadic forms", snapshot.monadic_supported],
     ["Dyadic forms", snapshot.dyadic_supported],
@@ -332,7 +340,7 @@ function renderMeasurementConditions(rows) {
     ["Accelerator", unique(rows.map((row) => row.accelerator_models).filter(Boolean)).join(", ") || "—"],
     ["Input sizes", unique(rows.map((row) => row.input_size).filter(Number.isFinite)).sort((a, b) => a - b).map(formatInteger).join(", ") || "—"],
     ["Timing", unique(rows.map((row) => row.timing_scope).filter(Boolean)).join(", ") || "—"],
-    ["Backends", unique(rows.map((row) => `${row.backend}${row.backend_version ? ` ${shortVersion(row.backend_version)}` : ""}`)).join(", ") || "—"],
+    ["Implementations", unique(rows.map((row) => `${backendLabel(row)} on ${resultDevice(row)}${row.backend_version ? ` (${shortVersion(row.backend_version)})` : ""}`)).join("; ") || "—"],
     ["Dtype", first?.dtype ?? "—"],
   ];
   for (const [label, value] of conditions) {
@@ -375,7 +383,7 @@ async function openRun(id) {
       <h3 class="mt-6 text-sm font-semibold">Command</h3><pre class="mt-2 overflow-x-auto rounded-md bg-slate-950 p-4 font-mono text-xs leading-5 text-slate-100">${escapeHtml(run.command ?? "—")}</pre>
       <h3 class="mt-6 text-sm font-semibold">Machine</h3><dl class="mt-2 grid gap-3 rounded-md border border-slate-200 p-4 text-sm sm:grid-cols-2">${detailTerm("CPU", profile.cpu?.model ?? "—")}${detailTerm("Accelerator", accelerators)}${detailTerm("OS / kernel", `${profile.operating_system ?? "—"} · ${profile.kernel ?? "—"}`)}${detailTerm("Software", software)}</dl>
       <div class="mt-6 flex items-center justify-between gap-3"><h3 class="text-sm font-semibold">Results (${formatInteger(bundle.results.length)})</h3><a class="text-sm text-blue-700 hover:underline" href="/api/v1/runs/${encodeURIComponent(id)}">Raw JSON ↗</a></div>
-      <div class="mt-2 max-h-96 overflow-auto rounded-md border border-slate-200"><table class="w-full text-left text-xs"><thead class="sticky top-0 border-b border-slate-200 bg-slate-50 text-slate-500"><tr><th class="px-3 py-2">Program</th><th class="px-3 py-2">Backend</th><th class="px-3 py-2 text-right">Median</th><th class="px-3 py-2 text-right">Min</th><th class="px-3 py-2 text-right">Max</th><th class="px-3 py-2">Correct</th></tr></thead><tbody class="divide-y divide-slate-100">${bundle.results.map((result) => `<tr><td class="px-3 py-2 font-mono">${escapeHtml(result.program_id)}</td><td class="px-3 py-2 font-mono">${escapeHtml(result.backend)}</td><td class="px-3 py-2 text-right font-mono">${formatNs(result.median_ns)}</td><td class="px-3 py-2 text-right font-mono">${formatNs(result.min_ns)}</td><td class="px-3 py-2 text-right font-mono">${formatNs(result.max_ns)}</td><td class="px-3 py-2">${result.correct ? "yes" : "no"}</td></tr>`).join("")}</tbody></table></div>`;
+      <div class="mt-2 max-h-96 overflow-auto rounded-md border border-slate-200"><table class="w-full text-left text-xs"><thead class="sticky top-0 border-b border-slate-200 bg-slate-50 text-slate-500"><tr><th class="px-3 py-2">Program</th><th class="px-3 py-2">Implementation</th><th class="px-3 py-2">Device</th><th class="px-3 py-2">Mode</th><th class="px-3 py-2 text-right">Median</th><th class="px-3 py-2">Correct</th></tr></thead><tbody class="divide-y divide-slate-100">${bundle.results.map((result) => `<tr><td class="px-3 py-2 font-mono">${escapeHtml(result.program_id)}</td><td class="px-3 py-2 font-mono">${escapeHtml(backendLabel(result))}</td><td class="px-3 py-2 font-mono font-semibold">${escapeHtml(resultDevice(result))}</td><td class="px-3 py-2 font-mono">${escapeHtml(result.execution_mode)}</td><td class="px-3 py-2 text-right font-mono">${formatNs(result.median_ns)}</td><td class="px-3 py-2">${result.correct ? "yes" : "no"}</td></tr>`).join("")}</tbody></table></div>`;
   } catch (error) {
     console.error(error);
     body.innerHTML = '<p class="text-sm text-red-700">This run could not be loaded.</p>';
@@ -411,11 +419,16 @@ function renderProgramDetail(id) {
   if (!program) return;
   const rows = filteredRows().filter((row) => row.program_id === id).sort((a, b) => b.started_at.localeCompare(a.started_at) || a.backend.localeCompare(b.backend));
   const tagMarkup = tags(program).map((tag) => `<span class="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">${escapeHtml(tag)}</span>`).join("");
+  const nativeSources = program.metadata?.native_implementations ?? {};
+  const nativeSourceMarkup = nativeSources.tinygrad || nativeSources.torch
+    ? `<details class="mt-6 rounded-md border border-slate-200" open><summary class="cursor-pointer px-4 py-3 text-sm font-medium">Independent native comparison programs</summary><div class="grid gap-4 border-t border-slate-200 p-4"><div><p class="text-xs font-medium text-slate-500">Native tinygrad source</p><pre class="mt-2 overflow-x-auto rounded-md bg-slate-950 p-4 font-mono text-xs leading-5 text-slate-100">${escapeHtml(nativeSources.tinygrad ?? "—")}</pre></div><div><p class="text-xs font-medium text-slate-500">Native Torch source</p><pre class="mt-2 overflow-x-auto rounded-md bg-slate-950 p-4 font-mono text-xs leading-5 text-slate-100">${escapeHtml(nativeSources.torch ?? "—")}</pre></div></div></details>`
+    : '<p class="mt-6 text-sm text-slate-500">Native comparison sources were not stored with this older record.</p>';
   $("#program-detail").innerHTML = `
     <div class="flex flex-wrap items-start justify-between gap-3"><div><h3 class="break-all font-mono text-sm font-semibold">${escapeHtml(program.id)}</h3><p class="mt-1 text-xs text-slate-500">${escapeHtml(program.category)} · ${escapeHtml(program.variant ?? "unlabeled")} · ${primitiveCount(program.source)} static primitives · ${Array.from(program.source ?? "").length} source glyphs</p></div><div class="flex flex-wrap gap-1.5">${tagMarkup}</div></div>
     <h4 class="mt-6 text-xs font-medium uppercase tracking-wide text-slate-500">BQN source</h4><pre class="mt-2 overflow-x-auto rounded-md bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-100">${escapeHtml(program.source)}</pre>
     <h4 class="mt-6 text-xs font-medium uppercase tracking-wide text-slate-500">Measurements matching current filters</h4>
-    <div class="mt-2 overflow-x-auto"><table class="w-full text-left text-xs"><thead class="border-b border-slate-200 text-slate-500"><tr><th class="py-2">Backend</th><th class="py-2">Input</th><th class="py-2 text-right">Median</th><th class="py-2 text-right">Min</th><th class="py-2 text-right">Max</th><th class="py-2">Commit</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.length ? rows.map((row) => `<tr><td class="py-2 font-mono">${escapeHtml(row.backend)}</td><td class="py-2 font-mono">${formatInteger(row.input_size)}</td><td class="py-2 text-right font-mono">${formatNs(row.median_ns)}</td><td class="py-2 text-right font-mono">${formatNs(row.min_ns)}</td><td class="py-2 text-right font-mono">${formatNs(row.max_ns)}</td><td class="py-2 font-mono">${shortCommit(row.project_commit)}</td></tr>`).join("") : '<tr><td colspan="6" class="py-6 text-center text-slate-500">No measurements match the current filters.</td></tr>'}</tbody></table></div>
+    <div class="mt-2 overflow-x-auto"><table class="w-full text-left text-xs"><thead class="border-b border-slate-200 text-slate-500"><tr><th class="py-2 pr-4">Implementation</th><th class="py-2 pr-4">Device</th><th class="py-2 pr-4">Mode</th><th class="py-2 pr-4">Input</th><th class="py-2 pr-4 text-right">Median</th><th class="py-2">Commit</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.length ? rows.map((row) => `<tr><td class="py-2 pr-4 font-mono">${escapeHtml(backendLabel(row))}</td><td class="py-2 pr-4 font-mono font-semibold">${escapeHtml(resultDevice(row))}</td><td class="py-2 pr-4 font-mono">${escapeHtml(row.execution_mode)}</td><td class="py-2 pr-4 font-mono">${formatInteger(row.input_size)}</td><td class="py-2 pr-4 text-right font-mono">${formatNs(row.median_ns)}</td><td class="py-2 font-mono">${shortCommit(row.project_commit)}</td></tr>`).join("") : '<tr><td colspan="6" class="py-6 text-center text-slate-500">No measurements match the current filters.</td></tr>'}</tbody></table></div>
+    ${nativeSourceMarkup}
     <details class="mt-6 rounded-md border border-slate-200"><summary class="cursor-pointer px-4 py-3 text-sm font-medium">Input generator and comparison policy</summary><div class="grid gap-4 border-t border-slate-200 p-4 lg:grid-cols-2"><div><p class="text-xs text-slate-500">Input generator</p><pre class="mt-2 overflow-x-auto text-xs leading-5">${escapeHtml(JSON.stringify(program.input_generator ?? {}, null, 2))}</pre></div><div><p class="text-xs text-slate-500">Comparison policy</p><pre class="mt-2 overflow-x-auto text-xs leading-5">${escapeHtml(JSON.stringify(program.comparison_policy ?? {}, null, 2))}</pre></div></div></details>`;
 }
 
@@ -423,6 +436,22 @@ function programById(id) { return state.programs.find((program) => program.id ==
 function tags(program) { return Array.isArray(program?.tags) ? program.tags : []; }
 function primitiveCount(source) { return Array.from(source ?? "").filter((glyph) => PRIMITIVE_GLYPHS.has(glyph)).length; }
 function hardwareName(row) { return row.accelerator_models || row.cpu_model || "unlabeled machine"; }
+function backendKey(row) {
+  if (row.backend === "tinygrad") return "bqn-gpu-tinygrad";
+  if (row.backend === "torch") return "bqn-gpu-torch";
+  return row.backend;
+}
+function backendLabel(row) {
+  const labels = {
+    cbqn: "cBQN reference",
+    "bqn-gpu-tinygrad": "bqn-gpu → tinygrad",
+    "bqn-gpu-torch": "bqn-gpu → Torch",
+    "native-tinygrad": "native tinygrad",
+    "native-torch": "native Torch",
+  };
+  return labels[backendKey(row)] ?? row.backend;
+}
+function resultDevice(row) { return row.metadata?.device ?? (backendKey(row) === "cbqn" ? "CPU" : row.device ?? "—"); }
 function unique(values) { return [...new Set(values)]; }
 function median(values) { return quantile(values, .5); }
 function quantile(values, q) {
@@ -439,7 +468,11 @@ function formatDate(value) { return new Intl.DateTimeFormat("en", { month: "shor
 function formatInteger(value) { return new Intl.NumberFormat("en-US").format(value ?? 0); }
 function formatCompact(value) { return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value); }
 function formatPercent(value) { return Number.isFinite(value) ? `${(value * 100).toFixed(value === 1 ? 0 : 1)}%` : "—"; }
-function formatSpeedup(value) { return Number.isFinite(value) ? `${value.toFixed(value >= 10 ? 1 : 2)}×` : "—"; }
+function formatSpeedup(value) {
+  if (!Number.isFinite(value)) return "—";
+  const digits = value < .01 ? 3 : value < 10 ? 2 : 1;
+  return `${value.toFixed(digits)}×`;
+}
 function formatNs(value) {
   if (!Number.isFinite(value)) return "—";
   if (value < 1e3) return `${Math.round(value)} ns`;

@@ -34,13 +34,36 @@ from bqn_gpu.errors import BQNGPUError  # noqa: E402
 from bqn_gpu.source import CompiledProgram, compile_bqn  # noqa: E402
 
 
+BACKEND_ALIASES = {
+    "tinygrad": "bqn-gpu-tinygrad",
+    "torch": "bqn-gpu-torch",
+}
+BACKENDS = (
+    "cbqn",
+    "bqn-gpu-tinygrad",
+    "bqn-gpu-torch",
+    "native-tinygrad",
+    "native-torch",
+    *BACKEND_ALIASES,
+)
+DEFAULT_BACKENDS = (
+    "cbqn",
+    "bqn-gpu-tinygrad",
+    "native-tinygrad",
+    "native-torch",
+)
+
+
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--backend",
         action="append",
-        choices=("cbqn", "tinygrad", "torch"),
-        help="backend to run; repeat for more than one (default: all available)",
+        choices=BACKENDS,
+        help=(
+            "implementation to run; repeat for more than one. "
+            "tinygrad/torch are deprecated aliases for bqn-gpu-tinygrad/bqn-gpu-torch"
+        ),
     )
     parser.add_argument("--device", default=os.environ.get("BQN_GPU_DEVICE", "CPU"))
     parser.add_argument("--size", type=int, default=262144)
@@ -71,9 +94,10 @@ def main() -> int:
     if not programs:
         raise SystemExit("no corpus programs matched")
 
-    requested = list(
-        dict.fromkeys(arguments.backend or ["cbqn", "tinygrad", "torch"])
-    )
+    requested = list(dict.fromkeys(
+        BACKEND_ALIASES.get(name, name)
+        for name in (arguments.backend or DEFAULT_BACKENDS)
+    ))
     # cBQN reserves JIT address space during initialization. It must initialize
     # before tensor runtimes allocate code mappings or start runtime workers.
     cbqn = CBQN(ROOT / ".build/cbqn/libcbqn.so")
@@ -99,11 +123,21 @@ def main() -> int:
                         arguments.repeat,
                         arguments.cbqn_timing_scope,
                     )
-                else:
+                elif name.startswith("bqn-gpu-"):
                     result = benchmark_backend(
                         name,
                         backends[name],
                         compiled,
+                        program,
+                        inputs,
+                        expected,
+                        arguments.warmup,
+                        arguments.repeat,
+                    )
+                else:
+                    result = benchmark_native(
+                        name,
+                        backends[name],
                         program,
                         inputs,
                         expected,
@@ -172,14 +206,22 @@ def load_backends(
         if name == "cbqn" or name in backends or name in skipped:
             continue
         try:
-            if name == "tinygrad":
+            if name == "bqn-gpu-tinygrad":
                 from bqn_gpu.tinygrad_backend import TinygradBackend
 
                 backends[name] = TinygradBackend(device)
-            elif name == "torch":
+            elif name == "bqn-gpu-torch":
                 from bqn_gpu.torch_backend import TorchBackend
 
                 backends[name] = TorchBackend(device)
+            elif name == "native-tinygrad":
+                from bqn_gpu.native_tinygrad import NativeTinygradRuntime
+
+                backends[name] = NativeTinygradRuntime(device)
+            elif name == "native-torch":
+                from bqn_gpu.native_torch import NativeTorchRuntime
+
+                backends[name] = NativeTorchRuntime(device)
         except (BQNGPUError, ImportError, RuntimeError) as error:
             skipped[name] = str(error)
     return backends, skipped
@@ -298,6 +340,41 @@ def benchmark_backend(
     return result
 
 
+def benchmark_native(
+    name: str,
+    runtime: Any,
+    program: Program,
+    inputs: dict[str, Any],
+    expected: Any,
+    warmup: int,
+    repeat: int,
+) -> dict[str, Any]:
+    """Benchmark a direct framework program that does not parse or lower BQN."""
+
+    device_inputs = {key: runtime.from_host(value) for key, value in inputs.items()}
+    executable = runtime.compile(program, device_inputs)
+
+    def run_once() -> tuple[Any, int]:
+        runtime.synchronize()
+        start = time.perf_counter_ns()
+        value = executable(device_inputs)
+        runtime.realize(value)
+        runtime.synchronize()
+        return value, time.perf_counter_ns() - start
+
+    actual, cold_ns = run_once()
+    assert_close(runtime.to_host(actual, atom=expected.atom), expected, program)
+    for _ in range(warmup):
+        run_once()
+    timings = [run_once()[1] for _ in range(repeat)]
+    result = timing_result(program, name, str(runtime.device).upper(), cold_ns, timings)
+    result["execution_mode"] = (
+        "native-jit-captured" if name == "native-tinygrad" else "native-eager"
+    )
+    result["timing_scope"] = "resident-compute"
+    return result
+
+
 def timing_result(
     program: Program,
     backend: str,
@@ -305,6 +382,11 @@ def timing_result(
     cold_ns: int,
     timings: list[int],
 ) -> dict[str, Any]:
+    identity = implementation_identity(backend)
+    native_source = {
+        "native-tinygrad": program.native_tinygrad,
+        "native-torch": program.native_torch,
+    }.get(backend)
     return {
         "program_id": program.id,
         "source_sha256": hashlib.sha256(program.bqn.encode("utf-8")).hexdigest(),
@@ -312,6 +394,7 @@ def timing_result(
         "variant": program.variant,
         "tags": list(program.tags),
         "backend": backend,
+        **identity,
         "device": device,
         "correct": True,
         "cold_ns": cold_ns,
@@ -319,16 +402,53 @@ def timing_result(
         "median_warm_ns": int(statistics.median(timings)),
         "min_warm_ns": min(timings),
         "max_warm_ns": max(timings),
+        "implementation_source_sha256": (
+            hashlib.sha256(native_source.encode("utf-8")).hexdigest()
+            if native_source is not None
+            else hashlib.sha256(program.bqn.encode("utf-8")).hexdigest()
+        ),
     }
 
 
 def backend_versions(backends: dict[str, Any]) -> dict[str, str]:
     versions = {"cbqn": (ROOT / "deps/cbqn.rev").read_text().strip()}
-    if "tinygrad" in backends:
-        versions["tinygrad"] = importlib.metadata.version("tinygrad")
-    if "torch" in backends:
-        versions["torch"] = importlib.metadata.version("torch")
+    for name in backends:
+        if "tinygrad" in name:
+            versions[name] = importlib.metadata.version("tinygrad")
+        elif "torch" in name:
+            versions[name] = importlib.metadata.version("torch")
     return versions
+
+
+def implementation_identity(backend: str) -> dict[str, str]:
+    identities = {
+        "cbqn": {
+            "language": "BQN",
+            "implementation_kind": "reference",
+            "framework": "cBQN",
+        },
+        "bqn-gpu-tinygrad": {
+            "language": "BQN",
+            "implementation_kind": "bqn-gpu",
+            "framework": "tinygrad",
+        },
+        "bqn-gpu-torch": {
+            "language": "BQN",
+            "implementation_kind": "bqn-gpu",
+            "framework": "PyTorch",
+        },
+        "native-tinygrad": {
+            "language": "Python",
+            "implementation_kind": "native-framework",
+            "framework": "tinygrad",
+        },
+        "native-torch": {
+            "language": "Python",
+            "implementation_kind": "native-framework",
+            "framework": "PyTorch",
+        },
+    }
+    return identities[backend]
 
 
 def repository_commit() -> str:

@@ -24,9 +24,12 @@ def test_tracked_corpus_is_current_and_grows_beyond_its_initial_floor() -> None:
     )
     raw = json.loads((ROOT / "corpus/programs.json").read_text(encoding="utf-8"))
     assert raw["policy"]["initial_floor"] == 100
+    assert raw["schema_version"] == 2
     assert "append durable cases" in raw["policy"]["growth"]
     assert len(PROGRAMS) >= 100
     assert len({program.id for program in PROGRAMS}) == len(PROGRAMS)
+    assert all(program.native_tinygrad.startswith("lambda") for program in PROGRAMS)
+    assert all(program.native_torch.startswith("lambda") for program in PROGRAMS)
 
 
 def test_corpus_has_glyph_phrase_pair_reduction_and_long_program_layers() -> None:

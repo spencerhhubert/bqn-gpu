@@ -10,6 +10,7 @@ from pathlib import Path
 import random
 
 from .host_value import HostValue
+from .ir import Expression
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,6 +24,9 @@ class Program:
     variant: str
     arity: int
     bqn: str
+    native_expression: Expression
+    native_tinygrad: str
+    native_torch: str
     input_mode: str
     domains: dict[str, str]
     rtol: float
@@ -32,7 +36,7 @@ class Program:
 
 def load_programs(path: Path = DEFAULT_MANIFEST) -> list[Program]:
     manifest = json.loads(path.read_text(encoding="utf-8"))
-    if manifest["schema_version"] != 1:
+    if manifest["schema_version"] != 2:
         raise ValueError(f"unsupported corpus schema {manifest['schema_version']}")
     return [
         Program(
@@ -41,6 +45,9 @@ def load_programs(path: Path = DEFAULT_MANIFEST) -> list[Program]:
             variant=item["variant"],
             arity=item["arity"],
             bqn=item["bqn"],
+            native_expression=dict(item["native"]["expression"]),
+            native_tinygrad=item["native"]["tinygrad"],
+            native_torch=item["native"]["torch"],
             input_mode=item["input_mode"],
             domains=dict(item["domains"]),
             rtol=float(item["rtol"]),

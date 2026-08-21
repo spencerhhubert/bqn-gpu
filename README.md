@@ -49,14 +49,15 @@ This is not yet a general BQN compiler. When the pinned cBQN shared library has 
 
 The tracked corpus currently contains 200 actual BQN programs and is explicitly designed to grow without a fixed cap. It includes primitive shape cases, phrases, naive/idiomatic pairs, reductions, and long pipelines. Every case is compiled through the BQN source frontend and compared as a complete value against pinned cBQN. See [docs/corpus.md](docs/corpus.md).
 
-Both tinygrad and PyTorch implement the same backend protocol. `scripts/run_corpus.py` correctness-checks and times selected BQN sources across cBQN, tinygrad, and Torch, on CPU or CUDA, and emits stable machine-readable JSON:
+The benchmark corpus keeps three independent forms of every workload: the actual BQN source, direct native tinygrad source, and direct native PyTorch source. The native sources are generated from the workload specification rather than parsed or lowered from BQN. `scripts/run_corpus.py` checks all results against cBQN and records four explicitly named implementations: cBQN on CPU, the custom BQN frontend/backend on tinygrad, direct tinygrad, and direct PyTorch. For example:
 
 ```sh
-python scripts/run_corpus.py --backend cbqn --backend tinygrad --backend torch \
+python scripts/run_corpus.py --backend cbqn \
+  --backend bqn-gpu-tinygrad --backend native-tinygrad --backend native-torch \
   --device CUDA --tag paired --size 1048576 --output results.json
 ```
 
-cBQN is always a CPU reference in this runner. By default, cBQN arguments and tensor inputs are both constructed before timing, so `resident-compute` rows compare the same execution boundary. `--cbqn-timing-scope boundary` separately measures cBQN's current `HostValue` embedding copies and marks those rows `host-value-boundary`; they must not be used for resident GPU speedup claims. tinygrad uses a reusable JIT-captured graph after two warmups; Torch currently uses eager dispatch. Every result records its timing scope, execution mode, cold time, raw warm repetitions, and aggregates. Required device synchronization is inside tensor timings, while host/device transfer is excluded.
+cBQN is always a CPU reference in this runner. By default, cBQN arguments and tensor inputs are both constructed before timing, so `resident-compute` rows compare the same execution boundary. `--cbqn-timing-scope boundary` separately measures cBQN's current `HostValue` embedding copies and marks those rows `host-value-boundary`; they must not be used for resident GPU speedup claims. The bqn-gpu and native tinygrad implementations use reusable JIT-captured graphs; native Torch uses ordinary eager PyTorch. Every result records language, implementation kind, framework, physical device, timing scope, execution mode, source hash, cold time, raw warm repetitions, and aggregates. Required device synchronization is inside tensor timings, while host/device transfer is excluded.
 
 Performance and capability history is published on the [bqn-gpu website](https://bqn-gpu-website.spencerhhubert.workers.dev) by the TypeScript Cloudflare Worker in [`site/`](site/). Its D1 schema keeps raw timings together with the tested commit, BQN source hashes, full input recipe, correctness result, and fingerprinted hardware/software environment. Tagged `site-v*` releases automatically deploy the dashboard and API; see [`site/README.md`](site/README.md) for the versioned ingestion contract and reproduction endpoints.
 

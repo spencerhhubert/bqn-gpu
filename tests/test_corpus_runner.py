@@ -18,7 +18,11 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
             "--backend",
             "cbqn",
             "--backend",
-            "tinygrad",
+            "bqn-gpu-tinygrad",
+            "--backend",
+            "native-tinygrad",
+            "--backend",
+            "native-torch",
             "--match",
             "glyph.add.dyadic_same",
             "--size",
@@ -38,7 +42,9 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     assert report["program_count"] == 1
     assert {result["backend"] for result in report["results"]} == {
         "cbqn",
-        "tinygrad",
+        "bqn-gpu-tinygrad",
+        "native-tinygrad",
+        "native-torch",
     }
     assert all(result["correct"] for result in report["results"])
     assert all(result["median_warm_ns"] > 0 for result in report["results"])
@@ -70,6 +76,9 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     assert payload["commit"]["sha"] == report["repository_commit"]
     assert payload["environment"]["fingerprint"] == report["environment"]["fingerprint"]
     assert len(payload["programs"]) == 1
-    assert len(payload["results"]) == 2
+    assert len(payload["results"]) == 4
     assert all(result["timing_scope"] == "resident-compute" for result in payload["results"])
     assert all(len(result["timings_ns"]) == 1 for result in payload["results"])
+    native = next(result for result in payload["results"] if result["backend"] == "native-torch")
+    assert native["metadata"]["implementation_kind"] == "native-framework"
+    assert payload["programs"][0]["metadata"]["native_implementations"]["torch"].startswith("lambda")

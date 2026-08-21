@@ -25,6 +25,7 @@ from bqn_gpu.ir import (  # noqa: E402
     monadic,
     render_bqn,
 )
+from bqn_gpu.native_sources import render_native_source  # noqa: E402
 
 
 DESTINATION = ROOT / "corpus" / "programs.json"
@@ -54,6 +55,15 @@ def make_programs() -> list[dict[str, Any]]:
                 "variant": variant,
                 "arity": arity,
                 "bqn": source or function_source(expression),
+                "native": {
+                    "expression": expression,
+                    "tinygrad": render_native_source(
+                        expression, "tinygrad", arity=arity, input_mode=input_mode
+                    ),
+                    "torch": render_native_source(
+                        expression, "torch", arity=arity, input_mode=input_mode
+                    ),
+                },
                 "input_mode": input_mode,
                 "domains": domains,
                 "rtol": rtol,
@@ -411,7 +421,7 @@ def render_manifest() -> str:
     programs = make_programs()
     categories = Counter(program["category"] for program in programs)
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "policy": {
             "growth": "append durable cases as bugs, optimizations, and workloads are discovered",
             "initial_floor": 100,

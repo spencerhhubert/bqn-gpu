@@ -202,7 +202,20 @@ def program_record(program: Program) -> dict[str, Any]:
             "absolute_tolerance": program.atol,
             "nan": "equal when both values are NaN",
         },
-        "metadata": {"arity": program.arity},
+        "metadata": {
+            "arity": program.arity,
+            "native_implementations": {
+                "tinygrad": program.native_tinygrad,
+                "torch": program.native_torch,
+            },
+            "native_expression_sha256": hashlib.sha256(
+                json.dumps(
+                    program.native_expression,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest(),
+        },
     }
 
 
@@ -228,6 +241,10 @@ def result_record(result: dict[str, Any], versions: dict[str, str]) -> dict[str,
             "tags": result["tags"],
             "device": result["device"],
             "source_sha256": result["source_sha256"],
+            "implementation_source_sha256": result.get("implementation_source_sha256"),
+            "language": result.get("language"),
+            "implementation_kind": result.get("implementation_kind"),
+            "framework": result.get("framework"),
         },
     }
 
