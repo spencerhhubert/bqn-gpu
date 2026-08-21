@@ -57,6 +57,8 @@ python scripts/run_corpus.py --backend cbqn \
   --device CUDA --tag paired --size 1048576 --output results.json
 ```
 
+For ordinary compiler iterations, `--profile development` runs a fixed two-size sentinel subset. `--profile certification` is its strict superset and is reserved for occasional tagged measurements. This keeps fast and long results directly comparable without spending most development time benchmarking.
+
 cBQN is always a CPU reference in this runner. By default, cBQN arguments and tensor inputs are both constructed before timing, so `resident-compute` rows compare the same execution boundary. `--cbqn-timing-scope boundary` separately measures cBQN's current `HostValue` embedding copies and marks those rows `host-value-boundary`; they must not be used for resident GPU speedup claims. The bqn-gpu and native tinygrad implementations use reusable JIT-captured graphs; native Torch uses ordinary eager PyTorch. Every result records language, implementation kind, framework, physical device, timing scope, execution mode, source hash, cold time, raw warm repetitions, and aggregates. Required device synchronization is inside tensor timings, while host/device transfer is excluded.
 
 Performance and capability history is published on the [bqn-gpu website](https://bqn-gpu-website.spencerhhubert.workers.dev) by the TypeScript Cloudflare Worker in [`site/`](site/). Its D1 schema keeps raw timings together with the tested commit, BQN source hashes, full input recipe, correctness result, and fingerprinted hardware/software environment. Tagged `site-v*` releases automatically deploy the dashboard and API; see [`site/README.md`](site/README.md) for the versioned ingestion contract and reproduction endpoints.

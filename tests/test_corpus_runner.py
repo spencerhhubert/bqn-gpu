@@ -82,3 +82,53 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     native = next(result for result in payload["results"] if result["backend"] == "native-torch")
     assert native["metadata"]["implementation_kind"] == "native-framework"
     assert payload["programs"][0]["metadata"]["native_implementations"]["torch"].startswith("lambda")
+
+
+def test_development_profile_is_a_multi_size_certification_subset(tmp_path) -> None:
+    manifest = json.loads(
+        (ROOT / "corpus/benchmark-profiles.json").read_text(encoding="utf-8")
+    )
+    programs = json.loads(
+        (ROOT / "corpus/programs.json").read_text(encoding="utf-8")
+    )["programs"]
+    program_ids = {program["id"] for program in programs}
+    development = manifest["profiles"]["development"]
+    certification = manifest["profiles"]["certification"]
+
+    assert set(development["program_ids"]) <= program_ids
+    assert certification["program_ids"] is None
+    assert set(development["sizes"]) <= set(certification["sizes"])
+
+    output = tmp_path / "profile-results.json"
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_corpus.py",
+            "--backend",
+            "cbqn",
+            "--backend",
+            "bqn-gpu-tinygrad",
+            "--profile",
+            "development",
+            "--match",
+            "glyph.add.dyadic_same",
+            "--size",
+            "7",
+            "--size",
+            "11",
+            "--warmup",
+            "0",
+            "--repeat",
+            "1",
+            "--output",
+            str(output),
+        ],
+        cwd=ROOT,
+        check=True,
+    )
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["benchmark_profile"] == "development"
+    assert report["sizes"] == [7, 11]
+    assert report["program_count"] == 1
+    assert len(report["results"]) == 4
+    assert {result["size"] for result in report["results"]} == {7, 11}

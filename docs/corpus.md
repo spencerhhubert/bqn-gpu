@@ -16,4 +16,13 @@ The correctness suite evaluates the original source with pinned cBQN, compiles i
 
 `scripts/run_corpus.py` selects by stable ID glob and tags, scales deterministic inputs, checks every requested implementation against cBQN, and records cold and repeated warm timings as JSON. Its unambiguous implementation names are `cbqn`, `bqn-gpu-tinygrad`, `bqn-gpu-torch`, `native-tinygrad`, and `native-torch`. The default comparison is cBQN CPU, bqn-gpu on tinygrad, direct tinygrad, and direct PyTorch. Tensor input transfer occurs before timing and output transfer after it. bqn-gpu/tinygrad and native tinygrad use reusable JIT-captured graphs; native PyTorch is eager. Each result records its language, implementation kind, framework, device, execution mode, and timing scope.
 
+`corpus/benchmark-profiles.json` aligns frequent and occasional measurements. The `development` profile is a fixed program-and-size subset of `certification`, so both measurements describe the same program IDs, deterministic seeds, input recipes, timing boundary, and backend identities at a commit. Development runs use fewer warmups and repetitions; certification adds the rest of the corpus and larger scale. Explicit `--size`, `--warmup`, or `--repeat` arguments override a profile for diagnosis while remaining recorded in the report.
+
+```sh
+python scripts/run_corpus.py --profile development --device CUDA \
+  --backend cbqn --backend bqn-gpu-tinygrad \
+  --backend native-tinygrad --backend native-torch \
+  --output development-results.json
+```
+
 Run `python scripts/generate_corpus.py --check` to verify the tracked manifest or omit `--check` to regenerate it. The generator enforces unique stable IDs and the initial floor; CI checks that the tracked file is current.

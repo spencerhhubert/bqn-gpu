@@ -20,6 +20,7 @@ from typing import Any, Iterable
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PROFILE_MANIFEST = ROOT / "corpus" / "benchmark-profiles.json"
 sys.path.insert(0, str(ROOT / "src"))
 
 from bqn_gpu.cbqn import CBQN  # noqa: E402
@@ -66,9 +67,18 @@ def parse_arguments() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--device", default=os.environ.get("BQN_GPU_DEVICE", "CPU"))
-    parser.add_argument("--size", type=int, default=262144)
-    parser.add_argument("--warmup", type=int, default=2)
-    parser.add_argument("--repeat", type=int, default=10)
+    parser.add_argument(
+        "--profile",
+        help="named profile from corpus/benchmark-profiles.json",
+    )
+    parser.add_argument(
+        "--size",
+        type=int,
+        action="append",
+        help="input scale; repeat for multiple sizes (overrides profile sizes)",
+    )
+    parser.add_argument("--warmup", type=int)
+    parser.add_argument("--repeat", type=int)
     parser.add_argument(
         "--cbqn-timing-scope",
         choices=("resident", "boundary"),
@@ -85,11 +95,27 @@ def parse_arguments() -> argparse.Namespace:
 def main() -> int:
     arguments = parse_arguments()
     started_at = datetime.now(timezone.utc)
-    if arguments.size < 1 or arguments.warmup < 0 or arguments.repeat < 1:
+    profile = resolve_profile(arguments.profile)
+    sizes = arguments.size or profile.get("sizes") or [262144]
+    arguments.warmup = (
+        arguments.warmup
+        if arguments.warmup is not None
+        else int(profile.get("warmup", 2))
+    )
+    arguments.repeat = (
+        arguments.repeat
+        if arguments.repeat is not None
+        else int(profile.get("repeat", 10))
+    )
+    if any(size < 1 for size in sizes) or arguments.warmup < 0 or arguments.repeat < 1:
         raise SystemExit("size and repeat must be positive; warmup must be non-negative")
 
     programs = select_programs(
-        load_programs(), arguments.match, arguments.tag or (), arguments.limit
+        load_programs(),
+        arguments.match,
+        arguments.tag or (),
+        arguments.limit,
+        profile.get("program_ids"),
     )
     if not programs:
         raise SystemExit("no corpus programs matched")
@@ -104,48 +130,55 @@ def main() -> int:
     backends, skipped = load_backends(requested, arguments.device)
     results: list[dict[str, Any]] = []
     try:
-        for index, program in enumerate(programs, 1):
-            print(f"[{index}/{len(programs)}] {program.id}", file=sys.stderr)
-            inputs = generate_inputs(program, size=arguments.size)
-            cbqn_arguments = source_arguments(program, inputs)
-            expected = cbqn.call(program.bqn, *cbqn_arguments)
-            compiled = compile_bqn(program.bqn)
-            for name in requested:
-                if name in skipped:
-                    continue
-                if name == "cbqn":
-                    result = benchmark_cbqn(
-                        cbqn,
-                        program,
-                        cbqn_arguments,
-                        expected,
-                        arguments.warmup,
-                        arguments.repeat,
-                        arguments.cbqn_timing_scope,
-                    )
-                elif name.startswith("bqn-gpu-"):
-                    result = benchmark_backend(
-                        name,
-                        backends[name],
-                        compiled,
-                        program,
-                        inputs,
-                        expected,
-                        arguments.warmup,
-                        arguments.repeat,
-                    )
-                else:
-                    result = benchmark_native(
-                        name,
-                        backends[name],
-                        program,
-                        inputs,
-                        expected,
-                        arguments.warmup,
-                        arguments.repeat,
-                    )
-                result["size"] = arguments.size
-                results.append(result)
+        measurement_count = len(programs) * len(sizes)
+        measurement_index = 0
+        for size in sizes:
+            for program in programs:
+                measurement_index += 1
+                print(
+                    f"[{measurement_index}/{measurement_count}] {program.id} size={size}",
+                    file=sys.stderr,
+                )
+                inputs = generate_inputs(program, size=size)
+                cbqn_arguments = source_arguments(program, inputs)
+                expected = cbqn.call(program.bqn, *cbqn_arguments)
+                compiled = compile_bqn(program.bqn)
+                for name in requested:
+                    if name in skipped:
+                        continue
+                    if name == "cbqn":
+                        result = benchmark_cbqn(
+                            cbqn,
+                            program,
+                            cbqn_arguments,
+                            expected,
+                            arguments.warmup,
+                            arguments.repeat,
+                            arguments.cbqn_timing_scope,
+                        )
+                    elif name.startswith("bqn-gpu-"):
+                        result = benchmark_backend(
+                            name,
+                            backends[name],
+                            compiled,
+                            program,
+                            inputs,
+                            expected,
+                            arguments.warmup,
+                            arguments.repeat,
+                        )
+                    else:
+                        result = benchmark_native(
+                            name,
+                            backends[name],
+                            program,
+                            inputs,
+                            expected,
+                            arguments.warmup,
+                            arguments.repeat,
+                        )
+                    result["size"] = size
+                    results.append(result)
     finally:
         cbqn.close()
 
@@ -164,6 +197,8 @@ def main() -> int:
             if arguments.cbqn_timing_scope == "resident"
             else "backend-specific"
         ),
+        "benchmark_profile": arguments.profile,
+        "sizes": sizes,
         "command": benchmark_command(arguments, requested),
         "warmup": arguments.warmup,
         "repeat": arguments.repeat,
@@ -185,16 +220,36 @@ def main() -> int:
 
 
 def select_programs(
-    programs: Iterable[Program], pattern: str, tags: Iterable[str], limit: int | None
+    programs: Iterable[Program],
+    pattern: str,
+    tags: Iterable[str],
+    limit: int | None,
+    identifiers: Iterable[str] | None = None,
 ) -> list[Program]:
     required_tags = set(tags)
+    required_identifiers = set(identifiers) if identifiers is not None else None
     selected = [
         program
         for program in programs
-        if fnmatch.fnmatchcase(program.id, pattern)
+        if (required_identifiers is None or program.id in required_identifiers)
+        and fnmatch.fnmatchcase(program.id, pattern)
         and required_tags.issubset(program.tags)
     ]
     return selected if limit is None else selected[:limit]
+
+
+def resolve_profile(name: str | None) -> dict[str, Any]:
+    if name is None:
+        return {}
+    manifest = json.loads(PROFILE_MANIFEST.read_text(encoding="utf-8"))
+    if manifest.get("schema_version") != 1:
+        raise SystemExit("unsupported benchmark profile schema")
+    try:
+        profile = manifest["profiles"][name]
+    except KeyError:
+        choices = ", ".join(sorted(manifest.get("profiles", {})))
+        raise SystemExit(f"unknown benchmark profile {name!r}; choose from: {choices}") from None
+    return dict(profile)
 
 
 def load_backends(
@@ -467,12 +522,13 @@ def benchmark_command(arguments: argparse.Namespace, backends: list[str]) -> lis
     command = ["python3", "scripts/run_corpus.py"]
     for backend in backends:
         command.extend(("--backend", backend))
+    command.extend(("--device", arguments.device))
+    if arguments.profile is not None:
+        command.extend(("--profile", arguments.profile))
+    for size in arguments.size or ():
+        command.extend(("--size", str(size)))
     command.extend(
         (
-            "--device",
-            arguments.device,
-            "--size",
-            str(arguments.size),
             "--warmup",
             str(arguments.warmup),
             "--repeat",

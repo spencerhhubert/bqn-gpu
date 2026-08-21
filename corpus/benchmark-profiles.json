@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "development": {
+      "description": "Fast, stable performance sentinels for ordinary compiler iterations.",
+      "program_ids": [
+        "glyph.add.dyadic_same",
+        "glyph.multiply.dyadic_same",
+        "phrase.unary_chain.001",
+        "phrase.masked_select.001",
+        "glyph.rank.monadic_matrix",
+        "glyph.range.natural_atom",
+        "pair.pipeline.01.naive",
+        "pair.pipeline.01.idiomatic",
+        "reduction.sum",
+        "reduction.sum_squares",
+        "reduction.dot",
+        "program.long_pipeline_reduce.01"
+      ],
+      "sizes": [16384, 262144],
+      "warmup": 1,
+      "repeat": 3
+    },
+    "certification": {
+      "description": "Occasional complete multi-size measurement for tagged capability and optimizer milestones.",
+      "program_ids": null,
+      "sizes": [1024, 16384, 262144, 1048576],
+      "warmup": 2,
+      "repeat": 10
+    }
+  },
+  "subset_invariants": [
+    {
+      "subset": "development",
+      "superset": "certification"
+    }
+  ]
+}
