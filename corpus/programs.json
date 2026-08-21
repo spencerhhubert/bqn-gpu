@@ -4,9 +4,9 @@
     "growth": "append durable cases as bugs, optimizations, and workloads are discovered",
     "initial_floor": 100,
     "categories": {
-      "glyph": 44,
+      "glyph": 84,
       "paired": 24,
-      "phrase": 30,
+      "phrase": 52,
       "program": 5,
       "reduction": 13
     }
@@ -875,6 +875,806 @@
       ]
     },
     {
+      "id": "glyph.power.dyadic_same",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨⋆𝕩)}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "positive",
+        "x": "signed"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "dyadic_same",
+        "glyph",
+        "power"
+      ]
+    },
+    {
+      "id": "glyph.power.left_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨⋆𝕩)}",
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "positive",
+        "x": "signed"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "left_atom",
+        "power"
+      ]
+    },
+    {
+      "id": "glyph.power.right_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨⋆𝕩)}",
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "positive",
+        "x": "signed"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "power",
+        "right_atom"
+      ]
+    },
+    {
+      "id": "glyph.power.leading_left",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨⋆𝕩)}",
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "positive",
+        "x": "signed"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_left",
+        "power"
+      ]
+    },
+    {
+      "id": "glyph.power.leading_right",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨⋆𝕩)}",
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "positive",
+        "x": "signed"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_right",
+        "power"
+      ]
+    },
+    {
+      "id": "glyph.root.dyadic_same",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨√𝕩)}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "positive",
+        "x": "positive"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "dyadic_same",
+        "glyph",
+        "root"
+      ]
+    },
+    {
+      "id": "glyph.root.left_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨√𝕩)}",
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "positive",
+        "x": "positive"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "left_atom",
+        "root"
+      ]
+    },
+    {
+      "id": "glyph.root.right_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨√𝕩)}",
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "positive",
+        "x": "positive"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "right_atom",
+        "root"
+      ]
+    },
+    {
+      "id": "glyph.root.leading_left",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨√𝕩)}",
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "positive",
+        "x": "positive"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_left",
+        "root"
+      ]
+    },
+    {
+      "id": "glyph.root.leading_right",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨√𝕩)}",
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "positive",
+        "x": "positive"
+      },
+      "rtol": 5e-14,
+      "atol": 5e-14,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_right",
+        "root"
+      ]
+    },
+    {
+      "id": "glyph.equal.dyadic_same",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨=𝕩)}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "dyadic_same",
+        "equal",
+        "glyph"
+      ]
+    },
+    {
+      "id": "glyph.equal.left_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨=𝕩)}",
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "equal",
+        "glyph",
+        "left_atom"
+      ]
+    },
+    {
+      "id": "glyph.equal.right_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨=𝕩)}",
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "equal",
+        "glyph",
+        "right_atom"
+      ]
+    },
+    {
+      "id": "glyph.equal.leading_left",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨=𝕩)}",
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "equal",
+        "glyph",
+        "leading_left"
+      ]
+    },
+    {
+      "id": "glyph.equal.leading_right",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨=𝕩)}",
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "equal",
+        "glyph",
+        "leading_right"
+      ]
+    },
+    {
+      "id": "glyph.not_equal.dyadic_same",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≠𝕩)}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "dyadic_same",
+        "glyph",
+        "not_equal"
+      ]
+    },
+    {
+      "id": "glyph.not_equal.left_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≠𝕩)}",
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "left_atom",
+        "not_equal"
+      ]
+    },
+    {
+      "id": "glyph.not_equal.right_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≠𝕩)}",
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "not_equal",
+        "right_atom"
+      ]
+    },
+    {
+      "id": "glyph.not_equal.leading_left",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≠𝕩)}",
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_left",
+        "not_equal"
+      ]
+    },
+    {
+      "id": "glyph.not_equal.leading_right",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≠𝕩)}",
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_right",
+        "not_equal"
+      ]
+    },
+    {
+      "id": "glyph.less.dyadic_same",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨<𝕩)}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "dyadic_same",
+        "glyph",
+        "less"
+      ]
+    },
+    {
+      "id": "glyph.less.left_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨<𝕩)}",
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "left_atom",
+        "less"
+      ]
+    },
+    {
+      "id": "glyph.less.right_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨<𝕩)}",
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "less",
+        "right_atom"
+      ]
+    },
+    {
+      "id": "glyph.less.leading_left",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨<𝕩)}",
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_left",
+        "less"
+      ]
+    },
+    {
+      "id": "glyph.less.leading_right",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨<𝕩)}",
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_right",
+        "less"
+      ]
+    },
+    {
+      "id": "glyph.greater.dyadic_same",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨>𝕩)}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "dyadic_same",
+        "glyph",
+        "greater"
+      ]
+    },
+    {
+      "id": "glyph.greater.left_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨>𝕩)}",
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "greater",
+        "left_atom"
+      ]
+    },
+    {
+      "id": "glyph.greater.right_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨>𝕩)}",
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "greater",
+        "right_atom"
+      ]
+    },
+    {
+      "id": "glyph.greater.leading_left",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨>𝕩)}",
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "greater",
+        "leading_left"
+      ]
+    },
+    {
+      "id": "glyph.greater.leading_right",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨>𝕩)}",
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "greater",
+        "leading_right"
+      ]
+    },
+    {
+      "id": "glyph.less_equal.dyadic_same",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≤𝕩)}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "dyadic_same",
+        "glyph",
+        "less_equal"
+      ]
+    },
+    {
+      "id": "glyph.less_equal.left_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≤𝕩)}",
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "left_atom",
+        "less_equal"
+      ]
+    },
+    {
+      "id": "glyph.less_equal.right_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≤𝕩)}",
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "less_equal",
+        "right_atom"
+      ]
+    },
+    {
+      "id": "glyph.less_equal.leading_left",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≤𝕩)}",
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_left",
+        "less_equal"
+      ]
+    },
+    {
+      "id": "glyph.less_equal.leading_right",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≤𝕩)}",
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "leading_right",
+        "less_equal"
+      ]
+    },
+    {
+      "id": "glyph.greater_equal.dyadic_same",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≥𝕩)}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "dyadic_same",
+        "glyph",
+        "greater_equal"
+      ]
+    },
+    {
+      "id": "glyph.greater_equal.left_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≥𝕩)}",
+      "input_mode": "left_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "greater_equal",
+        "left_atom"
+      ]
+    },
+    {
+      "id": "glyph.greater_equal.right_atom",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≥𝕩)}",
+      "input_mode": "right_atom",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "greater_equal",
+        "right_atom"
+      ]
+    },
+    {
+      "id": "glyph.greater_equal.leading_left",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≥𝕩)}",
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "greater_equal",
+        "leading_left"
+      ]
+    },
+    {
+      "id": "glyph.greater_equal.leading_right",
+      "category": "glyph",
+      "variant": "primitive",
+      "arity": 2,
+      "bqn": "{(𝕨≥𝕩)}",
+      "input_mode": "leading_right",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dyadic",
+        "glyph",
+        "greater_equal",
+        "leading_right"
+      ]
+    },
+    {
       "id": "phrase.unary_chain.001",
       "category": "phrase",
       "variant": "composed",
@@ -1451,6 +2251,444 @@
         "dyadic",
         "elementwise",
         "fusible",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.001",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨=𝕩)×𝕩)+(((𝕨=𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.002",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨≠𝕩)×𝕩)+(((𝕨≠𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.003",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨<𝕩)×𝕩)+(((𝕨<𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.004",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨>𝕩)×𝕩)+(((𝕨>𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.005",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨≤𝕩)×𝕩)+(((𝕨≤𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.006",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨≥𝕩)×𝕩)+(((𝕨≥𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.007",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨=𝕩)×𝕩)+(((𝕨=𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.008",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨≠𝕩)×𝕩)+(((𝕨≠𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.009",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨<𝕩)×𝕩)+(((𝕨<𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.masked_select.010",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 2,
+      "bqn": "{(((𝕨>𝕩)×𝕩)+(((𝕨>𝕩)=0)×𝕨))}",
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "dyadic",
+        "fusible",
+        "masked",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.compare_self.equal",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩=𝕩)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "equal",
+        "phrase",
+        "self"
+      ]
+    },
+    {
+      "id": "phrase.compare_zero.equal",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩=0)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "boundary",
+        "comparison",
+        "equal",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.compare_self.not_equal",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩≠𝕩)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "not_equal",
+        "phrase",
+        "self"
+      ]
+    },
+    {
+      "id": "phrase.compare_zero.not_equal",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩≠0)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "boundary",
+        "comparison",
+        "not_equal",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.compare_self.less",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩<𝕩)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "less",
+        "phrase",
+        "self"
+      ]
+    },
+    {
+      "id": "phrase.compare_zero.less",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩<0)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "boundary",
+        "comparison",
+        "less",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.compare_self.greater",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩>𝕩)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "greater",
+        "phrase",
+        "self"
+      ]
+    },
+    {
+      "id": "phrase.compare_zero.greater",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩>0)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "boundary",
+        "comparison",
+        "greater",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.compare_self.less_equal",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩≤𝕩)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "less_equal",
+        "phrase",
+        "self"
+      ]
+    },
+    {
+      "id": "phrase.compare_zero.less_equal",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩≤0)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "boundary",
+        "comparison",
+        "less_equal",
+        "phrase"
+      ]
+    },
+    {
+      "id": "phrase.compare_self.greater_equal",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩≥𝕩)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "comparison",
+        "greater_equal",
+        "phrase",
+        "self"
+      ]
+    },
+    {
+      "id": "phrase.compare_zero.greater_equal",
+      "category": "phrase",
+      "variant": "composed",
+      "arity": 1,
+      "bqn": "{(𝕩≥0)}",
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "boundary",
+        "comparison",
+        "greater_equal",
         "phrase"
       ]
     },

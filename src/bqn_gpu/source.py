@@ -13,7 +13,7 @@ from .ir import Expression, constant, dyadic, evaluate, fold, monadic
 from .protocol import ExecutionBackend, ValueT
 
 
-_GLYPHS = frozenset("+-×÷⋆√⌊⌈|")
+_GLYPHS = frozenset("+-×÷⋆√⌊⌈|=≠<>≤≥")
 _NUMBER = re.compile(
     r"¯?(?:∞|π|(?:\d+(?:\.\d+)?)(?:[eE]¯?\d+)?)"
 )

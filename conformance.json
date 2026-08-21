@@ -23,6 +23,7 @@
     "Nested arrays and characters are not supported.",
     "Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.",
     "Signed-zero preservation is not claimed, consistent with BQN portability guidance.",
+    "Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.",
     "The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead."
   ],
   "primitives": [
@@ -95,9 +96,9 @@
         "behavior": "Element-wise natural exponential."
       },
       "dyadic": {
-        "status": "unsupported",
-        "domain": "No dyadic domain is claimed yet.",
-        "behavior": "Rejected explicitly."
+        "status": "supported",
+        "domain": "Positive real base and real exponent satisfying BQN leading-axis agreement in the tested corpus.",
+        "behavior": "Element-wise Power with atom extension."
       },
       "tests": ["tests/test_corpus.py"]
     },
@@ -110,9 +111,9 @@
         "behavior": "Element-wise square root."
       },
       "dyadic": {
-        "status": "unsupported",
-        "domain": "No dyadic domain is claimed yet.",
-        "behavior": "Rejected explicitly."
+        "status": "supported",
+        "domain": "Positive real degree and radicand satisfying BQN leading-axis agreement in the tested corpus.",
+        "behavior": "Element-wise Root, raising the right argument to the reciprocal of the left."
       },
       "tests": ["tests/test_corpus.py"]
     },
@@ -158,6 +159,96 @@
         "status": "supported",
         "domain": "Nonzero real left argument and real right argument satisfying BQN leading-axis agreement.",
         "behavior": "BQN modulus, implemented as x minus w times floor(x divided by w)."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "=",
+      "name": "Rank / Equals",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "No monadic Rank domain is claimed yet.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise atomic equality, producing numeric zero or one."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "≠",
+      "name": "Length / Not Equals",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "No monadic Length domain is claimed yet.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise atomic inequality, producing numeric zero or one."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "<",
+      "name": "Enclose / Less Than",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "Nested results are outside the current value boundary.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise numeric less-than, producing numeric zero or one."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": ">",
+      "name": "Merge / Greater Than",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "No monadic Merge domain is claimed yet.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise numeric greater-than, producing numeric zero or one."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "≤",
+      "name": "Mark Firsts / Less Than or Equal",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "No monadic Mark Firsts domain is claimed yet.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise numeric less-than-or-equal, producing numeric zero or one."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "≥",
+      "name": "Occurrence Count / Greater Than or Equal",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "No monadic Occurrence Count domain is claimed yet.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise numeric greater-than-or-equal, producing numeric zero or one."
       },
       "tests": ["tests/test_corpus.py"]
     }

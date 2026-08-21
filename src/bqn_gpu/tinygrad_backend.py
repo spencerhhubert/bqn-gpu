@@ -111,12 +111,28 @@ class TinygradBackend:
             tensor = w_tensor * x_tensor
         elif glyph == "÷":
             tensor = w_tensor / x_tensor
+        elif glyph == "⋆":
+            tensor = w_tensor**x_tensor
+        elif glyph == "√":
+            tensor = x_tensor ** (1.0 / w_tensor)
         elif glyph == "|":
             tensor = x_tensor - w_tensor * (x_tensor / w_tensor).floor()
         elif glyph == "⌊":
             tensor = w_tensor.minimum(x_tensor)
         elif glyph == "⌈":
             tensor = w_tensor.maximum(x_tensor)
+        elif glyph == "=":
+            tensor = (w_tensor == x_tensor).cast(dtypes.float64)
+        elif glyph == "≠":
+            tensor = (w_tensor != x_tensor).cast(dtypes.float64)
+        elif glyph == "<":
+            tensor = (w_tensor < x_tensor).cast(dtypes.float64)
+        elif glyph == ">":
+            tensor = (w_tensor > x_tensor).cast(dtypes.float64)
+        elif glyph == "≤":
+            tensor = (w_tensor <= x_tensor).cast(dtypes.float64)
+        elif glyph == "≥":
+            tensor = (w_tensor >= x_tensor).cast(dtypes.float64)
         else:
             raise UnsupportedPrimitive(f"dyadic primitive {glyph!r} is not implemented")
         return TinygradValue(tensor=tensor, atom=w.atom and x.atom)

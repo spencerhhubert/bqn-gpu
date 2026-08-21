@@ -107,12 +107,28 @@ class TorchBackend:
             tensor = w_tensor * x_tensor
         elif glyph == "÷":
             tensor = w_tensor / x_tensor
+        elif glyph == "⋆":
+            tensor = torch.pow(w_tensor, x_tensor)
+        elif glyph == "√":
+            tensor = torch.pow(x_tensor, torch.reciprocal(w_tensor))
         elif glyph == "|":
             tensor = x_tensor - w_tensor * torch.floor(x_tensor / w_tensor)
         elif glyph == "⌊":
             tensor = torch.minimum(w_tensor, x_tensor)
         elif glyph == "⌈":
             tensor = torch.maximum(w_tensor, x_tensor)
+        elif glyph == "=":
+            tensor = torch.eq(w_tensor, x_tensor).to(torch.float64)
+        elif glyph == "≠":
+            tensor = torch.ne(w_tensor, x_tensor).to(torch.float64)
+        elif glyph == "<":
+            tensor = torch.lt(w_tensor, x_tensor).to(torch.float64)
+        elif glyph == ">":
+            tensor = torch.gt(w_tensor, x_tensor).to(torch.float64)
+        elif glyph == "≤":
+            tensor = torch.le(w_tensor, x_tensor).to(torch.float64)
+        elif glyph == "≥":
+            tensor = torch.ge(w_tensor, x_tensor).to(torch.float64)
         else:
             raise UnsupportedPrimitive(f"dyadic primitive {glyph!r} is not implemented")
         return TorchValue(tensor=tensor, atom=w.atom and x.atom)

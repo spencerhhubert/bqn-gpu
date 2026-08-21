@@ -14,11 +14,17 @@ Additional adapter: **PyTorch** `>=2.7`, using `float64` on `CPU`, `CUDA`; teste
 | `-` Negate / Subtract | supported | supported | `tests/test_corpus.py` |
 | `×` Sign / Multiply | supported | supported | `tests/test_corpus.py` |
 | `÷` Reciprocal / Divide | supported | supported | `tests/test_corpus.py` |
-| `⋆` Exponential / Power | supported | unsupported | `tests/test_corpus.py` |
-| `√` Square Root / Root | supported | unsupported | `tests/test_corpus.py` |
+| `⋆` Exponential / Power | supported | supported | `tests/test_corpus.py` |
+| `√` Square Root / Root | supported | supported | `tests/test_corpus.py` |
 | `⌊` Floor / Minimum | supported | supported | `tests/test_corpus.py` |
 | `⌈` Ceiling / Maximum | supported | supported | `tests/test_corpus.py` |
 | `|` Absolute Value / Modulus | supported | supported | `tests/test_corpus.py` |
+| `=` Rank / Equals | unsupported | supported | `tests/test_corpus.py` |
+| `≠` Length / Not Equals | unsupported | supported | `tests/test_corpus.py` |
+| `<` Enclose / Less Than | unsupported | supported | `tests/test_corpus.py` |
+| `>` Merge / Greater Than | unsupported | supported | `tests/test_corpus.py` |
+| `≤` Mark Firsts / Less Than or Equal | unsupported | supported | `tests/test_corpus.py` |
+| `≥` Occurrence Count / Greater Than or Equal | unsupported | supported | `tests/test_corpus.py` |
 
 ## `+` — Conjugate / Add
 
@@ -43,6 +49,7 @@ Element-wise addition with atom extension and explicit leading-axis agreement.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `-` — Negate / Subtract
@@ -68,6 +75,7 @@ Element-wise subtraction with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `×` — Sign / Multiply
@@ -93,6 +101,7 @@ Element-wise multiplication with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `÷` — Reciprocal / Divide
@@ -118,6 +127,7 @@ Element-wise division with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `⋆` — Exponential / Power
@@ -132,17 +142,18 @@ Element-wise natural exponential.
 
 ### Dyadic
 
-Status: **unsupported**
+Status: **supported**
 
-Domain: No dyadic domain is claimed yet.
+Domain: Positive real base and real exponent satisfying BQN leading-axis agreement in the tested corpus.
 
-Rejected explicitly.
+Element-wise Power with atom extension.
 
 ### Limitations
 
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `√` — Square Root / Root
@@ -157,17 +168,18 @@ Element-wise square root.
 
 ### Dyadic
 
-Status: **unsupported**
+Status: **supported**
 
-Domain: No dyadic domain is claimed yet.
+Domain: Positive real degree and radicand satisfying BQN leading-axis agreement in the tested corpus.
 
-Rejected explicitly.
+Element-wise Root, raising the right argument to the reciprocal of the left.
 
 ### Limitations
 
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `⌊` — Floor / Minimum
@@ -193,6 +205,7 @@ Element-wise minimum with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `⌈` — Ceiling / Maximum
@@ -218,6 +231,7 @@ Element-wise maximum with atom extension.
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## `|` — Absolute Value / Modulus
@@ -243,6 +257,163 @@ BQN modulus, implemented as x minus w times floor(x divided by w).
 - Nested arrays and characters are not supported.
 - Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
 - Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `=` — Rank / Equals
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: No monadic Rank domain is claimed yet.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real arguments satisfying BQN leading-axis agreement.
+
+Element-wise atomic equality, producing numeric zero or one.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `≠` — Length / Not Equals
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: No monadic Length domain is claimed yet.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real arguments satisfying BQN leading-axis agreement.
+
+Element-wise atomic inequality, producing numeric zero or one.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `<` — Enclose / Less Than
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: Nested results are outside the current value boundary.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real arguments satisfying BQN leading-axis agreement.
+
+Element-wise numeric less-than, producing numeric zero or one.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `>` — Merge / Greater Than
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: No monadic Merge domain is claimed yet.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real arguments satisfying BQN leading-axis agreement.
+
+Element-wise numeric greater-than, producing numeric zero or one.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `≤` — Mark Firsts / Less Than or Equal
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: No monadic Mark Firsts domain is claimed yet.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real arguments satisfying BQN leading-axis agreement.
+
+Element-wise numeric less-than-or-equal, producing numeric zero or one.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `≥` — Occurrence Count / Greater Than or Equal
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: No monadic Occurrence Count domain is claimed yet.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real arguments satisfying BQN leading-axis agreement.
+
+Element-wise numeric greater-than-or-equal, producing numeric zero or one.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
 ## Fold

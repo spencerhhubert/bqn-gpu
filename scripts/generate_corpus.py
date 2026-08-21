@@ -98,6 +98,14 @@ def make_programs() -> list[dict[str, Any]]:
         ("modulus", "|", "nonzero", "signed", 3e-15),
         ("minimum", "⌊", "signed", "signed", 0.0),
         ("maximum", "⌈", "signed", "signed", 0.0),
+        ("power", "⋆", "positive", "signed", 5e-14),
+        ("root", "√", "positive", "positive", 5e-14),
+        ("equal", "=", "signed", "signed", 0.0),
+        ("not_equal", "≠", "signed", "signed", 0.0),
+        ("less", "<", "signed", "signed", 0.0),
+        ("greater", ">", "signed", "signed", 0.0),
+        ("less_equal", "≤", "signed", "signed", 0.0),
+        ("greater_equal", "≥", "signed", "signed", 0.0),
     ]
     modes = ("dyadic_same", "left_atom", "right_atom", "leading_left", "leading_right")
     for name, glyph, w_domain, x_domain, tolerance in dyadic_glyphs:
@@ -184,6 +192,57 @@ def make_programs() -> list[dict[str, Any]]:
             ["phrase", "dyadic", "elementwise", "fusible"],
             rtol=3e-14,
             atol=3e-14,
+        )
+
+    comparisons = ("=", "≠", "<", ">", "≤", "≥")
+    for index in range(10):
+        comparison = dyadic(comparisons[index % len(comparisons)], w, x)
+        expression = dyadic(
+            "+",
+            dyadic("×", comparison, x),
+            dyadic("×", dyadic("=", comparison, constant(0)), w),
+        )
+        add(
+            f"phrase.masked_select.{index + 1:03d}",
+            "phrase",
+            "composed",
+            expression,
+            2,
+            "dyadic_same",
+            {"w": "signed", "x": "signed"},
+            ["phrase", "dyadic", "comparison", "masked", "fusible"],
+            rtol=0.0,
+            atol=0.0,
+        )
+
+    comparison_names = (
+        ("equal", "="),
+        ("not_equal", "≠"),
+        ("less", "<"),
+        ("greater", ">"),
+        ("less_equal", "≤"),
+        ("greater_equal", "≥"),
+    )
+    for name, glyph in comparison_names:
+        add(
+            f"phrase.compare_self.{name}",
+            "phrase",
+            "composed",
+            dyadic(glyph, x, x),
+            1,
+            "monadic_vector",
+            {"x": "signed"},
+            ["phrase", "comparison", "self", name],
+        )
+        add(
+            f"phrase.compare_zero.{name}",
+            "phrase",
+            "composed",
+            dyadic(glyph, x, constant(0)),
+            1,
+            "monadic_vector",
+            {"x": "signed"},
+            ["phrase", "comparison", "boundary", name],
         )
 
     def naive_source(steps: list[tuple[str, str, int | None]]) -> str:
