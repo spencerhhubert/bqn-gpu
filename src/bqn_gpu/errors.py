@@ -19,3 +19,7 @@ class DeviceError(BQNGPUError):
 
 class UnsupportedPrimitive(BQNGPUError):
     """The requested BQN primitive or valence is not implemented."""
+
+
+class SourceError(BQNGPUError):
+    """BQN source is invalid or outside the source frontend's current subset."""

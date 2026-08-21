@@ -4,12 +4,12 @@
 
 The project separates BQN semantics from device execution:
 
-1. A frontend or caller identifies a BQN primitive and valence.
-2. A backend-specific value remains resident on its execution device.
-3. A semantic adapter validates the supported domain and translates BQN rules into backend operations.
-4. Differential tests invoke the same primitive through a pinned cBQN shared library and compare the complete value: atom/array kind, shape, and data.
+1. The source frontend accepts a `.bqn` file or BQN string and lowers the supported syntax to a small expression IR.
+2. The IR dispatches BQN primitives and Fold through a framework-independent backend protocol.
+3. A backend-specific value remains resident on its execution device while a semantic adapter validates domains and translates BQN rules.
+4. Differential tests evaluate the original BQN source through pinned cBQN and compare the complete value: atom/array kind, shape, and data.
 
-The current public API starts at step 1 with `TinygradBackend.call`. It does not yet parse arbitrary BQN source or replace cBQN's own primitive dispatch.
+The CLI, `compile_bqn`, and `execute` start at step 1. `TinygradBackend.call` remains the lower-level adapter boundary. The source subset is documented precisely; this does not yet replace cBQN's own primitive dispatch.
 
 ## Value model
 
@@ -38,7 +38,7 @@ The semantic layer does not expose tinygrad UOps directly. A future raw CUDA bac
 ## Growth path
 
 1. Establish primitive semantics and conformance through tinygrad.
-2. Build the cross-language program corpus and a small composable IR.
+2. Build the actual-BQN program corpus, source frontend, and small composable IR.
 3. Expand the supported primitive surface and fuse naive compositions.
 4. Add correct cBQN fallback for unsupported domains.
 5. Add a cBQN integration point for transparent dispatch and persistent device values.

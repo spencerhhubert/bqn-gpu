@@ -1,38 +1,51 @@
 # bqn-gpu
 
-An experimental GPU backend for [BQN](https://mlochbaum.github.io/BQN/), developed against [cBQN](https://github.com/dzaima/CBQN) as the executable semantic oracle.
+An experimental GPU execution backend for [BQN](https://mlochbaum.github.io/BQN/), developed against [cBQN](https://github.com/dzaima/CBQN) as the executable semantic oracle.
 
-The first execution adapter uses [tinygrad](https://github.com/tinygrad/tinygrad). Its small, visible IR and code generator let this project establish BQN semantics now while retaining a short path to custom CUDA kernels and a raw CUDA backend later. tinygrad is an adapter, not the language specification.
+The first backend uses [tinygrad](https://github.com/tinygrad/tinygrad). Its lazy graph and small code generator let the project test BQN semantics and elementwise fusion now while retaining a short path to custom CUDA kernels and a raw CUDA backend later. tinygrad is an implementation adapter, not the language specification.
+
+## Run BQN
+
+The primary entry point accepts a `.bqn` file or a BQN source string. For example, save this as `sum-squares.bqn`:
+
+```bqn
+{
+  squares ← 𝕩 × 𝕩
+  +´ squares
+}
+```
+
+Then execute it with a JSON right argument:
+
+```sh
+bqn-gpu run sum-squares.bqn --device CUDA --x '[1,2,3,4]'
+# 30.0
+
+bqn-gpu eval '{𝕩+1}' --device CPU --x '[1,2,3]'
+# {"shape": [3], "data": [2.0, 3.0, 4.0]}
+```
+
+`--x` and `--w` accept inline JSON or `@path/to/input.json`. A JSON number is a BQN numeric atom. A rectangular nested list is a dense array. The explicit form `{"shape":[2,2],"data":[1,2,3,4]}` handles exact shapes, including rank-0 and empty arrays. Output is a JSON number for an atom or the explicit shape/data form for an array.
+
+The same path is available from Python:
+
+```python
+from bqn_gpu import HostValue, TinygradBackend, execute
+
+result = execute(
+    "{𝕩+1}",
+    TinygradBackend("CUDA"),
+    x=HostValue.from_array([1, 2, 3], (3,)),
+)
+```
 
 ## Current status
 
-The first end-to-end slice implements the BQN `+` primitive for real numeric atoms and dense arrays:
+The source frontend currently supports headerless function blocks, bare expressions, `𝕨`/`𝕩`, numeric constants, parentheses, BQN right-to-left evaluation, local `←` assignments, statement separators, comments, and Fold over a deliberately small primitive surface. Supported real-number primitives include monadic and dyadic `+ - × ÷ ⌊ ⌈ |`, monadic `⋆ √`, and Fold with `+ × ⌊ ⌈` on lists.
 
-- monadic `+` (Conjugate, currently identity for real numbers);
-- dyadic `+` (Add);
-- atom extension;
-- rank-0 arrays, kept distinct from atoms; and
-- BQN leading-axis agreement, translated explicitly to the tensor backend's trailing-axis broadcasting model.
+This is not yet a general BQN implementation. Unsupported syntax fails with its source location; automatic cBQN fallback is planned but not implemented. The exact claimed surface and limitations are generated in [docs/conformance.md](docs/conformance.md), and [docs/source-frontend.md](docs/source-frontend.md) describes the accepted source and data boundary.
 
-Values use `float64`, matching BQN's numeric model for this initial domain. Nested arrays, characters, arbitrary BQN source execution, automatic cBQN fallback, and transparent cBQN acceleration are not implemented yet. Unsupported primitives and invalid shape agreements fail explicitly.
-
-The precise tested surface is in [docs/conformance.md](docs/conformance.md).
-
-## Example
-
-```python
-from bqn_gpu import TinygradBackend
-
-backend = TinygradBackend("CUDA")
-w = backend.array([10, 20, 30], shape=(3,))
-x = backend.array([1, 2, 3, 4, 5, 6], shape=(3, 2))
-
-result = backend.call("+", w, x)
-print(result.to_host())
-# HostValue(atom=False, shape=(3, 2), data=(11.0, 12.0, 23.0, 24.0, 35.0, 36.0))
-```
-
-The rank-1 left argument is reshaped to `(3, 1)` before execution. This preserves BQN's leading-axis agreement instead of accepting the backend's usual trailing-axis interpretation.
+The tracked corpus starts at 115 actual BQN programs and is explicitly designed to grow without a fixed cap. It includes primitive shape cases, phrases, naive/idiomatic pairs, reductions, and long pipelines. Every case is compiled through the BQN source frontend and compared as a complete value against pinned cBQN. See [docs/corpus.md](docs/corpus.md).
 
 ## Development
 
@@ -44,7 +57,7 @@ python -m pip install -e '.[test]'
 make test
 ```
 
-`build_cbqn.sh` clones the cBQN revision pinned in `deps/cbqn.rev`, builds its shared embedding library, and places it under `.build/`. The differential tests use cBQN's public embedding API and never compare formatted text.
+`build_cbqn.sh` clones the revision in `deps/cbqn.rev`, builds its shared embedding library, and places it under `.build/`. Differential tests use cBQN's public embedding API and compare atom/array kind, shape, and numeric data rather than formatted text.
 
 To validate on a CUDA machine:
 
@@ -52,8 +65,6 @@ To validate on a CUDA machine:
 python scripts/validate_gpu.py --profile smoke
 ```
 
-This runs the cBQN differential suite on CUDA and writes a machine-readable validation manifest plus JUnit output under `.build/validation/`. GPU-tested releases will attach these results to the exact tagged commit along with the tested hardware and software configuration.
+This writes a machine-readable validation manifest and JUnit output under `.build/validation/`. GPU-tested releases can attach those results to the exact tagged commit with the tested hardware and software configuration.
 
-## Design
-
-See [docs/architecture.md](docs/architecture.md) for the value model, backend protocol, cBQN oracle, and path toward raw CUDA and transparent cBQN integration.
+See [docs/architecture.md](docs/architecture.md) for the value model, compiler boundary, backend protocol, cBQN oracle, and path toward raw CUDA and transparent cBQN integration.

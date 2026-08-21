@@ -25,6 +25,8 @@ jobs:
         run: ./scripts/build_cbqn.sh
       - name: Check generated conformance documentation
         run: python scripts/render_conformance.py --check
+      - name: Check generated program corpus
+        run: python scripts/generate_corpus.py --check
       - name: Differential tests on CPU
         env:
           BQN_GPU_TEST_DEVICE: CPU

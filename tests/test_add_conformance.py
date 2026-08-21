@@ -7,7 +7,7 @@ import random
 import pytest
 
 from bqn_gpu import HostValue, ShapeError, TinygradBackend, TinygradValue
-from cbqn_oracle import CBQNOracle
+from bqn_gpu.cbqn import CBQN
 
 
 def assert_matches(actual: TinygradValue, expected: HostValue) -> None:
@@ -23,7 +23,7 @@ def assert_matches(actual: TinygradValue, expected: HostValue) -> None:
 
 
 def oracle_call(
-    backend: TinygradBackend, cbqn: CBQNOracle, *arguments: HostValue
+    backend: TinygradBackend, cbqn: CBQN, *arguments: HostValue
 ) -> tuple[TinygradValue, HostValue]:
     device_values = tuple(backend.from_host(argument) for argument in arguments)
     actual = backend.call("+", *device_values)
@@ -57,7 +57,7 @@ def oracle_call(
 )
 def test_deterministic_cases_match_cbqn(
     backend: TinygradBackend,
-    cbqn: CBQNOracle,
+    cbqn: CBQN,
     arguments: tuple[HostValue, ...],
 ) -> None:
     actual, expected = oracle_call(backend, cbqn, *arguments)
@@ -74,7 +74,7 @@ def test_incompatible_shapes_are_rejected(backend: TinygradBackend) -> None:
 
 
 def test_seeded_random_cases_match_cbqn(
-    backend: TinygradBackend, cbqn: CBQNOracle
+    backend: TinygradBackend, cbqn: CBQN
 ) -> None:
     seed = int(os.environ.get("BQN_GPU_FUZZ_SEED", "20260821"))
     case_count = int(os.environ.get("BQN_GPU_FUZZ_CASES", "64"))

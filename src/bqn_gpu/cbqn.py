@@ -1,17 +1,17 @@
-"""Small ctypes wrapper around cBQN's public embedding interface."""
+"""ctypes wrapper around cBQN's public embedding interface."""
 
 from __future__ import annotations
 
 import ctypes
 from pathlib import Path
 
-from bqn_gpu import HostValue
+from .host_value import HostValue
 
 
 BQNV = ctypes.c_uint64
 
 
-class CBQNOracle:
+class CBQN:
     def __init__(self, library_path: Path) -> None:
         if not library_path.is_file():
             raise FileNotFoundError(
@@ -60,13 +60,13 @@ class CBQNOracle:
             self.library.bqn_free(function)
         self._functions.clear()
 
-    def call(self, glyph: str, *arguments: HostValue) -> HostValue:
+    def call(self, source: str, *arguments: HostValue) -> HostValue:
         if len(arguments) not in (1, 2):
-            raise ValueError("cBQN oracle wrapper supports monadic and dyadic calls")
-        function = self._functions.get(glyph)
+            raise ValueError("cBQN wrapper supports monadic and dyadic functions")
+        function = self._functions.get(source)
         if function is None:
-            function = int(self.library.bqn_evalCStr(glyph.encode("utf-8")))
-            self._functions[glyph] = function
+            function = int(self.library.bqn_evalCStr(source.encode("utf-8")))
+            self._functions[source] = function
 
         encoded = [self._make_value(value) for value in arguments]
         try:
@@ -85,15 +85,10 @@ class CBQNOracle:
     def _make_value(self, value: HostValue) -> int:
         if value.atom:
             return int(self.library.bqn_makeF64(value.data[0]))
-
         shape_buffer = (ctypes.c_size_t * max(1, len(value.shape)))(*value.shape)
         data_buffer = (ctypes.c_double * max(1, len(value.data)))(*value.data)
         return int(
-            self.library.bqn_makeF64Arr(
-                len(value.shape),
-                shape_buffer,
-                data_buffer,
-            )
+            self.library.bqn_makeF64Arr(len(value.shape), shape_buffer, data_buffer)
         )
 
     def _read_value(self, value: int) -> HostValue:
@@ -102,7 +97,6 @@ class CBQNOracle:
             return HostValue.from_atom(self.library.bqn_readF64(value))
         if value_type != 0:
             raise TypeError(f"expected cBQN numeric value, got •Type {value_type}")
-
         rank = int(self.library.bqn_rank(value))
         shape_buffer = (ctypes.c_size_t * max(1, rank))()
         self.library.bqn_shape(value, shape_buffer)

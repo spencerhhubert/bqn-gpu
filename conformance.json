@@ -10,6 +10,12 @@
     "dtype": "float64",
     "devices": ["CPU", "CUDA"]
   },
+  "common_limitations": [
+    "Nested arrays and characters are not supported.",
+    "Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.",
+    "Signed-zero preservation is not claimed, consistent with BQN portability guidance.",
+    "There is not yet a cBQN fallback for source outside the supported subset. It is rejected explicitly."
+  ],
   "primitives": [
     {
       "glyph": "+",
@@ -17,23 +23,192 @@
       "monadic": {
         "status": "supported",
         "domain": "Real numeric atoms and dense real numeric arrays of any rank and shape.",
-        "behavior": "Identity, matching current BQN Conjugate behavior for real numbers."
+        "behavior": "Identity for the current real-only domain."
       },
       "dyadic": {
         "status": "supported",
-        "domain": "Pairs of real numeric atoms or dense real numeric arrays whose shapes satisfy BQN leading-axis agreement.",
-        "behavior": "Element-wise float64 addition with atom extension and leading-axis agreement."
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise addition with atom extension and explicit leading-axis agreement."
       },
-      "tests": [
-        "tests/test_add_conformance.py",
-        "tests/test_tinygrad_backend.py"
-      ],
-      "limitations": [
-        "Nested arrays and characters are not supported.",
-        "Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.",
-        "Signed-zero preservation is not claimed, consistent with the BQN documentation's portability guidance.",
-        "This primitive API is not yet a parser for arbitrary BQN source and is not transparently installed into cBQN."
-      ]
+      "tests": ["tests/test_add_conformance.py", "tests/test_corpus.py"]
+    },
+    {
+      "glyph": "-",
+      "name": "Negate / Subtract",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Element-wise negation."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise subtraction with atom extension."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "×",
+      "name": "Sign / Multiply",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Element-wise sign."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise multiplication with atom extension."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "÷",
+      "name": "Reciprocal / Divide",
+      "monadic": {
+        "status": "supported",
+        "domain": "Nonzero real numeric atoms and dense arrays in the tested corpus.",
+        "behavior": "Element-wise reciprocal."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real numerator and nonzero real denominator satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise division with atom extension."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "⋆",
+      "name": "Exponential / Power",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Element-wise natural exponential."
+      },
+      "dyadic": {
+        "status": "unsupported",
+        "domain": "No dyadic domain is claimed yet.",
+        "behavior": "Rejected explicitly."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "√",
+      "name": "Square Root / Root",
+      "monadic": {
+        "status": "supported",
+        "domain": "Positive real numeric atoms and dense arrays in the tested corpus.",
+        "behavior": "Element-wise square root."
+      },
+      "dyadic": {
+        "status": "unsupported",
+        "domain": "No dyadic domain is claimed yet.",
+        "behavior": "Rejected explicitly."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "⌊",
+      "name": "Floor / Minimum",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Element-wise floor."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise minimum with atom extension."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "⌈",
+      "name": "Ceiling / Maximum",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Element-wise ceiling."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Element-wise maximum with atom extension."
+      },
+      "tests": ["tests/test_corpus.py"]
+    },
+    {
+      "glyph": "|",
+      "name": "Absolute Value / Modulus",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Element-wise absolute value."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Nonzero real left argument and real right argument satisfying BQN leading-axis agreement.",
+        "behavior": "BQN modulus, implemented as x minus w times floor(x divided by w)."
+      },
+      "tests": ["tests/test_corpus.py"]
     }
-  ]
+  ],
+  "folds": [
+    {
+      "glyph": "+",
+      "status": "supported",
+      "domain": "Nonempty real numeric lists; sum cases are differentially tested."
+    },
+    {
+      "glyph": "×",
+      "status": "supported",
+      "domain": "Nonempty real numeric lists."
+    },
+    {
+      "glyph": "⌊",
+      "status": "supported",
+      "domain": "Nonempty real numeric lists."
+    },
+    {
+      "glyph": "⌈",
+      "status": "supported",
+      "domain": "Nonempty real numeric lists."
+    }
+  ],
+  "source_frontend": {
+    "summary": "Both `.bqn` files and BQN strings compile to the same backend-neutral expression IR, then execute on the selected device backend.",
+    "constructs": [
+      {
+        "name": "Function blocks `{...}`",
+        "status": "supported",
+        "constraint": "Headerless blocks using `𝕨` and/or `𝕩`, or immediate numeric blocks."
+      },
+      {
+        "name": "Bare program bodies",
+        "status": "supported",
+        "constraint": "Accepted as a runner convenience with the same expression subset."
+      },
+      {
+        "name": "Right-to-left function application",
+        "status": "supported",
+        "constraint": "Supported primitives, numeric constants, arguments, names, and parentheses."
+      },
+      {
+        "name": "Local assignment `←`",
+        "status": "supported",
+        "constraint": "Subject-valued local names assigned in statement order."
+      },
+      {
+        "name": "Separators and comments",
+        "status": "supported",
+        "constraint": "Newline, `⋄`, comma, and `#` line comments."
+      },
+      {
+        "name": "General BQN syntax",
+        "status": "unsupported",
+        "constraint": "Arrays in source, trains, headers, modifiers other than Fold, namespaces, strings, nested values, and control flow are not compiled yet."
+      }
+    ],
+    "tests": ["tests/test_source_frontend.py", "tests/test_corpus.py"]
+  }
 }

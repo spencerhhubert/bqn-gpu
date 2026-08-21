@@ -64,23 +64,87 @@ class TinygradBackend:
         return TinygradValue(tensor=tensor, atom=value.atom)
 
     def call(self, glyph: str, *arguments: TinygradValue) -> TinygradValue:
-        if glyph != "+":
-            raise UnsupportedPrimitive(f"primitive {glyph!r} is not implemented")
         if len(arguments) == 1:
-            return self.conjugate(arguments[0])
+            return self._call_monadic(glyph, arguments[0])
         if len(arguments) == 2:
-            return self.add(arguments[0], arguments[1])
-        raise UnsupportedPrimitive(f"primitive '+' does not have valence {len(arguments)}")
+            return self._call_dyadic(glyph, arguments[0], arguments[1])
+        raise UnsupportedPrimitive(
+            f"primitive {glyph!r} does not have supported valence {len(arguments)}"
+        )
 
-    def conjugate(self, x: TinygradValue) -> TinygradValue:
+    def _call_monadic(self, glyph: str, x: TinygradValue) -> TinygradValue:
         self._check_device(x)
-        return TinygradValue(tensor=x.tensor, atom=x.atom)
+        if glyph == "+":
+            tensor = x.tensor
+        elif glyph == "-":
+            tensor = -x.tensor
+        elif glyph == "×":
+            tensor = x.tensor.sign()
+        elif glyph == "÷":
+            tensor = 1.0 / x.tensor
+        elif glyph == "⋆":
+            tensor = x.tensor.exp()
+        elif glyph == "√":
+            tensor = x.tensor.sqrt()
+        elif glyph == "⌊":
+            tensor = x.tensor.floor()
+        elif glyph == "⌈":
+            tensor = x.tensor.ceil()
+        elif glyph == "|":
+            tensor = x.tensor.abs()
+        else:
+            raise UnsupportedPrimitive(f"monadic primitive {glyph!r} is not implemented")
+        return TinygradValue(tensor=tensor, atom=x.atom)
 
-    def add(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+    def _call_dyadic(
+        self, glyph: str, w: TinygradValue, x: TinygradValue
+    ) -> TinygradValue:
         self._check_device(w)
         self._check_device(x)
         w_tensor, x_tensor = self._leading_axis_agreement(w, x)
-        return TinygradValue(tensor=w_tensor + x_tensor, atom=w.atom and x.atom)
+        if glyph == "+":
+            tensor = w_tensor + x_tensor
+        elif glyph == "-":
+            tensor = w_tensor - x_tensor
+        elif glyph == "×":
+            tensor = w_tensor * x_tensor
+        elif glyph == "÷":
+            tensor = w_tensor / x_tensor
+        elif glyph == "|":
+            tensor = x_tensor - w_tensor * (x_tensor / w_tensor).floor()
+        elif glyph == "⌊":
+            tensor = w_tensor.minimum(x_tensor)
+        elif glyph == "⌈":
+            tensor = w_tensor.maximum(x_tensor)
+        else:
+            raise UnsupportedPrimitive(f"dyadic primitive {glyph!r} is not implemented")
+        return TinygradValue(tensor=tensor, atom=w.atom and x.atom)
+
+    def conjugate(self, x: TinygradValue) -> TinygradValue:
+        return self._call_monadic("+", x)
+
+    def add(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
+        return self._call_dyadic("+", w, x)
+
+    def reduce(self, glyph: str, argument: TinygradValue) -> TinygradValue:
+        self._check_device(argument)
+        if argument.atom or len(argument.shape) != 1:
+            raise DomainError("BQN Fold is currently supported only for numeric lists")
+        if glyph == "+":
+            tensor = argument.tensor.sum()
+        elif glyph == "×":
+            tensor = argument.tensor.prod()
+        elif glyph == "⌊":
+            if argument.shape[0] == 0:
+                raise DomainError("Minimum Fold of an empty list has no supported fill")
+            tensor = argument.tensor.min()
+        elif glyph == "⌈":
+            if argument.shape[0] == 0:
+                raise DomainError("Maximum Fold of an empty list has no supported fill")
+            tensor = argument.tensor.max()
+        else:
+            raise UnsupportedPrimitive(f"Fold with {glyph!r} is not implemented")
+        return TinygradValue(tensor=tensor, atom=True)
 
     def _check_device(self, value: TinygradValue) -> None:
         if value.tensor.device != self.device:

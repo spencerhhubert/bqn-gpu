@@ -66,7 +66,42 @@ def render() -> str:
                 "",
             ]
         )
-        lines.extend(f"- {limitation}" for limitation in primitive["limitations"])
+        lines.extend(
+            f"- {limitation}"
+            for limitation in manifest.get("common_limitations", [])
+            + primitive.get("limitations", [])
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Fold",
+            "",
+            "| Function operand | Status | Domain |",
+            "|---|---|---|",
+        ]
+    )
+    for fold in manifest["folds"]:
+        lines.append(f"| `{fold['glyph']}´` | {fold['status']} | {fold['domain']} |")
+
+    source = manifest["source_frontend"]
+    lines.extend(
+        [
+            "",
+            "## BQN source frontend",
+            "",
+            source["summary"],
+            "",
+            "| Construct | Status | Constraint |",
+            "|---|---|---|",
+        ]
+    )
+    for construct in source["constructs"]:
+        lines.append(
+            f"| {construct['name']} | {construct['status']} | {construct['constraint']} |"
+        )
+    lines.extend(["", "Source frontend tests:", ""])
+    lines.extend(f"- `{test}`" for test in source["tests"])
 
     lines.extend(
         [

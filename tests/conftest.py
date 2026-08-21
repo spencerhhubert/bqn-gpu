@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from bqn_gpu import TinygradBackend
-from cbqn_oracle import CBQNOracle
+from bqn_gpu.cbqn import CBQN
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,8 +18,8 @@ def backend() -> TinygradBackend:
 
 
 @pytest.fixture(scope="session")
-def cbqn() -> CBQNOracle:
+def cbqn() -> CBQN:
     path = Path(os.environ.get("CBQN_LIB", ROOT / ".build/cbqn/libcbqn.so"))
-    oracle = CBQNOracle(path)
+    oracle = CBQN(path)
     yield oracle
     oracle.close()

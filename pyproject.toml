@@ -12,6 +12,9 @@ dependencies = [
   "tinygrad @ git+https://github.com/tinygrad/tinygrad.git@2d48fe8b7bd9acfa00e91a7f89b28b3ded370c27",
 ]
 
+[project.scripts]
+bqn-gpu = "bqn_gpu.cli:main"
+
 [project.optional-dependencies]
 test = [
   "pytest>=8",
