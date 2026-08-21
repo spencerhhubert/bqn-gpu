@@ -284,7 +284,14 @@ def capability_record(
                     "evidence": primitive.get("tests", []),
                 }
             )
-    fold_names = {"+": "sum", "×": "product", "⌊": "minimum", "⌈": "maximum"}
+    fold_names = {
+        "+": "sum",
+        "×": "product",
+        "∧": "and",
+        "∨": "or",
+        "⌊": "minimum",
+        "⌈": "maximum",
+    }
     supported_folds = 0
     for index, fold in enumerate(manifest["folds"]):
         if fold["status"] == "supported":
@@ -300,6 +307,24 @@ def capability_record(
                 "evidence": ["tests/test_corpus.py"],
             }
         )
+    modifier_counts = {"insert": 0, "scan": 0}
+    for section, modifier in (("inserts", "˝"), ("scans", "`")):
+        kind = section.removesuffix("s")
+        for index, entry in enumerate(manifest.get(section, [])):
+            if entry["status"] == "supported":
+                modifier_counts[kind] += 1
+            name = fold_names.get(entry["glyph"], entry["glyph"])
+            features.append(
+                {
+                    "id": f"{kind}.{name}",
+                    "glyph": f"{entry['glyph']}{modifier}",
+                    "name": f"{name} {kind.title()}",
+                    "valence": f"{kind}-modifier",
+                    "status": entry["status"],
+                    "domain": entry.get("domain"),
+                    "evidence": ["tests/test_dense_primitives.py"],
+                }
+            )
     return {
         "backend": manifest["backend"]["name"],
         "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
@@ -318,6 +343,8 @@ def capability_record(
             "validation_profile": validation.get("profile"),
             "validation_result": validation.get("result"),
             "validation_timestamp": validation.get("timestamp_utc"),
+            "inserts_supported": modifier_counts["insert"],
+            "scans_supported": modifier_counts["scan"],
         },
     }
 

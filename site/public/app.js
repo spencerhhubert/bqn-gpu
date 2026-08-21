@@ -317,10 +317,14 @@ function renderCapability() {
     return;
   }
   $("#capability-context").textContent = `${backendLabel(snapshot)} · ${shortCommit(snapshot.project_commit)} · ${formatInteger(snapshot.corpus_programs)} corpus programs`;
+  const insertCount = (snapshot.manifest?.inserts ?? []).filter((item) => item.status === "supported").length;
+  const scanCount = (snapshot.manifest?.scans ?? []).filter((item) => item.status === "supported").length;
   const items = [
     ["Monadic forms", snapshot.monadic_supported],
     ["Dyadic forms", snapshot.dyadic_supported],
-    ["Folds", snapshot.folds_supported],
+    ["Fold operands", snapshot.folds_supported],
+    ["Insert operands", insertCount],
+    ["Scan operands", scanCount],
     ["Tests", `${snapshot.tests_passed} passed`],
   ];
   for (const [label, value] of items) {
@@ -383,7 +387,7 @@ async function openRun(id) {
       <h3 class="mt-6 text-sm font-semibold">Command</h3><pre class="mt-2 overflow-x-auto rounded-md bg-slate-950 p-4 font-mono text-xs leading-5 text-slate-100">${escapeHtml(run.command ?? "—")}</pre>
       <h3 class="mt-6 text-sm font-semibold">Machine</h3><dl class="mt-2 grid gap-3 rounded-md border border-slate-200 p-4 text-sm sm:grid-cols-2">${detailTerm("CPU", profile.cpu?.model ?? "—")}${detailTerm("Accelerator", accelerators)}${detailTerm("OS / kernel", `${profile.operating_system ?? "—"} · ${profile.kernel ?? "—"}`)}${detailTerm("Software", software)}</dl>
       <div class="mt-6 flex items-center justify-between gap-3"><h3 class="text-sm font-semibold">Results (${formatInteger(bundle.results.length)})</h3><a class="text-sm text-blue-700 hover:underline" href="/api/v1/runs/${encodeURIComponent(id)}">Raw JSON ↗</a></div>
-      <div class="mt-2 max-h-96 overflow-auto rounded-md border border-slate-200"><table class="w-full text-left text-xs"><thead class="sticky top-0 border-b border-slate-200 bg-slate-50 text-slate-500"><tr><th class="px-3 py-2">Program</th><th class="px-3 py-2">Implementation</th><th class="px-3 py-2">Device</th><th class="px-3 py-2">Mode</th><th class="px-3 py-2 text-right">Median</th><th class="px-3 py-2">Correct</th></tr></thead><tbody class="divide-y divide-slate-100">${bundle.results.map((result) => `<tr><td class="px-3 py-2 font-mono">${escapeHtml(result.program_id)}</td><td class="px-3 py-2 font-mono">${escapeHtml(backendLabel(result))}</td><td class="px-3 py-2 font-mono font-semibold">${escapeHtml(resultDevice(result))}</td><td class="px-3 py-2 font-mono">${escapeHtml(result.execution_mode)}</td><td class="px-3 py-2 text-right font-mono">${formatNs(result.median_ns)}</td><td class="px-3 py-2">${result.correct ? "yes" : "no"}</td></tr>`).join("")}</tbody></table></div>`;
+      <div class="mt-2 max-h-96 overflow-auto rounded-md border border-slate-200"><table class="w-full text-left text-xs"><thead class="sticky top-0 border-b border-slate-200 bg-slate-50 text-slate-500"><tr><th class="px-3 py-2">Program</th><th class="px-3 py-2 text-right">Input</th><th class="px-3 py-2">Implementation</th><th class="px-3 py-2">Device</th><th class="px-3 py-2">Mode</th><th class="px-3 py-2 text-right">Median</th><th class="px-3 py-2">Correct</th></tr></thead><tbody class="divide-y divide-slate-100">${bundle.results.map((result) => `<tr><td class="px-3 py-2 font-mono">${escapeHtml(result.program_id)}</td><td class="px-3 py-2 text-right font-mono">${formatInteger(result.input_size)}</td><td class="px-3 py-2 font-mono">${escapeHtml(backendLabel(result))}</td><td class="px-3 py-2 font-mono font-semibold">${escapeHtml(resultDevice(result))}</td><td class="px-3 py-2 font-mono">${escapeHtml(result.execution_mode)}</td><td class="px-3 py-2 text-right font-mono">${formatNs(result.median_ns)}</td><td class="px-3 py-2">${result.correct ? "yes" : "no"}</td></tr>`).join("")}</tbody></table></div>`;
   } catch (error) {
     console.error(error);
     body.innerHTML = '<p class="text-sm text-red-700">This run could not be loaded.</p>';
