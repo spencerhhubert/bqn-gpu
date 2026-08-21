@@ -2,7 +2,7 @@
 
 ## Project intent
 
-This repository is private during early development but is intended to become public. Treat every tracked file, commit message, issue, test artifact, and piece of documentation as public material.
+This repository is public. Treat every tracked file, commit message, issue, test artifact, and piece of documentation as public material.
 
 Do not commit credentials, tokens, private URLs, machine-specific paths, internal infrastructure details, personal data, or anything else specific to a contributor's environment. Put local-only instructions in `AGENTS.local.md` and longer-lived local context in `agents-notes-local/`; both are intentionally ignored by Git.
 
