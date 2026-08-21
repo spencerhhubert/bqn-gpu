@@ -224,10 +224,10 @@
     },
     {
       "glyph": "≤",
-      "name": "Mark Firsts / Less Than or Equal",
+      "name": "Less Than or Equal",
       "monadic": {
         "status": "unsupported",
-        "domain": "No monadic Mark Firsts domain is claimed yet.",
+        "domain": "This glyph has no monadic primitive meaning.",
         "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
       },
       "dyadic": {
@@ -239,10 +239,10 @@
     },
     {
       "glyph": "≥",
-      "name": "Occurrence Count / Greater Than or Equal",
+      "name": "Greater Than or Equal",
       "monadic": {
         "status": "unsupported",
-        "domain": "No monadic Occurrence Count domain is claimed yet.",
+        "domain": "This glyph has no monadic primitive meaning.",
         "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
       },
       "dyadic": {
@@ -261,11 +261,356 @@
         "behavior": "Returns the shape as a numeric list; units produce an empty list."
       },
       "dyadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms or dense arrays; arguments may differ in kind, shape, or rank.",
+        "behavior": "Returns numeric one unless atom/array kind, shape, and every element match."
+      },
+      "tests": ["tests/test_corpus.py", "tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "≡",
+      "name": "Depth / Match",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and non-nested dense real arrays.",
+        "behavior": "Returns zero for an atom and one for a dense array."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms or dense arrays; arguments may differ in kind, shape, or rank.",
+        "behavior": "Returns numeric one exactly when atom/array kind, shape, and every element match."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "∧",
+      "name": "Sort Up / Logical And",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric lists.",
+        "behavior": "Sorts the list in ascending numeric order."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Computes BQN numeric logical And as multiplication."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "∨",
+      "name": "Sort Down / Logical Or",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric lists.",
+        "behavior": "Sorts the list in descending numeric order."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Computes BQN numeric logical Or as w+x-w×x."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "¬",
+      "name": "Not / Span",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Computes one minus the argument element-wise."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real arguments satisfying BQN leading-axis agreement.",
+        "behavior": "Computes one plus the left argument minus the right argument element-wise."
+      },
+      "tests": ["tests/test_dense_primitives.py", "tests/test_source_frontend.py"]
+    },
+    {
+      "glyph": "⊓",
+      "name": "Identity / Left",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Returns the argument without changing its kind or shape."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Any two values inside the dense-real boundary.",
+        "behavior": "Returns the left argument."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⊢",
+      "name": "Identity / Right",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Returns the argument without changing its kind or shape."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Any two values inside the dense-real boundary.",
+        "behavior": "Returns the right argument."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⥊",
+      "name": "Deshape / Reshape",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Returns a flat numeric list of the argument elements."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "A natural-number atom or list left argument and a dense right argument; a nonempty result requires a nonempty source.",
+        "behavior": "Cycles the ravel of the right argument into the requested dense shape."
+      },
+      "tests": ["tests/test_dense_primitives.py", "tests/test_source_frontend.py"]
+    },
+    {
+      "glyph": "∾",
+      "name": "Join / Join To",
+      "monadic": {
         "status": "unsupported",
-        "domain": "No dyadic Not Match domain is claimed yet.",
+        "domain": "General Join consumes nested cells, which are outside the current value boundary.",
         "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
       },
-      "tests": ["tests/test_corpus.py"]
+      "dyadic": {
+        "status": "supported",
+        "domain": "Dense real arguments with matching trailing cell shapes and ranks differing by no more than one.",
+        "behavior": "Joins the arguments along their leading axis, unitifying an argument when required."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "≍",
+      "name": "Solo / Couple",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms and dense arrays.",
+        "behavior": "Adds a leading unit axis."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Two dense-real values with the same atom/array kind and shape.",
+        "behavior": "Stacks the arguments along a new leading axis."
+      },
+      "tests": ["tests/test_dense_primitives.py", "tests/test_source_frontend.py"]
+    },
+    {
+      "glyph": "⋈",
+      "name": "Enlist / Pair",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric atoms only.",
+        "behavior": "Returns a one-element numeric list; general nested Enlist is outside the value boundary."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Two real numeric atoms only.",
+        "behavior": "Returns the two atoms as a numeric list; general nested Pair is outside the value boundary."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "↑",
+      "name": "Prefixes / Take",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "Prefixes generally produces nested results.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Whole-number atom/list counts over existing axes where no fill expansion is required.",
+        "behavior": "Takes leading or trailing cells along the specified axes."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "↓",
+      "name": "Suffixes / Drop",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "Suffixes generally produces nested results.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Whole-number atom/list counts over existing axes of a dense real value.",
+        "behavior": "Drops leading or trailing cells along the specified axes."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⌽",
+      "name": "Reverse / Rotate",
+      "monadic": {
+        "status": "supported",
+        "domain": "Dense real arrays with at least one axis.",
+        "behavior": "Reverses the leading axis."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Whole-number atom/list rotations naming no more axes than the dense right argument has.",
+        "behavior": "Rotates the named leading axes."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⍉",
+      "name": "Transpose / Reorder Axes",
+      "monadic": {
+        "status": "supported",
+        "domain": "Dense real numeric values.",
+        "behavior": "Moves the leading axis to the end; atoms become rank-zero arrays."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "A natural-number atom/list that completes to a permutation of the right argument axes.",
+        "behavior": "Reorders dense axes; diagonalizing repeated destinations is not yet supported."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "/",
+      "name": "Indices / Replicate",
+      "monadic": {
+        "status": "supported",
+        "domain": "Natural-number atoms or lists.",
+        "behavior": "Returns each index repeated by its corresponding count."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Natural-number atom/list counts agreeing with the leading axis of a dense right argument.",
+        "behavior": "Replicates major cells according to the counts."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⍋",
+      "name": "Grade Up / Bins Up",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric lists.",
+        "behavior": "Returns the ascending grade permutation."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "An ascending real numeric list left argument and dense real queries.",
+        "behavior": "Returns the ascending insertion bin for each query."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⍒",
+      "name": "Grade Down / Bins Down",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric lists.",
+        "behavior": "Returns the descending grade permutation."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "A descending real numeric list left argument and dense real queries.",
+        "behavior": "Returns the descending insertion bin for each query."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⊏",
+      "name": "First Cell / Select",
+      "monadic": {
+        "status": "supported",
+        "domain": "Nonempty dense real arrays with a leading axis.",
+        "behavior": "Returns the first major cell as an array."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "An in-bounds natural-number atom or list selecting the leading axis of a dense array.",
+        "behavior": "Selects major cells while preserving dense shape."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⊑",
+      "name": "First / Pick",
+      "monadic": {
+        "status": "supported",
+        "domain": "Nonempty dense real values.",
+        "behavior": "Returns the first element as a numeric atom."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "An in-bounds natural-number atom or coordinate list and a dense real array.",
+        "behavior": "Indexes successive axes; a full coordinate returns an atom."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⊐",
+      "name": "Classify / Index Of",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric lists.",
+        "behavior": "Returns the index of each element's first occurrence."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "A real numeric list principal argument and dense real queries.",
+        "behavior": "Returns each query's first index, or the principal length when absent."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⊒",
+      "name": "Occurrence Count / Progressive Index Of",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric lists.",
+        "behavior": "Counts earlier occurrences of each element."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "A real numeric list principal argument and dense real queries.",
+        "behavior": "Finds successive occurrences for repeated queries, returning the principal length when exhausted."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "∊",
+      "name": "Mark Firsts / Member Of",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric lists.",
+        "behavior": "Marks each element whose occurrence count is zero."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Dense real queries on the left and a real numeric list principal argument on the right.",
+        "behavior": "Returns numeric membership booleans with the shape of the left argument."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⍷",
+      "name": "Deduplicate / Find",
+      "monadic": {
+        "status": "supported",
+        "domain": "Real numeric lists.",
+        "behavior": "Keeps the first occurrence of each distinct value."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "Real numeric list pattern and searched list.",
+        "behavior": "Marks every complete occurrence of the left pattern in the right list."
+      },
+      "tests": ["tests/test_dense_primitives.py"]
     },
     {
       "glyph": "↕",
@@ -276,11 +621,11 @@
         "behavior": "Returns the float64 list of natural numbers below the argument. List Range, whose result is nested, is outside the current value boundary."
       },
       "dyadic": {
-        "status": "unsupported",
-        "domain": "No dyadic Windows domain is claimed yet.",
-        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+        "status": "supported",
+        "domain": "Positive natural-number atom/list window sizes naming no more axes than the dense right argument has, with at least one complete window.",
+        "behavior": "Returns the uniform dense array of sliding windows."
       },
-      "tests": ["tests/test_corpus.py"]
+      "tests": ["tests/test_corpus.py", "tests/test_dense_primitives.py"]
     }
   ],
   "folds": [
@@ -295,6 +640,16 @@
       "domain": "Nonempty real numeric lists."
     },
     {
+      "glyph": "∧",
+      "status": "supported",
+      "domain": "Nonempty real numeric lists."
+    },
+    {
+      "glyph": "∨",
+      "status": "supported",
+      "domain": "Nonempty real numeric lists."
+    },
+    {
       "glyph": "⌊",
       "status": "supported",
       "domain": "Nonempty real numeric lists."
@@ -303,6 +658,70 @@
       "glyph": "⌈",
       "status": "supported",
       "domain": "Nonempty real numeric lists."
+    }
+  ],
+  "inserts": [
+    {
+      "glyph": "+",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; reduction is over major cells."
+    },
+    {
+      "glyph": "×",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; reduction is over major cells."
+    },
+    {
+      "glyph": "∧",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; numeric logical And is reduced over major cells."
+    },
+    {
+      "glyph": "∨",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; numeric logical Or is reduced over major cells."
+    },
+    {
+      "glyph": "⌊",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; minimum is reduced over major cells."
+    },
+    {
+      "glyph": "⌈",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; maximum is reduced over major cells."
+    }
+  ],
+  "scans": [
+    {
+      "glyph": "+",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; inclusive scan is over major cells."
+    },
+    {
+      "glyph": "×",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; inclusive scan is over major cells."
+    },
+    {
+      "glyph": "∧",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; inclusive numeric logical-And scan is over major cells."
+    },
+    {
+      "glyph": "∨",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; inclusive numeric logical-Or scan is over major cells."
+    },
+    {
+      "glyph": "⌊",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; inclusive minimum scan is over major cells."
+    },
+    {
+      "glyph": "⌈",
+      "status": "supported",
+      "domain": "Dense real arrays with at least one axis; inclusive maximum scan is over major cells."
     }
   ],
   "source_frontend": {
@@ -334,11 +753,21 @@
         "constraint": "Newline, `⋄`, comma, and `#` line comments."
       },
       {
+        "name": "Numeric strands",
+        "status": "supported",
+        "constraint": "Literal numeric strands separated by `‿`, used for shapes, coordinates, counts, and axes."
+      },
+      {
+        "name": "Fold `´`, Insert `˝`, and Scan `` ` ``",
+        "status": "supported",
+        "constraint": "Prefix use with the supported dyadic function operands and no dyadic initial value."
+      },
+      {
         "name": "General BQN syntax",
         "status": "unsupported",
-        "constraint": "Arrays in source, trains, headers, modifiers other than Fold, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN."
+        "constraint": "General array notation, trains, headers, other modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN."
       }
     ],
-    "tests": ["tests/test_source_frontend.py", "tests/test_corpus.py"]
+    "tests": ["tests/test_source_frontend.py", "tests/test_dense_primitives.py", "tests/test_corpus.py"]
   }
 }

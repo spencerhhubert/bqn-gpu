@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+from typing import Any
+
 import pytest
 
 from bqn_gpu import HostValue, TinygradBackend, compile_bqn
@@ -9,6 +12,17 @@ from bqn_gpu.json_values import decode_host_value
 
 V = decode_host_value([3, 1, 2, 1])
 M = decode_host_value([[1, 2, 3], [4, 5, 6]])
+E = decode_host_value([])
+
+
+@pytest.fixture(scope="module", params=("tinygrad", "torch"))
+def dense_backend(request: pytest.FixtureRequest, cbqn: CBQN) -> Any:
+    if request.param == "tinygrad":
+        return TinygradBackend(os.environ.get("BQN_GPU_TEST_DEVICE", "CPU"))
+    pytest.importorskip("torch")
+    from bqn_gpu.torch_backend import TorchBackend
+
+    return TorchBackend(os.environ.get("BQN_GPU_TORCH_TEST_DEVICE", "CPU"))
 
 
 @pytest.mark.parametrize(
@@ -36,6 +50,23 @@ M = decode_host_value([[1, 2, 3], [4, 5, 6]])
         ("{⍷𝕩}", {"x": V}),
         ("{+˝𝕩}", {"x": M}),
         ("{+`𝕩}", {"x": M}),
+        ("{×´𝕩}", {"x": V}),
+        ("{∧´𝕩}", {"x": V}),
+        ("{∨´𝕩}", {"x": V}),
+        ("{⌊´𝕩}", {"x": V}),
+        ("{⌈´𝕩}", {"x": V}),
+        ("{×˝𝕩}", {"x": M}),
+        ("{∧˝𝕩}", {"x": M}),
+        ("{∨˝𝕩}", {"x": M}),
+        ("{⌊˝𝕩}", {"x": M}),
+        ("{⌈˝𝕩}", {"x": M}),
+        ("{×`𝕩}", {"x": M}),
+        ("{∧`𝕩}", {"x": M}),
+        ("{∨`𝕩}", {"x": M}),
+        ("{⌊`𝕩}", {"x": M}),
+        ("{⌈`𝕩}", {"x": M}),
+        ("{+˝𝕩}", {"x": E}),
+        ("{+`𝕩}", {"x": E}),
         ("{𝕨∧𝕩}", {"w": V, "x": decode_host_value([1, 0, 1, 0])}),
         ("{𝕨∨𝕩}", {"w": V, "x": decode_host_value([1, 0, 1, 0])}),
         ("{𝕨¬𝕩}", {"w": V, "x": decode_host_value([1, 0, 1, 0])}),
@@ -46,6 +77,8 @@ M = decode_host_value([[1, 2, 3], [4, 5, 6]])
         ("{2‿3⥊𝕩}", {"x": V}),
         ("{𝕩∾𝕩}", {"x": V}),
         ("{𝕩≍𝕩}", {"x": V}),
+        ("{⋈𝕩}", {"x": HostValue.from_atom(3)}),
+        ("{𝕩⋈2}", {"x": HostValue.from_atom(1)}),
         ("{2↑𝕩}", {"x": V}),
         ("{¯2↑𝕩}", {"x": V}),
         ("{2↓𝕩}", {"x": V}),
@@ -68,11 +101,11 @@ M = decode_host_value([[1, 2, 3], [4, 5, 6]])
 def test_dense_numeric_primitive_matches_cbqn(
     source: str,
     arguments: dict[str, HostValue],
-    backend: TinygradBackend,
+    dense_backend: Any,
     cbqn: CBQN,
 ) -> None:
     compiled = compile_bqn(source)
-    actual = compiled.execute(backend, **arguments)
+    actual = compiled.execute(dense_backend, **arguments)
     oracle_arguments = (
         (arguments["w"], arguments["x"])
         if compiled.arity == 2

@@ -86,17 +86,24 @@ def render() -> str:
             + primitive.get("limitations", [])
         )
 
-    lines.extend(
-        [
-            "",
-            "## Fold",
-            "",
-            "| Function operand | Status | Domain |",
-            "|---|---|---|",
-        ]
-    )
-    for fold in manifest["folds"]:
-        lines.append(f"| `{fold['glyph']}´` | {fold['status']} | {fold['domain']} |")
+    for title, key, modifier in (
+        ("Fold", "folds", "´"),
+        ("Insert", "inserts", "˝"),
+        ("Scan", "scans", "`"),
+    ):
+        lines.extend(
+            [
+                "",
+                f"## {title}",
+                "",
+                "| Function operand | Status | Domain |",
+                "|---|---|---|",
+            ]
+        )
+        for entry in manifest[key]:
+            lines.append(
+                f"| `{entry['glyph']}{modifier}` | {entry['status']} | {entry['domain']} |"
+            )
 
     source = manifest["source_frontend"]
     lines.extend(

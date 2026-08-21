@@ -255,7 +255,10 @@ class TorchBackend:
         if argument.atom or len(argument.shape) == 0:
             raise DomainError("Insert requires an array with at least one axis")
         tensor = self._reduce_tensor(glyph, argument.tensor, axis=0)
-        return TorchValue(tensor=tensor, atom=len(argument.shape) == 1)
+        return TorchValue(
+            tensor=tensor,
+            atom=len(argument.shape) == 1 and argument.shape[0] != 0,
+        )
 
     def scan(self, glyph: str, argument: TorchValue) -> TorchValue:
         self._check_device(argument)

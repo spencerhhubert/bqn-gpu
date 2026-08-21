@@ -23,10 +23,33 @@ Additional adapter: **PyTorch** `>=2.7`, using `float64` on `CPU`, `CUDA`; teste
 | `≠` Length / Not Equals | supported | supported | `tests/test_corpus.py` |
 | `<` Enclose / Less Than | unsupported | supported | `tests/test_corpus.py` |
 | `>` Merge / Greater Than | unsupported | supported | `tests/test_corpus.py` |
-| `≤` Mark Firsts / Less Than or Equal | unsupported | supported | `tests/test_corpus.py` |
-| `≥` Occurrence Count / Greater Than or Equal | unsupported | supported | `tests/test_corpus.py` |
-| `≢` Shape / Not Match | supported | unsupported | `tests/test_corpus.py` |
-| `↕` Range / Windows | supported | unsupported | `tests/test_corpus.py` |
+| `≤` Less Than or Equal | unsupported | supported | `tests/test_corpus.py` |
+| `≥` Greater Than or Equal | unsupported | supported | `tests/test_corpus.py` |
+| `≢` Shape / Not Match | supported | supported | `tests/test_corpus.py`<br>`tests/test_dense_primitives.py` |
+| `≡` Depth / Match | supported | supported | `tests/test_dense_primitives.py` |
+| `∧` Sort Up / Logical And | supported | supported | `tests/test_dense_primitives.py` |
+| `∨` Sort Down / Logical Or | supported | supported | `tests/test_dense_primitives.py` |
+| `¬` Not / Span | supported | supported | `tests/test_dense_primitives.py`<br>`tests/test_source_frontend.py` |
+| `⊓` Identity / Left | supported | supported | `tests/test_dense_primitives.py` |
+| `⊢` Identity / Right | supported | supported | `tests/test_dense_primitives.py` |
+| `⥊` Deshape / Reshape | supported | supported | `tests/test_dense_primitives.py`<br>`tests/test_source_frontend.py` |
+| `∾` Join / Join To | unsupported | supported | `tests/test_dense_primitives.py` |
+| `≍` Solo / Couple | supported | supported | `tests/test_dense_primitives.py`<br>`tests/test_source_frontend.py` |
+| `⋈` Enlist / Pair | supported | supported | `tests/test_dense_primitives.py` |
+| `↑` Prefixes / Take | unsupported | supported | `tests/test_dense_primitives.py` |
+| `↓` Suffixes / Drop | unsupported | supported | `tests/test_dense_primitives.py` |
+| `⌽` Reverse / Rotate | supported | supported | `tests/test_dense_primitives.py` |
+| `⍉` Transpose / Reorder Axes | supported | supported | `tests/test_dense_primitives.py` |
+| `/` Indices / Replicate | supported | supported | `tests/test_dense_primitives.py` |
+| `⍋` Grade Up / Bins Up | supported | supported | `tests/test_dense_primitives.py` |
+| `⍒` Grade Down / Bins Down | supported | supported | `tests/test_dense_primitives.py` |
+| `⊏` First Cell / Select | supported | supported | `tests/test_dense_primitives.py` |
+| `⊑` First / Pick | supported | supported | `tests/test_dense_primitives.py` |
+| `⊐` Classify / Index Of | supported | supported | `tests/test_dense_primitives.py` |
+| `⊒` Occurrence Count / Progressive Index Of | supported | supported | `tests/test_dense_primitives.py` |
+| `∊` Mark Firsts / Member Of | supported | supported | `tests/test_dense_primitives.py` |
+| `⍷` Deduplicate / Find | supported | supported | `tests/test_dense_primitives.py` |
+| `↕` Range / Windows | supported | supported | `tests/test_corpus.py`<br>`tests/test_dense_primitives.py` |
 
 ## `+` — Conjugate / Add
 
@@ -366,13 +389,13 @@ Element-wise numeric greater-than, producing numeric zero or one.
 - Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
-## `≤` — Mark Firsts / Less Than or Equal
+## `≤` — Less Than or Equal
 
 ### Monadic
 
 Status: **unsupported**
 
-Domain: No monadic Mark Firsts domain is claimed yet.
+Domain: This glyph has no monadic primitive meaning.
 
 Delegated to cBQN by the CLI or rejected in strict mode.
 
@@ -392,13 +415,13 @@ Element-wise numeric less-than-or-equal, producing numeric zero or one.
 - Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
-## `≥` — Occurrence Count / Greater Than or Equal
+## `≥` — Greater Than or Equal
 
 ### Monadic
 
 Status: **unsupported**
 
-Domain: No monadic Occurrence Count domain is claimed yet.
+Domain: This glyph has no monadic primitive meaning.
 
 Delegated to cBQN by the CLI or rejected in strict mode.
 
@@ -430,11 +453,609 @@ Returns the shape as a numeric list; units produce an empty list.
 
 ### Dyadic
 
+Status: **supported**
+
+Domain: Real numeric atoms or dense arrays; arguments may differ in kind, shape, or rank.
+
+Returns numeric one unless atom/array kind, shape, and every element match.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `≡` — Depth / Match
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric atoms and non-nested dense real arrays.
+
+Returns zero for an atom and one for a dense array.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real numeric atoms or dense arrays; arguments may differ in kind, shape, or rank.
+
+Returns numeric one exactly when atom/array kind, shape, and every element match.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `∧` — Sort Up / Logical And
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric lists.
+
+Sorts the list in ascending numeric order.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real arguments satisfying BQN leading-axis agreement.
+
+Computes BQN numeric logical And as multiplication.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `∨` — Sort Down / Logical Or
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric lists.
+
+Sorts the list in descending numeric order.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real arguments satisfying BQN leading-axis agreement.
+
+Computes BQN numeric logical Or as w+x-w×x.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `¬` — Not / Span
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric atoms and dense arrays.
+
+Computes one minus the argument element-wise.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real arguments satisfying BQN leading-axis agreement.
+
+Computes one plus the left argument minus the right argument element-wise.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⊓` — Identity / Left
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric atoms and dense arrays.
+
+Returns the argument without changing its kind or shape.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Any two values inside the dense-real boundary.
+
+Returns the left argument.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⊢` — Identity / Right
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric atoms and dense arrays.
+
+Returns the argument without changing its kind or shape.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Any two values inside the dense-real boundary.
+
+Returns the right argument.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⥊` — Deshape / Reshape
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric atoms and dense arrays.
+
+Returns a flat numeric list of the argument elements.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: A natural-number atom or list left argument and a dense right argument; a nonempty result requires a nonempty source.
+
+Cycles the ravel of the right argument into the requested dense shape.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `∾` — Join / Join To
+
+### Monadic
+
 Status: **unsupported**
 
-Domain: No dyadic Not Match domain is claimed yet.
+Domain: General Join consumes nested cells, which are outside the current value boundary.
 
 Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Dense real arguments with matching trailing cell shapes and ranks differing by no more than one.
+
+Joins the arguments along their leading axis, unitifying an argument when required.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `≍` — Solo / Couple
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric atoms and dense arrays.
+
+Adds a leading unit axis.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Two dense-real values with the same atom/array kind and shape.
+
+Stacks the arguments along a new leading axis.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⋈` — Enlist / Pair
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric atoms only.
+
+Returns a one-element numeric list; general nested Enlist is outside the value boundary.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Two real numeric atoms only.
+
+Returns the two atoms as a numeric list; general nested Pair is outside the value boundary.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `↑` — Prefixes / Take
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: Prefixes generally produces nested results.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Whole-number atom/list counts over existing axes where no fill expansion is required.
+
+Takes leading or trailing cells along the specified axes.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `↓` — Suffixes / Drop
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: Suffixes generally produces nested results.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Whole-number atom/list counts over existing axes of a dense real value.
+
+Drops leading or trailing cells along the specified axes.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⌽` — Reverse / Rotate
+
+### Monadic
+
+Status: **supported**
+
+Domain: Dense real arrays with at least one axis.
+
+Reverses the leading axis.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Whole-number atom/list rotations naming no more axes than the dense right argument has.
+
+Rotates the named leading axes.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⍉` — Transpose / Reorder Axes
+
+### Monadic
+
+Status: **supported**
+
+Domain: Dense real numeric values.
+
+Moves the leading axis to the end; atoms become rank-zero arrays.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: A natural-number atom/list that completes to a permutation of the right argument axes.
+
+Reorders dense axes; diagonalizing repeated destinations is not yet supported.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `/` — Indices / Replicate
+
+### Monadic
+
+Status: **supported**
+
+Domain: Natural-number atoms or lists.
+
+Returns each index repeated by its corresponding count.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Natural-number atom/list counts agreeing with the leading axis of a dense right argument.
+
+Replicates major cells according to the counts.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⍋` — Grade Up / Bins Up
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric lists.
+
+Returns the ascending grade permutation.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: An ascending real numeric list left argument and dense real queries.
+
+Returns the ascending insertion bin for each query.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⍒` — Grade Down / Bins Down
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric lists.
+
+Returns the descending grade permutation.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: A descending real numeric list left argument and dense real queries.
+
+Returns the descending insertion bin for each query.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⊏` — First Cell / Select
+
+### Monadic
+
+Status: **supported**
+
+Domain: Nonempty dense real arrays with a leading axis.
+
+Returns the first major cell as an array.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: An in-bounds natural-number atom or list selecting the leading axis of a dense array.
+
+Selects major cells while preserving dense shape.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⊑` — First / Pick
+
+### Monadic
+
+Status: **supported**
+
+Domain: Nonempty dense real values.
+
+Returns the first element as a numeric atom.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: An in-bounds natural-number atom or coordinate list and a dense real array.
+
+Indexes successive axes; a full coordinate returns an atom.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⊐` — Classify / Index Of
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric lists.
+
+Returns the index of each element's first occurrence.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: A real numeric list principal argument and dense real queries.
+
+Returns each query's first index, or the principal length when absent.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⊒` — Occurrence Count / Progressive Index Of
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric lists.
+
+Counts earlier occurrences of each element.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: A real numeric list principal argument and dense real queries.
+
+Finds successive occurrences for repeated queries, returning the principal length when exhausted.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `∊` — Mark Firsts / Member Of
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric lists.
+
+Marks each element whose occurrence count is zero.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Dense real queries on the left and a real numeric list principal argument on the right.
+
+Returns numeric membership booleans with the shape of the left argument.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⍷` — Deduplicate / Find
+
+### Monadic
+
+Status: **supported**
+
+Domain: Real numeric lists.
+
+Keeps the first occurrence of each distinct value.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: Real numeric list pattern and searched list.
+
+Marks every complete occurrence of the left pattern in the right list.
 
 ### Limitations
 
@@ -456,11 +1077,11 @@ Returns the float64 list of natural numbers below the argument. List Range, whos
 
 ### Dyadic
 
-Status: **unsupported**
+Status: **supported**
 
-Domain: No dyadic Windows domain is claimed yet.
+Domain: Positive natural-number atom/list window sizes naming no more axes than the dense right argument has, with at least one complete window.
 
-Delegated to cBQN by the CLI or rejected in strict mode.
+Returns the uniform dense array of sliding windows.
 
 ### Limitations
 
@@ -476,8 +1097,32 @@ Delegated to cBQN by the CLI or rejected in strict mode.
 |---|---|---|
 | `+´` | supported | Nonempty real numeric lists; sum cases are differentially tested. |
 | `×´` | supported | Nonempty real numeric lists. |
+| `∧´` | supported | Nonempty real numeric lists. |
+| `∨´` | supported | Nonempty real numeric lists. |
 | `⌊´` | supported | Nonempty real numeric lists. |
 | `⌈´` | supported | Nonempty real numeric lists. |
+
+## Insert
+
+| Function operand | Status | Domain |
+|---|---|---|
+| `+˝` | supported | Dense real arrays with at least one axis; reduction is over major cells. |
+| `×˝` | supported | Dense real arrays with at least one axis; reduction is over major cells. |
+| `∧˝` | supported | Dense real arrays with at least one axis; numeric logical And is reduced over major cells. |
+| `∨˝` | supported | Dense real arrays with at least one axis; numeric logical Or is reduced over major cells. |
+| `⌊˝` | supported | Dense real arrays with at least one axis; minimum is reduced over major cells. |
+| `⌈˝` | supported | Dense real arrays with at least one axis; maximum is reduced over major cells. |
+
+## Scan
+
+| Function operand | Status | Domain |
+|---|---|---|
+| `+`` | supported | Dense real arrays with at least one axis; inclusive scan is over major cells. |
+| `×`` | supported | Dense real arrays with at least one axis; inclusive scan is over major cells. |
+| `∧`` | supported | Dense real arrays with at least one axis; inclusive numeric logical-And scan is over major cells. |
+| `∨`` | supported | Dense real arrays with at least one axis; inclusive numeric logical-Or scan is over major cells. |
+| `⌊`` | supported | Dense real arrays with at least one axis; inclusive minimum scan is over major cells. |
+| `⌈`` | supported | Dense real arrays with at least one axis; inclusive maximum scan is over major cells. |
 
 ## BQN source frontend
 
@@ -490,11 +1135,14 @@ Both `.bqn` files and BQN strings compile to the same backend-neutral expression
 | Right-to-left function application | supported | Supported primitives, numeric constants, arguments, names, and parentheses. |
 | Local assignment `←` | supported | Subject-valued local names assigned in statement order. |
 | Separators and comments | supported | Newline, `⋄`, comma, and `#` line comments. |
-| General BQN syntax | unsupported | Arrays in source, trains, headers, modifiers other than Fold, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
+| Numeric strands | supported | Literal numeric strands separated by `‿`, used for shapes, coordinates, counts, and axes. |
+| Fold `´`, Insert `˝`, and Scan `` ` `` | supported | Prefix use with the supported dyadic function operands and no dyadic initial value. |
+| General BQN syntax | unsupported | General array notation, trains, headers, other modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
 
 Source frontend tests:
 
 - `tests/test_source_frontend.py`
+- `tests/test_dense_primitives.py`
 - `tests/test_corpus.py`
 
 ## Meaning of status
