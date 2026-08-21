@@ -12,6 +12,7 @@ from tinygrad import Device, Tensor, TinyJit, dtypes
 from .errors import DeviceError, DomainError, ShapeError, UnsupportedPrimitive
 from .host_value import HostValue, Shape
 from .ir import Expression, evaluate, has_tensor_compute
+from .optimizer import OptimizationResult, optimize
 
 
 @dataclass(frozen=True)
@@ -595,6 +596,8 @@ class TinygradBackend:
 
         names = tuple(sorted(arguments))
         atom_kinds = tuple(arguments[name].atom for name in names)
+        optimization = self.optimize(expression, arguments)
+        optimized_expression = optimization.expression
         output_atom: list[bool] = []
         for argument in arguments.values():
             argument.tensor.realize()
@@ -604,10 +607,18 @@ class TinygradBackend:
                 name: TinygradValue(tensor=tensor, atom=atom)
                 for name, tensor, atom in zip(names, tensors, atom_kinds, strict=True)
             }
-            result = evaluate(expression, self, values)
+            result = evaluate(optimized_expression, self, values)
             if not output_atom:
                 output_atom.append(result.atom)
             return result.tensor
+
+        if not has_tensor_compute(optimized_expression):
+            def execute_simplified(
+                supplied: Mapping[str, TinygradValue],
+            ) -> TinygradValue:
+                return evaluate(optimized_expression, self, supplied)
+
+            return execute_simplified
 
         jitted = TinyJit(execute_tensors)
 
@@ -624,6 +635,16 @@ class TinygradBackend:
         return execute_compiled
 
     @staticmethod
+    def optimize(
+        expression: Expression,
+        arguments: Mapping[str, TinygradValue],
+    ) -> OptimizationResult:
+        return optimize(
+            expression,
+            {name: len(value.shape) for name, value in arguments.items()},
+        )
+
+    @staticmethod
     def can_compile(expression: Expression) -> bool:
         """Whether the expression has fixed shape and launches tensor work."""
 
@@ -637,13 +658,17 @@ class TinygradBackend:
 
         operation = expression["op"]
         if operation == "call":
-            if expression["glyph"] in {
+            glyph = expression["glyph"]
+            children = expression["arguments"]
+            if len(children) == 1 and glyph in {"↕", "/", "⍷"}:
+                return False
+            if len(children) == 2 and glyph in {
                 "⥊", "∾", "≍", "⋈", "↑", "↓", "↕", "⌽", "⍉", "/", "⊏", "⊑", "⊒", "⍷"
             }:
                 return False
             return all(
                 TinygradBackend._fixed_output_shape(child)
-                for child in expression["arguments"]
+                for child in children
             )
         if operation == "fold":
             return TinygradBackend._fixed_output_shape(expression["argument"])

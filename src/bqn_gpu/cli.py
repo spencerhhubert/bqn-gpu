@@ -10,7 +10,9 @@ import sys
 from typing import Sequence
 
 from .errors import BQNGPUError
+from .ir import has_tensor_compute, render_bqn
 from .json_values import dumps_host_value, loads_host_value
+from .optimizer import optimize
 from .source import compile_bqn
 
 
@@ -24,6 +26,13 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("path", type=Path)
     evaluate = commands.add_parser("eval", help="execute a BQN source string")
     evaluate.add_argument("source")
+    explain = commands.add_parser(
+        "explain",
+        help="show semantic IR and shape-specialized optimizer rewrites",
+    )
+    explain.add_argument("source", help="BQN source string or @path/to/program.bqn")
+    explain.add_argument("--x", help="right argument as JSON or @path/to/file.json")
+    explain.add_argument("--w", help="left argument as JSON or @path/to/file.json")
     for command in (run, evaluate):
         command.add_argument(
             "--backend", choices=("tinygrad", "torch"), default="tinygrad"
@@ -54,11 +63,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = parser.parse_args(argv)
     oracle = None
     try:
-        source = (
-            arguments.path.read_text(encoding="utf-8")
-            if arguments.command == "run"
-            else arguments.source
-        )
+        source = _source_argument(arguments)
+        if arguments.command == "explain":
+            return _explain(source, arguments.x, arguments.w)
         if arguments.fallback == "cbqn" and arguments.cbqn_lib.is_file():
             # cBQN reserves JIT address space and must initialize before tensor
             # runtimes map code or start runtime workers.
@@ -118,6 +125,66 @@ def _json_argument(specification: str) -> str:
     if specification.startswith("@"):
         return Path(specification[1:]).read_text(encoding="utf-8")
     return specification
+
+
+def _source_argument(arguments: argparse.Namespace) -> str:
+    if arguments.command == "run":
+        return arguments.path.read_text(encoding="utf-8")
+    if arguments.command == "explain" and arguments.source.startswith("@"):
+        return Path(arguments.source[1:]).read_text(encoding="utf-8")
+    return arguments.source
+
+
+def _explain(source: str, x_specification: str | None, w_specification: str | None) -> int:
+    program = compile_bqn(source)
+    values = {}
+    if x_specification is not None:
+        values["x"] = loads_host_value(_json_argument(x_specification))
+    if w_specification is not None:
+        values["w"] = loads_host_value(_json_argument(w_specification))
+    expected_names = set() if program.arity == 0 else {"x"} if program.arity == 1 else {"w", "x"}
+    if set(values) != expected_names:
+        required = "no arguments" if not expected_names else " and ".join(f"--{name}" for name in sorted(expected_names))
+        raise BQNGPUError(f"explain requires {required}")
+
+    ranks = {name: len(value.shape) for name, value in values.items()}
+    optimized = optimize(program.expression, ranks)
+    from .tinygrad_backend import TinygradBackend
+
+    document = {
+        "schema_version": 1,
+        "source": source,
+        "arity": program.arity,
+        "arguments": {
+            name: {
+                "kind": "atom" if value.atom else "array",
+                "shape": list(value.shape),
+                "dtype": "float64",
+            }
+            for name, value in values.items()
+        },
+        "semantic_ir": program.expression,
+        "semantic_bqn": render_bqn(program.expression),
+        "optimized_ir": optimized.expression,
+        "optimized_bqn": render_bqn(optimized.expression),
+        "rewrites": [
+            {
+                "rule": event.rule,
+                "before": event.before,
+                "after": event.after,
+            }
+            for event in optimized.events
+        ],
+        "lowering": {
+            "tensor_compute_before": has_tensor_compute(program.expression),
+            "tensor_compute_after": has_tensor_compute(optimized.expression),
+            "tinygrad_fixed_output_shape": TinygradBackend._fixed_output_shape(
+                optimized.expression
+            ),
+        },
+    }
+    print(json.dumps(document, ensure_ascii=False, indent=2))
+    return 0
 
 
 if __name__ == "__main__":

@@ -20,6 +20,8 @@ The high-level IR retains primitive identity and BQN evaluation rules. It is the
 
 Every lowering or optimization is checked by evaluating the original source with pinned cBQN. Optimized and unoptimized execution must also agree so that a compiler pass cannot silently redefine the language.
 
+`bqn-gpu explain SOURCE --x JSON` exposes the semantic and optimized IR plus named rewrite events for a concrete argument signature. Compiler observability is a versioned machine-readable output, not only debug logging, so benchmark records can eventually retain the exact rewrite and lowering decisions that produced a kernel.
+
 ## Specialization
 
 GPU programs are specialized by the facts that materially change generated code: argument kind, dtype, rank, shape or symbolic shape constraints, layout, device, and semantic options. Compilation artifacts are cached by this signature. Dynamic shapes remain possible, but a hot stable shape should reach a branch-free specialized kernel.

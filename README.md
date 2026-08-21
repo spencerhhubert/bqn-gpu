@@ -41,6 +41,14 @@ result = execute(
 )
 ```
 
+`bqn-gpu explain` reports the semantic IR, argument kind/shape specialization, optimized IR, every named rewrite, and whether tensor work remains. It does not execute the program:
+
+```sh
+bqn-gpu explain '{⌽⌽𝕩}' --x '[1,2,3]'
+# optimized_bqn: 𝕩
+# rewrite: double-reverse
+```
+
 ## Current status
 
 The source frontend currently supports headerless function blocks, bare expressions, `𝕨`/`𝕩`, numeric constants, parentheses, BQN right-to-left evaluation, local `←` assignments, statement separators, comments, and Fold over a deliberately small primitive surface. Supported real-number primitives include monadic and dyadic `+ - × ÷ ⌊ ⌈ |`, monadic and dyadic `⋆ √`, dyadic `= ≠ < > ≤ ≥`, monadic Rank `=`, Length `≠`, Shape `≢`, scalar Range `↕`, and Fold with `+ × ⌊ ⌈` on lists.

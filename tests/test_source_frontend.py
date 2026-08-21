@@ -119,3 +119,19 @@ def test_cli_falls_back_to_cbqn_for_unsupported_source(capsys) -> None:
 def test_cli_can_require_acceleration_instead_of_fallback(capsys) -> None:
     assert main(["eval", "1⊣\"frontend fallback\"", "--fallback", "error"]) == 2
     assert "unsupported BQN token" in capsys.readouterr().err
+
+
+def test_cli_explains_shape_specialized_rewrites(capsys) -> None:
+    assert main(["explain", "{⌽⌽𝕩}", "--x", "[1,2,3]"]) == 0
+    explanation = json.loads(capsys.readouterr().out)
+    assert explanation["arguments"]["x"] == {
+        "kind": "array",
+        "shape": [3],
+        "dtype": "float64",
+    }
+    assert explanation["optimized_bqn"] == "𝕩"
+    assert explanation["rewrites"] == [
+        {"rule": "double-reverse", "before": "(⌽(⌽𝕩))", "after": "𝕩"}
+    ]
+    assert explanation["lowering"]["tensor_compute_before"] is True
+    assert explanation["lowering"]["tensor_compute_after"] is False

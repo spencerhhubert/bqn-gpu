@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from bqn_gpu import HostValue, TinygradBackend, compile_bqn
 from bqn_gpu.ir import evaluate
+from bqn_gpu.optimizer import optimize
 
 
 def test_only_fixed_shape_tensor_work_is_compiled() -> None:
@@ -9,6 +10,8 @@ def test_only_fixed_shape_tensor_work_is_compiled() -> None:
     assert not TinygradBackend.can_compile(compile_bqn("{+𝕩}").expression)
     assert not TinygradBackend.can_compile(compile_bqn("{≢𝕩}").expression)
     assert not TinygradBackend.can_compile(compile_bqn("{↕𝕩}").expression)
+    assert TinygradBackend.can_compile(compile_bqn("{⌽⌽𝕩}").expression)
+    assert TinygradBackend.can_compile(compile_bqn("{⍉𝕩}").expression)
 
 
 def test_compiled_tinygrad_program_reuses_source_graph(
@@ -35,3 +38,32 @@ def test_compiled_and_eager_tinygrad_results_match(backend: TinygradBackend) -> 
     executable = backend.compile(program.expression, arguments)
     for _ in range(3):
         assert executable(arguments).to_host() == expected
+
+
+def test_shape_specialized_optimizer_explains_structural_rewrites() -> None:
+    cases = [
+        ("{⌽⌽𝕩}", 1, "double-reverse"),
+        ("{1⌽¯1⌽𝕩}", 1, "cancel-rotates"),
+        ("{⍉⍉𝕩}", 2, "double-transpose-rank-2"),
+        ("{⌽∨𝕩}", 1, "reverse-sorted-list"),
+    ]
+    for source, rank, rule in cases:
+        original = compile_bqn(source).expression
+        result = optimize(original, {"x": rank})
+        assert result.expression != original
+        assert rule in {event.rule for event in result.events}
+
+    atom_reverse = compile_bqn("{⌽⌽𝕩}").expression
+    assert optimize(atom_reverse, {"x": 0}).expression == atom_reverse
+
+
+def test_compiled_double_reverse_is_erased(backend: TinygradBackend) -> None:
+    program = compile_bqn("{⌽⌽𝕩}")
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([1, 2, 3], (3,)))
+    }
+    optimization = backend.optimize(program.expression, arguments)
+    assert [event.rule for event in optimization.events] == ["double-reverse"]
+
+    executable = backend.compile(program.expression, arguments)
+    assert executable(arguments) is arguments["x"]
