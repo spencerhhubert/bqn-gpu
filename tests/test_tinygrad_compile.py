@@ -140,3 +140,23 @@ def test_combinator_is_inlined_before_jit_capture(backend: TinygradBackend) -> N
     executable = backend.compile(expression, arguments)
     assert executable(arguments).to_host() == HostValue.from_atom(6)
     assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
+
+
+def test_ranked_matrix_vector_product_is_jit_captured(
+    backend: TinygradBackend,
+) -> None:
+    expression = compile_bqn("{𝕨+˝∘×⎉1𝕩}").expression
+    assert TinygradBackend._is_sum_product_operand(expression["function"])
+    arguments = {
+        "w": backend.from_host(HostValue.from_array([1, 2, 3, 4, 5, 6], (2, 3))),
+        "x": backend.from_host(HostValue.from_array([10, 20, 30], (3,))),
+    }
+    executable = backend.compile(expression, arguments)
+    for _ in range(3):
+        assert executable(arguments).to_host() == HostValue.from_array(
+            [140, 320], (2,)
+        )
+    assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
+    assert executable.execution_reason == (  # type: ignore[attr-defined]
+        "ranked-sum-product-lowers-to-one-batched-reduction"
+    )

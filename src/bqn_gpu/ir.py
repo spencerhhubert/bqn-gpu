@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from numbers import Real
 from typing import Any, Mapping, Sequence
 
@@ -83,9 +84,30 @@ def apply_function(
         constructor = {"´": fold, "˝": insert, "`": scan}[operation]
         return constructor(function["glyph"], arguments[0])
     if kind == "modifier":
+        modifier = function["modifier"]
+        if modifier in {"˘", "¨", "⌜", "⎉"}:
+            rank_specification: list[Real] = []
+            if modifier == "⎉":
+                right = function.get("right")
+                if right is None or right["kind"] != "constant":
+                    raise ValueError("Rank currently requires a literal numeric rank operand")
+                value = right["value"]
+                if value["op"] == "constant":
+                    rank_specification = [value["value"]]
+                elif value["op"] == "array":
+                    rank_specification = list(value["values"])
+                else:
+                    raise ValueError("Rank currently requires literal numeric ranks")
+            return {
+                "op": "map",
+                "modifier": modifier,
+                "function": function["left"],
+                "ranks": rank_specification,
+                "arguments": list(arguments),
+            }
         return {
             "op": "combinator",
-            "modifier": function["modifier"],
+            "modifier": modifier,
             "left": function["left"],
             **({"right": function["right"]} if "right" in function else {}),
             "arguments": list(arguments),
@@ -168,6 +190,26 @@ def evaluate(
         return backend.scan(expression["glyph"], value)
     if operation == "combinator":
         return evaluate(expand_combinator(expression), backend, arguments)
+    if operation == "map":
+        values = tuple(
+            evaluate(child, backend, arguments) for child in expression["arguments"]
+        )
+
+        def invoke(mapped_values: Sequence[ValueT]) -> ValueT:
+            names = [f"__mapped_{index}" for index in range(len(mapped_values))]
+            call = apply_function(
+                expression["function"],
+                [argument(name) for name in names],
+            )
+            return evaluate(call, backend, dict(zip(names, mapped_values, strict=True)))
+
+        return backend.map_function(
+            expression["modifier"],
+            expression["ranks"],
+            expression["function"],
+            values,
+            invoke,
+        )
     raise ValueError(f"unknown IR operation {operation!r}")
 
 
@@ -183,6 +225,8 @@ def has_tensor_compute(expression: Expression) -> bool:
         return True
     if operation == "combinator":
         return has_tensor_compute(expand_combinator(expression))
+    if operation == "map":
+        return True
     if operation == "call":
         glyph = expression["glyph"]
         children = expression["arguments"]
@@ -241,6 +285,22 @@ def render_bqn(expression: Expression) -> str:
             f"({render_bqn(arguments[0])} {rendered_function} "
             f"{render_bqn(arguments[1])})"
         )
+    if operation == "map":
+        function = render_function(expression["function"])
+        modifier = expression["modifier"]
+        if modifier == "⎉":
+            values = expression["ranks"]
+            rank = "‿".join(_render_number(value) for value in values)
+            function = f"{function}⎉{rank}"
+        else:
+            function = f"{function}{modifier}"
+        arguments = expression["arguments"]
+        if len(arguments) == 1:
+            return f"({function} {render_bqn(arguments[0])})"
+        return (
+            f"({render_bqn(arguments[0])} {function} "
+            f"{render_bqn(arguments[1])})"
+        )
     raise ValueError(f"unknown IR operation {operation!r}")
 
 
@@ -266,5 +326,7 @@ def function_source(expression: Expression) -> str:
 
 def _render_number(value: Real) -> str:
     number = float(value)
+    if math.isinf(number):
+        return "¯∞" if number < 0 else "∞"
     rendered = repr(number) if not number.is_integer() else str(int(number))
     return "¯" + rendered[1:] if rendered.startswith("-") else rendered

@@ -42,6 +42,16 @@ def atom(value: float) -> HostValue:
         ("{×˜𝕩}", {"x": atom(4)}, atom(16)),
         ("{-⟜1 𝕩}", {"x": atom(8)}, atom(7)),
         ("{+´∘|𝕩}", {"x": decode_host_value([-1, 2, -3])}, atom(6)),
+        (
+            "{⌽˘𝕩}",
+            {"x": decode_host_value([[1, 2, 3], [4, 5, 6]])},
+            decode_host_value([[3, 2, 1], [6, 5, 4]]),
+        ),
+        (
+            "{𝕨×⌜𝕩}",
+            {"w": decode_host_value([10, 20]), "x": decode_host_value([1, 2, 3])},
+            decode_host_value([[10, 20, 30], [20, 40, 60]]),
+        ),
         ("{π}", {}, atom(3.141592653589793)),
         ("{¯5e¯1}", {}, atom(-0.5)),
     ],
@@ -146,3 +156,22 @@ def test_cli_explains_combinator_lowering(capsys) -> None:
     assert explanation["semantic_bqn"] == "(+´∘| 𝕩)"
     assert explanation["optimized_bqn"] == "(+´(|𝕩))"
     assert explanation["rewrites"][0]["rule"] == "inline-atop"
+
+
+def test_cli_explains_rank_mapping(capsys) -> None:
+    source = "{𝕨+˝∘×⎉1𝕩}"
+    assert main(
+        [
+            "explain",
+            source,
+            "--w",
+            "[[1,2,3],[4,5,6]]",
+            "--x",
+            "[10,20,30]",
+        ]
+    ) == 0
+    explanation = json.loads(capsys.readouterr().out)
+    assert explanation["semantic_ir"]["op"] == "map"
+    assert explanation["semantic_ir"]["modifier"] == "⎉"
+    assert explanation["semantic_ir"]["ranks"] == [1.0]
+    assert explanation["lowering"]["tinygrad_fixed_output_shape"] is True

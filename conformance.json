@@ -766,6 +766,40 @@
       "tests": ["tests/test_dense_primitives.py"]
     }
   ],
+  "mapping_modifiers": [
+    {
+      "glyph": "˘",
+      "name": "Cells",
+      "status": "supported",
+      "domain": "Dense real arguments with mapped frames that have no zero-length axes, and supported operands that return one uniform dense shape. Pervasive numeric operands also support empty arrays.",
+      "behavior": "Applies the operand to major cells, using leading-axis frame agreement for two arguments, and combines uniform results as major cells.",
+      "tests": ["tests/test_dense_primitives.py", "tests/test_tinygrad_compile.py"]
+    },
+    {
+      "glyph": "⎉",
+      "name": "Rank",
+      "status": "supported",
+      "domain": "Literal numeric rank atoms or one-to-three-item strands, dense real arguments with mapped frames that have no zero-length axes, and supported operands that return one uniform dense shape. Pervasive numeric operands also support empty arrays.",
+      "behavior": "Natural ranks select trailing cells, negative ranks select a frame-axis count, ranks clamp to the argument rank, positive infinity selects the entire argument, negative infinity selects atoms, and dyadic frames use leading-axis agreement.",
+      "tests": ["tests/test_dense_primitives.py", "tests/test_tinygrad_compile.py"]
+    },
+    {
+      "glyph": "¨",
+      "name": "Each",
+      "status": "supported",
+      "domain": "Dense real atoms and arrays with supported operands that return one uniform dense shape; general non-pervasive operands require mapped frames with no zero-length axes. Pervasive numeric operands support empty arrays.",
+      "behavior": "Applies the operand to elements with leading-axis agreement for two arguments and always returns an array, including a rank-0 array for atom input.",
+      "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⌜",
+      "name": "Table",
+      "status": "supported",
+      "domain": "Dense real atoms and arrays with supported operands that return one uniform dense shape; general non-pervasive operands require argument frames with no zero-length axes.",
+      "behavior": "Monadic Table maps over elements; dyadic Table applies the operand to every element pair and concatenates the two argument shapes as the result frame.",
+      "tests": ["tests/test_dense_primitives.py"]
+    }
+  ],
   "source_frontend": {
     "summary": "Both `.bqn` files and BQN strings compile to the same backend-neutral expression IR, then execute on the selected device backend.",
     "constructs": [
@@ -808,6 +842,11 @@
         "name": "Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜`",
         "status": "supported",
         "constraint": "Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization."
+      },
+      {
+        "name": "Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜`",
+        "status": "supported",
+        "constraint": "Dense uniform-result mapping. Rank accepts literal numeric atoms or strands; general computed rank operands and empty generic frames are not compiled yet."
       },
       {
         "name": "General BQN syntax",

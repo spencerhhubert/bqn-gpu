@@ -52,6 +52,11 @@ def optimize(
             }
         elif operation in {"fold", "insert", "scan", "static_call"}:
             rewritten = {**node, "argument": visit(node["argument"])}
+        elif operation == "map":
+            rewritten = {
+                **node,
+                "arguments": [visit(child) for child in node["arguments"]],
+            }
         else:
             return node
 
@@ -74,6 +79,8 @@ def infer_rank(expression: Expression, argument_ranks: Mapping[str, int]) -> int
     operation = expression["op"]
     if operation == "combinator":
         return infer_rank(expand_combinator(expression), argument_ranks)
+    if operation == "map":
+        return None
     if operation == "argument":
         return argument_ranks.get(expression["name"])
     if operation == "constant":

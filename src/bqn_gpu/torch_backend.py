@@ -5,12 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 from numbers import Real
-from typing import Iterable, Sequence
+from typing import Callable, Iterable, Sequence
 
 import torch
 
 from .errors import DeviceError, DomainError, ShapeError, UnsupportedPrimitive
 from .host_value import HostValue, Shape
+from .mapping import plan_mapping
 
 
 @dataclass(frozen=True)
@@ -279,6 +280,134 @@ class TorchBackend:
         else:
             raise UnsupportedPrimitive(f"Scan with {glyph!r} is not implemented")
         return TorchValue(tensor=tensor, atom=False)
+
+    def map_function(
+        self,
+        modifier: str,
+        rank_specification: Sequence[float],
+        operand: object,
+        arguments: Sequence[TorchValue],
+        function: Callable[[Sequence[TorchValue]], TorchValue],
+    ) -> TorchValue:
+        for argument in arguments:
+            self._check_device(argument)
+        primitive = (
+            operand.get("glyph")
+            if isinstance(operand, dict) and operand.get("kind") == "primitive"
+            else None
+        )
+        monadic_pervasive = {"+", "-", "×", "÷", "⋆", "√", "⌊", "⌈", "|", "¬"}
+        dyadic_pervasive = {
+            "+", "-", "×", "÷", "⋆", "√", "⌊", "⌈", "|", "¬",
+            "=", "≠", "<", ">", "≤", "≥", "∧", "∨",
+        }
+        if len(arguments) == 1 and primitive in monadic_pervasive:
+            result = self.call(primitive, arguments[0])
+            return TorchValue(tensor=result.tensor, atom=False)
+        if modifier == "¨" and len(arguments) == 2 and primitive in dyadic_pervasive:
+            result = self.call(primitive, *arguments)
+            return TorchValue(tensor=result.tensor, atom=False)
+        if modifier == "⌜" and len(arguments) == 2 and primitive in dyadic_pervasive:
+            left, right = arguments
+            output_shape = left.shape + right.shape
+            left_tensor = left.tensor.reshape(left.shape + (1,) * len(right.shape)).expand(output_shape)
+            right_tensor = right.tensor.reshape((1,) * len(left.shape) + right.shape).expand(output_shape)
+            result = self.call(
+                primitive,
+                TorchValue(left_tensor, atom=False),
+                TorchValue(right_tensor, atom=False),
+            )
+            return TorchValue(tensor=result.tensor, atom=False)
+
+        plan = plan_mapping(
+            modifier,
+            [argument.shape for argument in arguments],
+            rank_specification,
+        )
+        if (
+            modifier == "⎉"
+            and len(arguments) == 2
+            and plan.cell_ranks == (1, 1)
+            and self._is_sum_product_operand(operand)
+        ):
+            left, right = arguments
+            left_cell = left.shape[-1:]
+            right_cell = right.shape[-1:]
+            if left_cell != right_cell:
+                raise ShapeError(
+                    "ranked sum-product requires equal vector cell shapes, got "
+                    f"{left_cell} and {right_cell}"
+                )
+            output_shape = plan.frame_shape + left_cell
+            tensors = []
+            for argument, frame in zip(arguments, plan.argument_frames, strict=True):
+                shape = frame + (1,) * (len(plan.frame_shape) - len(frame)) + left_cell
+                tensors.append(argument.tensor.reshape(shape).expand(output_shape))
+            return TorchValue(
+                tensor=(tensors[0] * tensors[1]).sum(dim=len(plan.frame_shape)),
+                atom=False,
+            )
+        if any(length == 0 for length in plan.frame_shape):
+            raise DomainError("mapping over an empty frame is not implemented yet")
+        results: list[TorchValue] = []
+        for indices in plan.indices():
+            cells = []
+            for argument, index, cell_rank in zip(
+                arguments, indices, plan.cell_ranks, strict=True
+            ):
+                tensor = argument.tensor if not index else argument.tensor[index]
+                cells.append(
+                    TorchValue(
+                        tensor=tensor,
+                        atom=(
+                            argument.atom
+                            if not index and argument.atom
+                            else modifier in {"¨", "⌜"} and cell_rank == 0
+                        ),
+                    )
+                )
+            results.append(function(cells))
+        return self._combine_mapped_results(plan.frame_shape, results)
+
+    @staticmethod
+    def _is_sum_product_operand(operand: object) -> bool:
+        if not isinstance(operand, dict):
+            return False
+        left = operand.get("left")
+        right = operand.get("right")
+        return (
+            operand.get("kind") == "modifier"
+            and operand.get("modifier") == "∘"
+            and isinstance(left, dict)
+            and left.get("kind") == "fold"
+            and left.get("modifier") == "˝"
+            and left.get("glyph") == "+"
+            and isinstance(right, dict)
+            and right.get("kind") == "primitive"
+            and right.get("glyph") == "×"
+        )
+
+    @staticmethod
+    def _combine_mapped_results(
+        frame_shape: Shape,
+        results: Sequence[TorchValue],
+    ) -> TorchValue:
+        if not results:
+            raise DomainError("mapping produced no result cells")
+        result_shape = results[0].shape
+        if any(result.shape != result_shape for result in results[1:]):
+            raise ShapeError("mapped function returned incompatible dense result shapes")
+        if not frame_shape:
+            return TorchValue(
+                tensor=results[0].tensor.reshape(result_shape),
+                atom=False,
+            )
+        tensor = (
+            results[0].tensor.reshape((1,) + result_shape)
+            if len(results) == 1
+            else torch.stack(tuple(result.tensor for result in results), dim=0)
+        )
+        return TorchValue(tensor=tensor.reshape(frame_shape + result_shape), atom=False)
 
     def _reduce_tensor(
         self, glyph: str, tensor: torch.Tensor, *, axis: int

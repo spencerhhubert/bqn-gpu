@@ -30,12 +30,18 @@ _NUMBER = re.compile(
     r"¯?(?:∞|π|(?:\d+(?:\.\d+)?)(?:[eE]¯?\d+)?)"
 )
 _MISSING = object()
-_ONE_MODIFIERS = {"SELF": "˜"}
+_ONE_MODIFIERS = {
+    "SELF": "˜",
+    "CELLS": "˘",
+    "EACH": "¨",
+    "TABLE": "⌜",
+}
 _TWO_MODIFIERS = {
     "ATOP": "∘",
     "OVER": "○",
     "BEFORE": "⊸",
     "AFTER": "⟜",
+    "RANK_MODIFIER": "⎉",
 }
 
 
@@ -316,6 +322,10 @@ def _tokenize(source: str) -> list[Token]:
             "○": "OVER",
             "⊸": "BEFORE",
             "⟜": "AFTER",
+            "˘": "CELLS",
+            "¨": "EACH",
+            "⌜": "TABLE",
+            "⎉": "RANK_MODIFIER",
             "‿": "STRAND",
             "𝕨": "ARG",
             "𝕩": "ARG",
@@ -389,6 +399,12 @@ def _argument_names(expression: Mapping[str, object]) -> set[str]:
         result.update(_function_argument_names(expression["left"]))  # type: ignore[arg-type]
         if "right" in expression:
             result.update(_function_argument_names(expression["right"]))  # type: ignore[arg-type]
+        return result
+    if operation == "map":
+        result: set[str] = set()
+        for child in expression["arguments"]:  # type: ignore[union-attr]
+            result.update(_argument_names(child))
+        result.update(_function_argument_names(expression["function"]))  # type: ignore[arg-type]
         return result
     return set()
 

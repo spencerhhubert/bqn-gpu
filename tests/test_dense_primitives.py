@@ -153,3 +153,82 @@ def test_dense_combinators_match_cbqn(
         else (arguments["x"],)
     )
     assert actual == cbqn.call(source, *oracle_arguments)
+
+
+@pytest.mark.parametrize(
+    ("source", "arguments"),
+    [
+        ("{+¨𝕩}", {"x": HostValue.from_atom(3)}),
+        ("{-¨𝕩}", {"x": M}),
+        (
+            "{𝕨+¨𝕩}",
+            {"w": decode_host_value([10, 20]), "x": M},
+        ),
+        (
+            "{𝕨×⌜𝕩}",
+            {"w": decode_host_value([10, 20]), "x": decode_host_value([1, 2, 3])},
+        ),
+        ("{⌽˘𝕩}", {"x": M}),
+        ("{≢˘𝕩}", {"x": M}),
+        ("{≡˘𝕩}", {"x": V}),
+        ("{≡¨𝕩}", {"x": V}),
+        ("{≡⎉0𝕩}", {"x": HostValue.from_array([3], ())}),
+        ("{⌽⎉1𝕩}", {"x": M}),
+        ("{⌽⎉¯1𝕩}", {"x": M}),
+        ("{⌽⎉∞𝕩}", {"x": M}),
+        ("{≢⎉¯∞𝕩}", {"x": M}),
+        ("{≢⎉0‿1‿2𝕩}", {"x": M}),
+        (
+            "{𝕨+⎉1‿1𝕩}",
+            {"w": M, "x": decode_host_value([10, 20, 30])},
+        ),
+        (
+            "{𝕨+˘𝕩}",
+            {"w": M, "x": HostValue.from_array([10], ())},
+        ),
+        (
+            "{𝕨+⎉1‿2𝕩}",
+            {
+                "w": M,
+                "x": decode_host_value(
+                    [
+                        [[10, 20], [30, 40], [50, 60]],
+                        [[70, 80], [90, 100], [110, 120]],
+                    ]
+                ),
+            },
+        ),
+        (
+            "{𝕨+⎉0‿1‿2𝕩}",
+            {
+                "w": M,
+                "x": decode_host_value(
+                    [
+                        [[10, 20], [30, 40], [50, 60]],
+                        [[70, 80], [90, 100], [110, 120]],
+                    ]
+                ),
+            },
+        ),
+        (
+            "{𝕨+˝∘×⎉1𝕩}",
+            {"w": M, "x": decode_host_value([10, 20, 30])},
+        ),
+        ("{-⟜1¨𝕩}", {"x": V}),
+        ("{+´∘|˘𝕩}", {"x": M}),
+    ],
+)
+def test_dense_mapping_modifiers_match_cbqn(
+    source: str,
+    arguments: dict[str, HostValue],
+    dense_backend: Any,
+    cbqn: CBQN,
+) -> None:
+    compiled = compile_bqn(source)
+    actual = compiled.execute(dense_backend, **arguments)
+    oracle_arguments = (
+        (arguments["w"], arguments["x"])
+        if compiled.arity == 2
+        else (arguments["x"],)
+    )
+    assert actual == cbqn.call(source, *oracle_arguments)

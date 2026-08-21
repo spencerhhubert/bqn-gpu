@@ -2,7 +2,7 @@
 
 `corpus/programs.json` is a generated, tracked corpus of actual BQN sources. The initial floor is 100 programs, not a target or limit. New semantic bugs, optimization boundaries, real workloads, useful phrases, and backend discrepancies should add durable cases with stable IDs.
 
-The current 287-case seed has eleven layers:
+The current 294-case seed has twelve layers:
 
 - individual glyphs over monadic and dyadic valence, atom extension, equal shapes, and leading-axis agreement;
 - short elementwise phrases;
@@ -14,6 +14,7 @@ The current 287-case seed has eleven layers:
 - Fold, Insert, and Scan families;
 - structural and modifier phrases; and
 - pure-combinator programs covering monadic, dyadic, chained, reduction, and literal-Bind forms; and
+- dense Cells, Rank, Each, and Table programs, including matrix-vector multiplication; and
 - naive/idiomatic structural pairs whose results agree but whose compiler costs currently differ.
 
 Each entry records its BQN source, independent direct tinygrad and direct PyTorch sources, a backend-neutral workload expression, arity, deterministic input mode and domains, comparison tolerance, category, variant, and tags. Input size is a runner parameter rather than part of the source, so the same program can be exercised from tiny correctness shapes through benchmark-scale arrays.

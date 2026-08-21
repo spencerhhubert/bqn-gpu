@@ -62,6 +62,14 @@ benchmark results. This conservative static policy is a starting point for
 measured, hardware-keyed decisions rather than a permanent list of special
 cases.
 
+Dense mapping remains explicit as Cells/Rank/Each/Table IR until argument shapes
+and frames are known. Pervasive Each calls and primitive Table calls lower to
+one broadcast tensor expression. The common BQN matrix-vector form
+`𝕨 +˝∘×⎉1 𝕩` is recognized after Rank planning and lowered to one broadcast
+multiply/reduction graph rather than one host-constructed reduction per row.
+Other uniform-result mapped functions currently use a correct cell planner and
+are candidates for further batched lowering when measurements justify it.
+
 ## Measurement discipline
 
 Development uses a compact sentinel set covering elementwise fusion, structural index-map fusion, reductions, scans, selection, sorting/search, and mixed complex programs. Full multi-size measurements are recorded only for tagged milestones. Raw repetitions, exact commits, hardware, compiler choices, and correctness evidence remain reproducible through the results service.

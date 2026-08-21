@@ -1134,6 +1134,15 @@ Returns the uniform dense array of sliding windows.
 | `⊸` Before / Bind Left | supported | Supported primitive operands or a numeric literal left operand, with a dense-real result. | The left operand transforms the left argument (or the duplicated right argument monadically) before the right operand receives it and the original right argument. |
 | `⟜` After / Bind Right | supported | Supported primitive operands or a numeric literal right operand, with a dense-real result. | The right operand transforms the right argument before the left operand receives the original left argument and transformed right argument. |
 
+## Dense mapping modifiers
+
+| Modifier | Status | Domain | Behavior |
+|---|---|---|---|
+| `˘` Cells | supported | Dense real arguments with mapped frames that have no zero-length axes, and supported operands that return one uniform dense shape. Pervasive numeric operands also support empty arrays. | Applies the operand to major cells, using leading-axis frame agreement for two arguments, and combines uniform results as major cells. |
+| `⎉` Rank | supported | Literal numeric rank atoms or one-to-three-item strands, dense real arguments with mapped frames that have no zero-length axes, and supported operands that return one uniform dense shape. Pervasive numeric operands also support empty arrays. | Natural ranks select trailing cells, negative ranks select a frame-axis count, ranks clamp to the argument rank, positive infinity selects the entire argument, negative infinity selects atoms, and dyadic frames use leading-axis agreement. |
+| `¨` Each | supported | Dense real atoms and arrays with supported operands that return one uniform dense shape; general non-pervasive operands require mapped frames with no zero-length axes. Pervasive numeric operands support empty arrays. | Applies the operand to elements with leading-axis agreement for two arguments and always returns an array, including a rank-0 array for atom input. |
+| `⌜` Table | supported | Dense real atoms and arrays with supported operands that return one uniform dense shape; general non-pervasive operands require argument frames with no zero-length axes. | Monadic Table maps over elements; dyadic Table applies the operand to every element pair and concatenates the two argument shapes as the result frame. |
+
 ## BQN source frontend
 
 Both `.bqn` files and BQN strings compile to the same backend-neutral expression IR, then execute on the selected device backend.
@@ -1148,6 +1157,7 @@ Both `.bqn` files and BQN strings compile to the same backend-neutral expression
 | Numeric strands | supported | Literal numeric strands separated by `‿`, used for shapes, coordinates, counts, and axes. |
 | Fold `´`, Insert `˝`, and Scan `` ` `` | supported | Prefix use with the supported dyadic function operands and no dyadic initial value. |
 | Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜` | supported | Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization. |
+| Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜` | supported | Dense uniform-result mapping. Rank accepts literal numeric atoms or strands; general computed rank operands and empty generic frames are not compiled yet. |
 | General BQN syntax | unsupported | General array notation, trains, headers, parenthesized or nested function values, remaining modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
 
 Source frontend tests:

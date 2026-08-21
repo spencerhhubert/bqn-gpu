@@ -120,6 +120,21 @@ def render() -> str:
             f"{entry['domain']} | {entry['behavior']} |"
         )
 
+    lines.extend(
+        [
+            "",
+            "## Dense mapping modifiers",
+            "",
+            "| Modifier | Status | Domain | Behavior |",
+            "|---|---|---|---|",
+        ]
+    )
+    for entry in manifest.get("mapping_modifiers", []):
+        lines.append(
+            f"| `{entry['glyph']}` {entry['name']} | {entry['status']} | "
+            f"{entry['domain']} | {entry['behavior']} |"
+        )
+
     source = manifest["source_frontend"]
     lines.extend(
         [

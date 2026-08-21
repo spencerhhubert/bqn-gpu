@@ -5,6 +5,7 @@
     "initial_floor": 100,
     "categories": {
       "dense-combinator": 11,
+      "dense-mapping": 7,
       "dense-modifier": 12,
       "dense-paired": 10,
       "dense-phrase": 10,
@@ -10506,6 +10507,305 @@
         "combinator",
         "dense",
         "modifier"
+      ]
+    },
+    {
+      "id": "dense.mapping.each_negate",
+      "category": "dense-mapping",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{-¨𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "-",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (-(x))",
+        "torch": "lambda x: (-(x))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "each_negate",
+        "mapping",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.mapping.each_leading_add",
+      "category": "dense-mapping",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨+¨𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "+",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w.reshape(w.shape + (1,))) + (x))",
+        "torch": "lambda w, x: ((w.reshape(w.shape + (1,))) + (x))"
+      },
+      "input_mode": "leading_left",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "each_leading_add",
+        "mapping",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.mapping.table_multiply",
+      "category": "dense-mapping",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨×⌜𝕩}",
+      "native": {
+        "expression": {
+          "op": "map",
+          "modifier": "⌜",
+          "function": {
+            "kind": "primitive",
+            "glyph": "×"
+          },
+          "ranks": [],
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: w.reshape((w.shape[0], 1)) * x.reshape((1, x.shape[0]))",
+        "torch": "lambda w, x: w.reshape((w.shape[0], 1)) * x.reshape((1, x.shape[0]))"
+      },
+      "input_mode": "table_vectors",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "mapping",
+        "modifier",
+        "table_multiply"
+      ]
+    },
+    {
+      "id": "dense.mapping.cells_reverse",
+      "category": "dense-mapping",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{⌽˘𝕩}",
+      "native": {
+        "expression": {
+          "op": "map",
+          "modifier": "˘",
+          "function": {
+            "kind": "primitive",
+            "glyph": "⌽"
+          },
+          "ranks": [],
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: x.flip(1)",
+        "torch": "lambda x: torch.flip(x, dims=(1,))"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "cells_reverse",
+        "dense",
+        "mapping",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.mapping.cells_sum_absolute",
+      "category": "dense-mapping",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{+´∘|˘𝕩}",
+      "native": {
+        "expression": {
+          "op": "map",
+          "modifier": "˘",
+          "function": {
+            "kind": "modifier",
+            "modifier": "∘",
+            "left": {
+              "kind": "fold",
+              "glyph": "+",
+              "modifier": "´"
+            },
+            "right": {
+              "kind": "primitive",
+              "glyph": "|"
+            }
+          },
+          "ranks": [],
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: x.abs().sum(axis=1)",
+        "torch": "lambda x: x.abs().sum(dim=1)"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "cells_sum_absolute",
+        "dense",
+        "mapping",
+        "modifier"
+      ]
+    },
+    {
+      "id": "dense.mapping.rank_add_rows",
+      "category": "dense-mapping",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨+⎉1‿1𝕩}",
+      "native": {
+        "expression": {
+          "op": "map",
+          "modifier": "⎉",
+          "function": {
+            "kind": "primitive",
+            "glyph": "+"
+          },
+          "ranks": [
+            1.0,
+            1.0
+          ],
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: w + x.reshape((1, x.shape[0]))",
+        "torch": "lambda w, x: w + x.reshape((1, x.shape[0]))"
+      },
+      "input_mode": "matrix_vector",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "mapping",
+        "modifier",
+        "rank_add_rows"
+      ]
+    },
+    {
+      "id": "dense.mapping.rank_matrix_vector",
+      "category": "dense-mapping",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨+˝∘×⎉1𝕩}",
+      "native": {
+        "expression": {
+          "op": "map",
+          "modifier": "⎉",
+          "function": {
+            "kind": "modifier",
+            "modifier": "∘",
+            "left": {
+              "kind": "fold",
+              "glyph": "+",
+              "modifier": "˝"
+            },
+            "right": {
+              "kind": "primitive",
+              "glyph": "×"
+            }
+          },
+          "ranks": [
+            1.0
+          ],
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (w * x.reshape((1, x.shape[0]))).sum(axis=1)",
+        "torch": "lambda w, x: (w * x.reshape((1, x.shape[0]))).sum(dim=1)"
+      },
+      "input_mode": "matrix_vector",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "mapping",
+        "modifier",
+        "rank_matrix_vector"
       ]
     },
     {

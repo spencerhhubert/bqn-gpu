@@ -114,6 +114,12 @@ def _input_shapes(mode: str, size: int) -> dict[str, tuple[int, ...] | None]:
         return {"x": (0, 3)}
     if mode == "dyadic_same":
         return {"w": (size,), "x": (size,)}
+    if mode in {"matrix_vector", "table_vectors"}:
+        rows = max(1, min(32, math.isqrt(size)))
+        columns = max(1, (size + rows - 1) // rows)
+        if mode == "matrix_vector":
+            return {"w": (rows, columns), "x": (columns,)}
+        return {"w": (rows,), "x": (columns,)}
     if mode == "left_atom":
         return {"w": None, "x": (size,)}
     if mode == "right_atom":

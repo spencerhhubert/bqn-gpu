@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from numbers import Real
-from typing import Iterable, Protocol, Sequence, TypeVar
+from typing import Callable, Iterable, Protocol, Sequence, TypeVar
 
 from .host_value import HostValue, Shape
 
@@ -42,3 +42,12 @@ class ExecutionBackend(Protocol[ValueT]):
     def insert(self, glyph: str, argument: ValueT) -> ValueT: ...
 
     def scan(self, glyph: str, argument: ValueT) -> ValueT: ...
+
+    def map_function(
+        self,
+        modifier: str,
+        rank_specification: Sequence[float],
+        operand: object,
+        arguments: Sequence[ValueT],
+        function: Callable[[Sequence[ValueT]], ValueT],
+    ) -> ValueT: ...

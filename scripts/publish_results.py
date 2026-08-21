@@ -341,6 +341,22 @@ def capability_record(
                 "evidence": entry.get("tests", []),
             }
         )
+    supported_mapping_modifiers = 0
+    for index, entry in enumerate(manifest.get("mapping_modifiers", [])):
+        if entry["status"] == "supported":
+            supported_mapping_modifiers += 1
+        features.append(
+            {
+                "id": f"mapping.{index:03d}",
+                "glyph": entry["glyph"],
+                "name": entry["name"],
+                "valence": "mapping-modifier",
+                "status": entry["status"],
+                "domain": entry.get("domain"),
+                "behavior": entry.get("behavior"),
+                "evidence": entry.get("tests", []),
+            }
+        )
     return {
         "backend": manifest["backend"]["name"],
         "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
@@ -362,6 +378,7 @@ def capability_record(
             "inserts_supported": modifier_counts["insert"],
             "scans_supported": modifier_counts["scan"],
             "combinators_supported": supported_combinators,
+            "mapping_modifiers_supported": supported_mapping_modifiers,
         },
     }
 

@@ -11,6 +11,8 @@ The accepted subset is deliberately narrower than BQN. It includes:
 - numeric strands for shapes, axes, counts, and other literal vectors;
 - Fold `´`, Insert `˝`, and Scan `` ` `` for the functions in their conformance tables;
 - Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜` over supported primitive or reduction operands, including numeric literal Bind operands;
+- dense uniform-result Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜`, with
+  literal numeric Rank specifications;
 - local subject assignment with `←`;
 - newline, `⋄`, and comma statement separators; and
 - `#` line comments.

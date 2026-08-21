@@ -29,6 +29,7 @@ from bqn_gpu.ir import (  # noqa: E402
     scan,
 )
 from bqn_gpu.native_sources import render_native_source  # noqa: E402
+from bqn_gpu.source import compile_bqn  # noqa: E402
 
 
 DESTINATION = ROOT / "corpus" / "programs.json"
@@ -48,9 +49,13 @@ def make_programs() -> list[dict[str, Any]]:
         tags: Iterable[str],
         *,
         source: str | None = None,
+        native_expression: Expression | None = None,
+        native_tinygrad: str | None = None,
+        native_torch: str | None = None,
         rtol: float = 0.0,
         atol: float = 0.0,
     ) -> None:
+        native_ir = native_expression or expression
         programs.append(
             {
                 "id": identifier,
@@ -59,12 +64,12 @@ def make_programs() -> list[dict[str, Any]]:
                 "arity": arity,
                 "bqn": source or function_source(expression),
                 "native": {
-                    "expression": expression,
-                    "tinygrad": render_native_source(
-                        expression, "tinygrad", arity=arity, input_mode=input_mode
+                    "expression": native_ir,
+                    "tinygrad": native_tinygrad or render_native_source(
+                        native_ir, "tinygrad", arity=arity, input_mode=input_mode
                     ),
-                    "torch": render_native_source(
-                        expression, "torch", arity=arity, input_mode=input_mode
+                    "torch": native_torch or render_native_source(
+                        native_ir, "torch", arity=arity, input_mode=input_mode
                     ),
                 },
                 "input_mode": input_mode,
@@ -582,6 +587,96 @@ def make_programs() -> list[dict[str, Any]]:
             domains,
             ["dense", "modifier", "combinator", name],
             source=source,
+            rtol=5e-12,
+            atol=5e-12,
+        )
+
+    dense_mapping = [
+        {
+            "name": "each_negate",
+            "expression": monadic("-", x),
+            "source": "{-¨𝕩}",
+            "arity": 1,
+            "mode": "monadic_vector",
+            "domains": {"x": "signed"},
+        },
+        {
+            "name": "each_leading_add",
+            "expression": dyadic("+", w, x),
+            "source": "{𝕨+¨𝕩}",
+            "arity": 2,
+            "mode": "leading_left",
+            "domains": {"w": "signed", "x": "signed"},
+        },
+        {
+            "name": "table_multiply",
+            "expression": dyadic("×", w, x),
+            "source": "{𝕨×⌜𝕩}",
+            "arity": 2,
+            "mode": "table_vectors",
+            "domains": {"w": "signed", "x": "signed"},
+            "native_tinygrad": "lambda w, x: w.reshape((w.shape[0], 1)) * x.reshape((1, x.shape[0]))",
+            "native_torch": "lambda w, x: w.reshape((w.shape[0], 1)) * x.reshape((1, x.shape[0]))",
+        },
+        {
+            "name": "cells_reverse",
+            "expression": monadic("⌽", x),
+            "source": "{⌽˘𝕩}",
+            "arity": 1,
+            "mode": "monadic_matrix",
+            "domains": {"x": "signed"},
+            "native_tinygrad": "lambda x: x.flip(1)",
+            "native_torch": "lambda x: torch.flip(x, dims=(1,))",
+        },
+        {
+            "name": "cells_sum_absolute",
+            "expression": fold("+", monadic("|", x)),
+            "source": "{+´∘|˘𝕩}",
+            "arity": 1,
+            "mode": "monadic_matrix",
+            "domains": {"x": "signed"},
+            "native_tinygrad": "lambda x: x.abs().sum(axis=1)",
+            "native_torch": "lambda x: x.abs().sum(dim=1)",
+        },
+        {
+            "name": "rank_add_rows",
+            "expression": dyadic("+", w, x),
+            "source": "{𝕨+⎉1‿1𝕩}",
+            "arity": 2,
+            "mode": "matrix_vector",
+            "domains": {"w": "signed", "x": "signed"},
+            "native_tinygrad": "lambda w, x: w + x.reshape((1, x.shape[0]))",
+            "native_torch": "lambda w, x: w + x.reshape((1, x.shape[0]))",
+        },
+        {
+            "name": "rank_matrix_vector",
+            "expression": fold("+", dyadic("×", w, x)),
+            "source": "{𝕨+˝∘×⎉1𝕩}",
+            "arity": 2,
+            "mode": "matrix_vector",
+            "domains": {"w": "signed", "x": "signed"},
+            "native_tinygrad": "lambda w, x: (w * x.reshape((1, x.shape[0]))).sum(axis=1)",
+            "native_torch": "lambda w, x: (w * x.reshape((1, x.shape[0]))).sum(dim=1)",
+        },
+    ]
+    for item in dense_mapping:
+        add(
+            f"dense.mapping.{item['name']}",
+            "dense-mapping",
+            "idiomatic",
+            item["expression"],
+            item["arity"],
+            item["mode"],
+            item["domains"],
+            ["dense", "modifier", "mapping", item["name"]],
+            source=item["source"],
+            native_expression=(
+                compile_bqn(item["source"]).expression
+                if "native_tinygrad" in item
+                else None
+            ),
+            native_tinygrad=item.get("native_tinygrad"),
+            native_torch=item.get("native_torch"),
             rtol=5e-12,
             atol=5e-12,
         )
