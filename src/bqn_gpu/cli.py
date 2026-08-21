@@ -12,7 +12,6 @@ from typing import Sequence
 from .errors import BQNGPUError
 from .json_values import dumps_host_value, loads_host_value
 from .source import compile_bqn
-from .tinygrad_backend import TinygradBackend
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -23,7 +22,9 @@ def _parser() -> argparse.ArgumentParser:
     evaluate = commands.add_parser("eval", help="execute a BQN source string")
     evaluate.add_argument("source")
     for command in (run, evaluate):
-        command.add_argument("--backend", choices=("tinygrad",), default="tinygrad")
+        command.add_argument(
+            "--backend", choices=("tinygrad", "torch"), default="tinygrad"
+        )
         command.add_argument(
             "--device", default=os.environ.get("BQN_GPU_DEVICE", "CPU")
         )
@@ -42,7 +43,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             else arguments.source
         )
         compiled = compile_bqn(source)
-        backend = TinygradBackend(arguments.device)
+        if arguments.backend == "tinygrad":
+            from .tinygrad_backend import TinygradBackend
+
+            backend = TinygradBackend(arguments.device)
+        else:
+            from .torch_backend import TorchBackend
+
+            backend = TorchBackend(arguments.device)
         values = {}
         if arguments.x is not None:
             values["x"] = loads_host_value(_json_argument(arguments.x))

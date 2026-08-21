@@ -23,6 +23,8 @@ bqn-gpu run sum-squares.bqn --device CUDA --x '[1,2,3,4]'
 
 bqn-gpu eval '{𝕩+1}' --device CPU --x '[1,2,3]'
 # {"shape": [3], "data": [2.0, 3.0, 4.0]}
+
+bqn-gpu eval '{𝕩+1}' --backend torch --device CUDA --x '[1,2,3]'
 ```
 
 `--x` and `--w` accept inline JSON or `@path/to/input.json`. A JSON number is a BQN numeric atom. A rectangular nested list is a dense array. The explicit form `{"shape":[2,2],"data":[1,2,3,4]}` handles exact shapes, including rank-0 and empty arrays. Output is a JSON number for an atom or the explicit shape/data form for an array.
@@ -45,7 +47,16 @@ The source frontend currently supports headerless function blocks, bare expressi
 
 This is not yet a general BQN implementation. Unsupported syntax fails with its source location; automatic cBQN fallback is planned but not implemented. The exact claimed surface and limitations are generated in [docs/conformance.md](docs/conformance.md), and [docs/source-frontend.md](docs/source-frontend.md) describes the accepted source and data boundary.
 
-The tracked corpus starts at 115 actual BQN programs and is explicitly designed to grow without a fixed cap. It includes primitive shape cases, phrases, naive/idiomatic pairs, reductions, and long pipelines. Every case is compiled through the BQN source frontend and compared as a complete value against pinned cBQN. See [docs/corpus.md](docs/corpus.md).
+The tracked corpus starts at 116 actual BQN programs and is explicitly designed to grow without a fixed cap. It includes primitive shape cases, phrases, naive/idiomatic pairs, reductions, and long pipelines. Every case is compiled through the BQN source frontend and compared as a complete value against pinned cBQN. See [docs/corpus.md](docs/corpus.md).
+
+Both tinygrad and PyTorch implement the same backend protocol. `scripts/run_corpus.py` correctness-checks and times selected BQN sources across cBQN, tinygrad, and Torch, on CPU or CUDA, and emits stable machine-readable JSON:
+
+```sh
+python scripts/run_corpus.py --backend cbqn --backend tinygrad --backend torch \
+  --device CUDA --tag paired --size 1048576 --output results.json
+```
+
+cBQN is always a CPU reference in this runner. Tensor inputs are transferred before timing; reported tensor-backend times include source-IR dispatch, graph construction or eager operator dispatch, kernel realization, and required device synchronization, but exclude host/device input and output transfer.
 
 ## Development
 
@@ -56,6 +67,8 @@ python -m pip install -e '.[test]'
 ./scripts/build_cbqn.sh
 make test
 ```
+
+PyTorch is optional. Install `.[torch]` when it is not already present, or install a CUDA build appropriate for the host before installing this project. tinygrad remains the default backend.
 
 `build_cbqn.sh` clones the revision in `deps/cbqn.rev`, builds its shared embedding library, and places it under `.build/`. Differential tests use cBQN's public embedding API and compare atom/array kind, shape, and numeric data rather than formatted text.
 

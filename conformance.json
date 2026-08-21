@@ -10,6 +10,15 @@
     "dtype": "float64",
     "devices": ["CPU", "CUDA"]
   },
+  "additional_backends": [
+    {
+      "name": "PyTorch",
+      "version": ">=2.7",
+      "dtype": "float64",
+      "devices": ["CPU", "CUDA"],
+      "tests": ["tests/test_torch_backend.py"]
+    }
+  ],
   "common_limitations": [
     "Nested arrays and characters are not supported.",
     "Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.",

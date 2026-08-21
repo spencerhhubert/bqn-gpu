@@ -13,7 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(scope="session")
-def backend() -> TinygradBackend:
+def backend(cbqn: CBQN) -> TinygradBackend:
+    # cBQN reserves JIT address space during initialization. Initialize it
+    # before tensor runtimes start worker threads or allocate code mappings.
     return TinygradBackend(os.environ.get("BQN_GPU_TEST_DEVICE", "CPU"))
 
 

@@ -6,6 +6,8 @@ Semantic oracle: **cBQN**, pinned by `deps/cbqn.rev`.
 
 Execution backend: **tinygrad** at `2d48fe8b7bd9acfa00e91a7f89b28b3ded370c27`, using `float64` on `CPU`, `CUDA`.
 
+Additional adapter: **PyTorch** `>=2.7`, using `float64` on `CPU`, `CUDA`; tested by `tests/test_torch_backend.py`.
+
 | Primitive | Monad | Dyad | Tests |
 |---|---|---|---|
 | `+` Conjugate / Add | supported | supported | `tests/test_add_conformance.py`<br>`tests/test_corpus.py` |

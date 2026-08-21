@@ -19,6 +19,10 @@ bqn-gpu = "bqn_gpu.cli:main"
 test = [
   "pytest>=8",
 ]
+torch = [
+  "numpy>=1.26",
+  "torch>=2.7",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

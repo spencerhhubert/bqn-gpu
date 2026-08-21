@@ -35,6 +35,8 @@ tinygrad supplies allocation, lazy graphs, fusion, scheduling, code generation, 
 
 The semantic layer does not expose tinygrad UOps directly. A future raw CUDA backend will implement the same backend protocol and reuse the BQN agreement rules, program corpus, cBQN oracle, and result comparison.
 
+PyTorch is a second implementation of that protocol and a familiar performance baseline. The source compiler and corpus do not contain Torch-specific programs: the same BQN source IR dispatches to either tensor backend. This makes backend discrepancies visible and prevents benchmark definitions from drifting apart.
+
 ## Growth path
 
 1. Establish primitive semantics and conformance through tinygrad.

@@ -28,9 +28,23 @@ def render() -> str:
         f"Execution backend: **{backend['name']}** at `{backend['revision']}`, "
         f"using `{backend['dtype']}` on {', '.join(f'`{d}`' for d in backend['devices'])}.",
         "",
-        "| Primitive | Monad | Dyad | Tests |",
-        "|---|---|---|---|",
     ]
+    for additional in manifest.get("additional_backends", []):
+        lines.extend(
+            [
+            f"Additional adapter: **{additional['name']}** `{additional['version']}`, "
+            f"using `{additional['dtype']}` on "
+            f"{', '.join(f'`{d}`' for d in additional['devices'])}; "
+            f"tested by {', '.join(f'`{test}`' for test in additional['tests'])}.",
+            "",
+            ]
+        )
+    lines.extend(
+        [
+            "| Primitive | Monad | Dyad | Tests |",
+            "|---|---|---|---|",
+        ]
+    )
     for primitive in manifest["primitives"]:
         tests = "<br>".join(f"`{test}`" for test in primitive["tests"])
         lines.append(

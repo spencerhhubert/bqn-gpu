@@ -1,4 +1,4 @@
-"""tinygrad adapter for a deliberately small BQN primitive surface."""
+"""PyTorch adapter for the currently supported BQN primitive surface."""
 
 from __future__ import annotations
 
@@ -6,25 +6,25 @@ from dataclasses import dataclass
 from numbers import Real
 from typing import Iterable, Sequence
 
-from tinygrad import Device, Tensor, dtypes
+import torch
 
 from .errors import DeviceError, DomainError, ShapeError, UnsupportedPrimitive
 from .host_value import HostValue, Shape
 
 
 @dataclass(frozen=True)
-class TinygradValue:
-    """A dense real BQN value resident on a tinygrad device."""
+class TorchValue:
+    """A dense real BQN value resident on a PyTorch device."""
 
-    tensor: Tensor
+    tensor: torch.Tensor
     atom: bool
 
     def __post_init__(self) -> None:
-        if not isinstance(self.tensor, Tensor):
-            raise DomainError("TinygradValue requires a tinygrad Tensor")
-        if self.tensor.dtype != dtypes.float64:
-            raise DomainError(f"TinygradValue requires float64, got {self.tensor.dtype}")
-        if self.atom and len(self.tensor.shape) != 0:
+        if not isinstance(self.tensor, torch.Tensor):
+            raise DomainError("TorchValue requires a torch.Tensor")
+        if self.tensor.dtype != torch.float64:
+            raise DomainError(f"TorchValue requires float64, got {self.tensor.dtype}")
+        if self.atom and self.tensor.ndim != 0:
             raise DomainError("an atom must use a zero-dimensional tensor")
 
     @property
@@ -32,38 +32,38 @@ class TinygradValue:
         return tuple(int(length) for length in self.tensor.shape)
 
     def to_host(self) -> HostValue:
+        tensor = self.tensor.detach().cpu()
         if self.atom:
-            return HostValue.from_atom(float(self.tensor.item()))
-        if self.tensor.numel() == 0:
-            data: tuple[float, ...] = ()
-        else:
-            data = tuple(float(value) for value in self.tensor.flatten().tolist())
+            return HostValue.from_atom(float(tensor.item()))
+        data = tuple(float(value) for value in tensor.flatten().tolist())
         return HostValue.from_array(data, self.shape)
 
 
-class TinygradBackend:
-    """Execute the supported BQN primitive surface with tinygrad."""
+class TorchBackend:
+    """Execute the supported BQN primitive surface with PyTorch."""
 
     def __init__(self, device: str = "CPU") -> None:
-        requested = device.upper()
         try:
-            Device[requested]
-        except Exception as error:
-            raise DeviceError(f"tinygrad device {requested!r} is unavailable: {error}") from error
-        self.device = requested
+            requested = torch.device(device.lower())
+        except (RuntimeError, ValueError) as error:
+            raise DeviceError(f"invalid PyTorch device {device!r}: {error}") from error
+        if requested.type == "cuda" and not torch.cuda.is_available():
+            raise DeviceError("PyTorch CUDA execution was requested but CUDA is unavailable")
+        self.torch_device = requested
+        self.device = str(requested)
 
-    def atom(self, value: Real) -> TinygradValue:
+    def atom(self, value: Real) -> TorchValue:
         return self.from_host(HostValue.from_atom(value))
 
-    def array(self, values: Iterable[Real], shape: Sequence[int]) -> TinygradValue:
+    def array(self, values: Iterable[Real], shape: Sequence[int]) -> TorchValue:
         return self.from_host(HostValue.from_array(values, shape))
 
-    def from_host(self, value: HostValue) -> TinygradValue:
-        tensor = Tensor(value.data, dtype=dtypes.float64, device=self.device)
+    def from_host(self, value: HostValue) -> TorchValue:
+        tensor = torch.tensor(value.data, dtype=torch.float64, device=self.torch_device)
         tensor = tensor.reshape(()) if value.atom else tensor.reshape(value.shape)
-        return TinygradValue(tensor=tensor, atom=value.atom)
+        return TorchValue(tensor=tensor, atom=value.atom)
 
-    def call(self, glyph: str, *arguments: TinygradValue) -> TinygradValue:
+    def call(self, glyph: str, *arguments: TorchValue) -> TorchValue:
         if len(arguments) == 1:
             return self._call_monadic(glyph, arguments[0])
         if len(arguments) == 2:
@@ -72,33 +72,28 @@ class TinygradBackend:
             f"primitive {glyph!r} does not have supported valence {len(arguments)}"
         )
 
-    def _call_monadic(self, glyph: str, x: TinygradValue) -> TinygradValue:
+    def _call_monadic(self, glyph: str, x: TorchValue) -> TorchValue:
         self._check_device(x)
-        if glyph == "+":
-            tensor = x.tensor
-        elif glyph == "-":
-            tensor = -x.tensor
-        elif glyph == "×":
-            tensor = x.tensor.sign()
-        elif glyph == "÷":
-            tensor = 1.0 / x.tensor
-        elif glyph == "⋆":
-            tensor = x.tensor.exp()
-        elif glyph == "√":
-            tensor = x.tensor.sqrt()
-        elif glyph == "⌊":
-            tensor = x.tensor.floor()
-        elif glyph == "⌈":
-            tensor = x.tensor.ceil()
-        elif glyph == "|":
-            tensor = x.tensor.abs()
-        else:
-            raise UnsupportedPrimitive(f"monadic primitive {glyph!r} is not implemented")
-        return TinygradValue(tensor=tensor, atom=x.atom)
+        operations = {
+            "+": lambda tensor: tensor,
+            "-": torch.neg,
+            "×": torch.sign,
+            "÷": torch.reciprocal,
+            "⋆": torch.exp,
+            "√": torch.sqrt,
+            "⌊": torch.floor,
+            "⌈": torch.ceil,
+            "|": torch.abs,
+        }
+        try:
+            tensor = operations[glyph](x.tensor)
+        except KeyError:
+            raise UnsupportedPrimitive(
+                f"monadic primitive {glyph!r} is not implemented"
+            ) from None
+        return TorchValue(tensor=tensor, atom=x.atom)
 
-    def _call_dyadic(
-        self, glyph: str, w: TinygradValue, x: TinygradValue
-    ) -> TinygradValue:
+    def _call_dyadic(self, glyph: str, w: TorchValue, x: TorchValue) -> TorchValue:
         self._check_device(w)
         self._check_device(x)
         w_tensor, x_tensor = self._leading_axis_agreement(w, x)
@@ -111,22 +106,16 @@ class TinygradBackend:
         elif glyph == "÷":
             tensor = w_tensor / x_tensor
         elif glyph == "|":
-            tensor = x_tensor - w_tensor * (x_tensor / w_tensor).floor()
+            tensor = x_tensor - w_tensor * torch.floor(x_tensor / w_tensor)
         elif glyph == "⌊":
-            tensor = w_tensor.minimum(x_tensor)
+            tensor = torch.minimum(w_tensor, x_tensor)
         elif glyph == "⌈":
-            tensor = w_tensor.maximum(x_tensor)
+            tensor = torch.maximum(w_tensor, x_tensor)
         else:
             raise UnsupportedPrimitive(f"dyadic primitive {glyph!r} is not implemented")
-        return TinygradValue(tensor=tensor, atom=w.atom and x.atom)
+        return TorchValue(tensor=tensor, atom=w.atom and x.atom)
 
-    def conjugate(self, x: TinygradValue) -> TinygradValue:
-        return self._call_monadic("+", x)
-
-    def add(self, w: TinygradValue, x: TinygradValue) -> TinygradValue:
-        return self._call_dyadic("+", w, x)
-
-    def reduce(self, glyph: str, argument: TinygradValue) -> TinygradValue:
+    def reduce(self, glyph: str, argument: TorchValue) -> TorchValue:
         self._check_device(argument)
         if argument.atom or len(argument.shape) != 1:
             raise DomainError("BQN Fold is currently supported only for numeric lists")
@@ -144,21 +133,22 @@ class TinygradBackend:
             tensor = argument.tensor.max()
         else:
             raise UnsupportedPrimitive(f"Fold with {glyph!r} is not implemented")
-        return TinygradValue(tensor=tensor, atom=True)
+        return TorchValue(tensor=tensor, atom=True)
 
     def synchronize(self) -> None:
-        Device[self.device].synchronize()
+        if self.torch_device.type == "cuda":
+            torch.cuda.synchronize(self.torch_device)
 
-    def _check_device(self, value: TinygradValue) -> None:
-        if value.tensor.device != self.device:
+    def _check_device(self, value: TorchValue) -> None:
+        if value.tensor.device != self.torch_device:
             raise DeviceError(
-                f"value is on {value.tensor.device}, backend executes on {self.device}"
+                f"value is on {value.tensor.device}, backend executes on {self.torch_device}"
             )
 
     @staticmethod
     def _leading_axis_agreement(
-        w: TinygradValue, x: TinygradValue
-    ) -> tuple[Tensor, Tensor]:
+        w: TorchValue, x: TorchValue
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         if w.atom or x.atom:
             return w.tensor, x.tensor
 
