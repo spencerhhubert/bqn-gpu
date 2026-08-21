@@ -1,8 +1,8 @@
 const BQN_GPU_BACKEND = "bqn-gpu-tinygrad";
 const REFERENCE_BACKENDS = [
   { backend: "cbqn", label: "cBQN", color: "#475569" },
-  { backend: "native-tinygrad", label: "native tinygrad", color: "#16a34a" },
-  { backend: "native-torch", label: "native Torch", color: "#d97706" },
+  { backend: "native-tinygrad", label: "native tinygrad", color: "#15803d" },
+  { backend: "native-torch", label: "native Torch", color: "#c2410c" },
 ];
 const PRIMITIVE_GLYPHS = new Set(Array.from("+-×÷|⌊⌈⋆√¬∧∨<≤=≥>≠≡≢⊣⊢⥊∾≍⋈↑↓↕⌽⍉/⍋⍒⊏⊑⊐⊒∊⍷⊔!˙˜˘¨⌜⁼´˝`"));
 const state = { summary: null, runs: [], performance: [], capability: [], programs: [], selectedProgram: null };
@@ -124,9 +124,9 @@ function renderMetrics(rows) {
   const vsNativeTinygrad = pairedRatios(rows, BQN_GPU_BACKEND, "native-tinygrad");
   const vsNativeTorch = pairedRatios(rows, BQN_GPU_BACKEND, "native-torch");
   const correct = rows.filter((row) => Boolean(row.correct)).length;
-  $("#metric-cbqn").textContent = formatSpeedup(median(vsCbqn.map((item) => item.ratio)));
-  $("#metric-native-tinygrad").textContent = formatSpeedup(median(vsNativeTinygrad.map((item) => item.ratio)));
-  $("#metric-native-torch").textContent = formatSpeedup(median(vsNativeTorch.map((item) => item.ratio)));
+  renderComparisonMetric($("#metric-cbqn"), median(vsCbqn.map((item) => item.ratio)), "cBQN CPU");
+  renderComparisonMetric($("#metric-native-tinygrad"), median(vsNativeTinygrad.map((item) => item.ratio)), "native tinygrad");
+  renderComparisonMetric($("#metric-native-torch"), median(vsNativeTorch.map((item) => item.ratio)), "native Torch");
   $("#metric-correct").textContent = rows.length ? `${formatPercent(correct / rows.length)}` : "—";
   $("#metric-correct-detail").textContent = `${formatInteger(correct)} of ${formatInteger(rows.length)} results`;
 }
@@ -165,15 +165,25 @@ function renderDistribution(rows) {
   const low = 2 ** lowPower;
   const high = 2 ** highPower;
   const x = (value) => left + (Math.log2(value) - Math.log2(low)) / (Math.log2(high) - Math.log2(low)) * (right - left);
-  chart.setAttribute("viewBox", `0 0 ${width} ${bottom + 38}`);
-  chart.setAttribute("height", String(bottom + 38));
+  chart.setAttribute("viewBox", `0 0 ${width} ${bottom + 50}`);
+  chart.setAttribute("height", String(bottom + 50));
 
+  const tickStep = Math.max(1, Math.ceil((highPower - lowPower) / 7));
   for (let power = lowPower; power <= highPower; power++) {
+    if (power !== 0 && power % tickStep !== 0) continue;
     const value = 2 ** power;
     const px = x(value);
     chart.append(svg("line", { x1: px, x2: px, y1: top - 18, y2: bottom, class: value === 1 ? "chart-parity" : "chart-grid" }));
-    const label = svg("text", { x: px, y: bottom + 22, "text-anchor": "middle", class: "chart-label" });
-    label.textContent = `${formatCompact(value)}×`;
+    const label = svg("text", { x: px, y: bottom + 17, "text-anchor": "middle", class: "chart-label" });
+    const [factor, direction] = formatAxisComparison(value).split(" ");
+    const factorLine = svg("tspan", { x: px });
+    factorLine.textContent = factor;
+    label.append(factorLine);
+    if (direction) {
+      const directionLine = svg("tspan", { x: px, dy: 12 });
+      directionLine.textContent = direction;
+      label.append(directionLine);
+    }
     chart.append(label);
   }
   const heading = svg("text", { x: left, y: 18, class: "chart-label" });
@@ -188,12 +198,16 @@ function renderDistribution(rows) {
     const label = svg("text", { x: left - 14, y: y + 4, "text-anchor": "end", class: "chart-label" });
     label.textContent = `${dataset.condition} · vs ${dataset.reference.label}`;
     chart.append(label);
-    chart.append(svg("line", { x1: x(dataset.p10), x2: x(dataset.p90), y1: y, y2: y, stroke: dataset.reference.color, class: "distribution-range" }));
-    chart.append(svg("line", { x1: x(dataset.p25), x2: x(dataset.p75), y1: y, y2: y, stroke: dataset.reference.color, class: "distribution-iqr" }));
-    const dot = svg("circle", { cx: x(dataset.median), cy: y, r: 5, fill: dataset.reference.color, class: "distribution-median" });
-    const title = svg("title");
-    title.textContent = `${dataset.condition} · bqn-gpu vs ${dataset.reference.label}\nn=${dataset.values.length}\np10 ${formatSpeedup(dataset.p10)} · median ${formatSpeedup(dataset.median)} · p90 ${formatSpeedup(dataset.p90)}`;
-    dot.append(title);
+    const context = `${dataset.condition} · bqn-gpu compared with ${dataset.reference.label}`;
+    const range = svg("line", { x1: x(dataset.p10), x2: x(dataset.p90), y1: y, y2: y, stroke: dataset.reference.color, class: "distribution-range" });
+    appendSvgTitle(range, `${context}\nThin line: p10 ${formatComparison(dataset.p10, dataset.reference.label)} through p90 ${formatComparison(dataset.p90, dataset.reference.label)}`);
+    chart.append(range);
+    const iqr = svg("line", { x1: x(dataset.p25), x2: x(dataset.p75), y1: y, y2: y, stroke: dataset.reference.color, class: "distribution-iqr" });
+    appendSvgTitle(iqr, `${context}\nThick line: middle 50%, from ${formatComparison(dataset.p25, dataset.reference.label)} through ${formatComparison(dataset.p75, dataset.reference.label)}`);
+    chart.append(iqr);
+    const dotLabel = `${context}\nMedian: ${formatComparison(dataset.median, dataset.reference.label)} across ${dataset.values.length} matched programs`;
+    const dot = svg("circle", { cx: x(dataset.median), cy: y, r: 5, fill: dataset.reference.color, class: "distribution-median", tabindex: 0, role: "img", "aria-label": dotLabel });
+    appendSvgTitle(dot, dotLabel);
     chart.append(dot);
     const count = svg("text", { x: right + 12, y: y + 4, class: "chart-label" });
     count.textContent = `n=${dataset.values.length}`;
@@ -201,7 +215,7 @@ function renderDistribution(rows) {
 
     const row = document.createElement("tr");
     const wins = dataset.values.filter((value) => value > 1).length / dataset.values.length;
-    row.innerHTML = `<td class="py-2 pr-4 font-sans">${escapeHtml(dataset.condition)}</td><td class="py-2 pr-4">${escapeHtml(dataset.reference.label)}</td><td class="py-2 text-right">${dataset.values.length}</td><td class="py-2 text-right">${formatSpeedup(dataset.p10)}</td><td class="py-2 text-right font-semibold">${formatSpeedup(dataset.median)}</td><td class="py-2 text-right">${formatSpeedup(dataset.p90)}</td><td class="py-2 text-right">${formatPercent(wins)}</td>`;
+    row.innerHTML = `<td class="py-2 pr-5 font-sans">${escapeHtml(dataset.condition)}</td><td class="py-2 pr-5">${escapeHtml(dataset.reference.label)}</td><td class="py-2 pr-5 text-right">${dataset.values.length}</td><td class="py-2 pr-5 text-right">${comparisonMarkup(dataset.p10, dataset.reference.label)}</td><td class="py-2 pr-5 text-right">${comparisonMarkup(dataset.median, dataset.reference.label)}</td><td class="py-2 pr-5 text-right">${comparisonMarkup(dataset.p90, dataset.reference.label)}</td><td class="py-2 text-right">${formatPercent(wins)}</td>`;
     table.append(row);
   });
 }
@@ -256,7 +270,7 @@ function renderAggregateTable(target, rows, definitions) {
     const subset = rows.filter((row) => definition.matches(programById(row.program_id), row));
     const stats = aggregateStats(subset);
     const row = document.createElement("tr");
-    row.innerHTML = `<td class="py-3 pr-3 font-sans font-medium">${escapeHtml(definition.label)}</td><td class="py-3 text-right">${formatInteger(stats.programs)}</td><td class="py-3 text-right">${formatNs(stats.bqnGpu)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsCbqn)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsNativeTinygrad)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsNativeTorch)}</td>`;
+    row.innerHTML = `<td class="py-3 pr-5 font-sans font-medium">${escapeHtml(definition.label)}</td><td class="py-3 pr-5 text-right">${formatInteger(stats.programs)}</td><td class="py-3 pr-5 text-right">${formatNs(stats.bqnGpu)}</td><td class="py-3 pr-5 text-right">${comparisonMarkup(stats.vsCbqn, "cBQN")}</td><td class="py-3 pr-5 text-right">${comparisonMarkup(stats.vsNativeTinygrad, "native tinygrad")}</td><td class="py-3 text-right">${comparisonMarkup(stats.vsNativeTorch, "native Torch")}</td>`;
     target.append(row);
   }
   if (!definitions.length) target.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500">No matching data.</td></tr>';
@@ -268,7 +282,7 @@ function renderWorkloadTable(target, rows, definitions) {
     const subset = rows.filter((row) => definition.matches(programById(row.program_id), row));
     const stats = aggregateStats(subset);
     const row = document.createElement("tr");
-    row.innerHTML = `<td class="py-3 pr-3 font-sans font-medium">${escapeHtml(definition.label)}</td><td class="py-3 text-right">${formatInteger(stats.programs)}</td><td class="py-3 text-right">${formatNs(stats.cbqn)}</td><td class="py-3 text-right">${formatNs(stats.bqnGpu)}</td><td class="py-3 text-right">${formatNs(stats.nativeTinygrad)}</td><td class="py-3 text-right">${formatNs(stats.nativeTorch)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsCbqn)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsNativeTinygrad)}</td><td class="py-3 text-right font-semibold text-blue-700">${formatSpeedup(stats.vsNativeTorch)}</td>`;
+    row.innerHTML = `<td class="py-3 pr-5 font-sans font-medium">${escapeHtml(definition.label)}</td><td class="py-3 pr-5 text-right">${formatInteger(stats.programs)}</td><td class="py-3 pr-5 text-right">${formatNs(stats.cbqn)}</td><td class="py-3 pr-5 text-right">${formatNs(stats.bqnGpu)}</td><td class="py-3 pr-5 text-right">${formatNs(stats.nativeTinygrad)}</td><td class="py-3 pr-5 text-right">${formatNs(stats.nativeTorch)}</td><td class="py-3 pr-5 text-right">${comparisonMarkup(stats.vsCbqn, "cBQN")}</td><td class="py-3 pr-5 text-right">${comparisonMarkup(stats.vsNativeTinygrad, "native tinygrad")}</td><td class="py-3 text-right">${comparisonMarkup(stats.vsNativeTorch, "native Torch")}</td>`;
     target.append(row);
   }
 }
@@ -320,6 +334,7 @@ function renderCapability() {
   const insertCount = (snapshot.manifest?.inserts ?? []).filter((item) => item.status === "supported").length;
   const scanCount = (snapshot.manifest?.scans ?? []).filter((item) => item.status === "supported").length;
   const combinatorCount = (snapshot.manifest?.combinators ?? []).filter((item) => item.status === "supported").length;
+  const mappingCount = (snapshot.manifest?.mapping_modifiers ?? []).filter((item) => item.status === "supported").length;
   const items = [
     ["Monadic forms", snapshot.monadic_supported],
     ["Dyadic forms", snapshot.dyadic_supported],
@@ -327,6 +342,7 @@ function renderCapability() {
     ["Insert operands", insertCount],
     ["Scan operands", scanCount],
     ["Pure combinators", combinatorCount],
+    ["Mapping modifiers", mappingCount],
     ["Tests", `${snapshot.tests_passed} passed`],
   ];
   for (const [label, value] of items) {
@@ -472,12 +488,48 @@ function shortCommit(value) { return value ? value.slice(0, 8) : "unknown"; }
 function shortVersion(value) { return String(value).length > 14 ? `${String(value).slice(0, 8)}…` : value; }
 function formatDate(value) { return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value)); }
 function formatInteger(value) { return new Intl.NumberFormat("en-US").format(value ?? 0); }
-function formatCompact(value) { return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value); }
 function formatPercent(value) { return Number.isFinite(value) ? `${(value * 100).toFixed(value === 1 ? 0 : 1)}%` : "—"; }
-function formatSpeedup(value) {
-  if (!Number.isFinite(value)) return "—";
-  const digits = value < .01 ? 3 : value < 10 ? 2 : 1;
-  return `${value.toFixed(digits)}×`;
+function comparisonDirection(value) {
+  if (!Number.isFinite(value) || value <= 0) return "unavailable";
+  const factor = value >= 1 ? value : 1 / value;
+  if (factor < 1.05) return "same";
+  return value > 1 ? "faster" : "slower";
+}
+function formatComparison(value, reference, includeReference = true) {
+  const direction = comparisonDirection(value);
+  if (direction === "unavailable") return "—";
+  const suffix = includeReference ? ` ${direction === "same" ? "as" : "than"} ${reference}` : "";
+  if (direction === "same") return `about the same${suffix}`;
+  const factor = value >= 1 ? value : 1 / value;
+  if (factor < 1.5) return `slightly ${direction}${suffix}`;
+  return `${formatInteger(Math.round(factor))}× ${direction}${suffix}`;
+}
+function formatAxisComparison(value) {
+  if (value === 1) return "same speed";
+  return formatComparison(value, "", false);
+}
+function comparisonClasses(direction) {
+  if (direction === "faster") return "text-emerald-700";
+  if (direction === "slower") return "text-rose-700";
+  return "text-slate-600";
+}
+function comparisonMarkup(value, reference) {
+  const direction = comparisonDirection(value);
+  const label = formatComparison(value, reference);
+  return `<span class="whitespace-nowrap font-semibold ${comparisonClasses(direction)}" title="${escapeHtml(`bqn-gpu is ${label}`)}">${escapeHtml(label)}</span>`;
+}
+function renderComparisonMetric(element, value, reference) {
+  const direction = comparisonDirection(value);
+  const label = formatComparison(value, reference);
+  element.textContent = label;
+  element.title = label === "—" ? "No matched programs" : `bqn-gpu is ${label}`;
+  element.classList.remove("text-emerald-700", "text-rose-700", "text-slate-600");
+  element.classList.add(comparisonClasses(direction));
+}
+function appendSvgTitle(element, label) {
+  const title = svg("title");
+  title.textContent = label;
+  element.append(title);
 }
 function formatNs(value) {
   if (!Number.isFinite(value)) return "—";

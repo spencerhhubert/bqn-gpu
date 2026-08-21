@@ -51,18 +51,18 @@
       <section class="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Aggregate summary">
         <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p class="text-xs font-medium uppercase tracking-wide text-slate-500">bqn-gpu vs cBQN CPU</p>
-          <p id="metric-cbqn" class="mt-2 font-mono text-2xl font-semibold">—</p>
-          <p class="mt-1 text-xs text-slate-500">median paired speedup</p>
+          <p id="metric-cbqn" class="mt-2 font-mono text-xl font-semibold">—</p>
+          <p class="mt-1 text-xs text-slate-500">median of matched programs</p>
         </article>
         <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p class="text-xs font-medium uppercase tracking-wide text-slate-500">bqn-gpu vs native tinygrad</p>
-          <p id="metric-native-tinygrad" class="mt-2 font-mono text-2xl font-semibold">—</p>
-          <p class="mt-1 text-xs text-slate-500">median paired speedup</p>
+          <p id="metric-native-tinygrad" class="mt-2 font-mono text-xl font-semibold">—</p>
+          <p class="mt-1 text-xs text-slate-500">median of matched programs</p>
         </article>
         <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p class="text-xs font-medium uppercase tracking-wide text-slate-500">bqn-gpu vs native Torch</p>
-          <p id="metric-native-torch" class="mt-2 font-mono text-2xl font-semibold">—</p>
-          <p class="mt-1 text-xs text-slate-500">median paired speedup</p>
+          <p id="metric-native-torch" class="mt-2 font-mono text-xl font-semibold">—</p>
+          <p class="mt-1 text-xs text-slate-500">median of matched programs</p>
         </article>
         <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Correct results</p>
@@ -74,7 +74,12 @@
       <section id="aggregates" class="rounded-lg border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-200 p-5">
           <h2 class="text-base font-semibold">bqn-gpu relative performance</h2>
-          <p class="mt-1 text-sm text-slate-500">Reference time divided by bqn-gpu time over matched programs on the same run. Above 1× means the custom BQN GPU backend is faster. Thick interval: middle 50%; thin interval: p10–p90.</p>
+          <p class="mt-1 text-sm text-slate-500">Every comparison is written from bqn-gpu's perspective: for example, “7× faster” or “3× slower.” Thick interval: middle 50%; thin interval: p10–p90.</p>
+          <ul class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-700" aria-label="Chart color key">
+            <li class="flex items-center gap-2" title="Gray marks comparisons against the cBQN CPU reference"><span class="size-2.5 rounded-full bg-slate-600" aria-hidden="true"></span><span><strong>Gray</strong>: versus cBQN on CPU</span></li>
+            <li class="flex items-center gap-2" title="Green marks comparisons against native tinygrad on CUDA"><span class="size-2.5 rounded-full bg-green-700" aria-hidden="true"></span><span><strong>Green</strong>: versus native tinygrad on CUDA</span></li>
+            <li class="flex items-center gap-2" title="Orange marks comparisons against native Torch on CUDA"><span class="size-2.5 rounded-full bg-orange-700" aria-hidden="true"></span><span><strong>Orange</strong>: versus native Torch on CUDA</span></li>
+          </ul>
         </div>
         <div class="overflow-x-auto p-5">
           <svg id="distribution-chart" class="min-w-[760px]" role="img" aria-label="Aggregate bqn-gpu performance compared with cBQN, native tinygrad, and native Torch"></svg>
@@ -83,7 +88,7 @@
         <details class="border-t border-slate-200">
           <summary class="cursor-pointer px-5 py-3 text-sm font-medium text-slate-700">Exact distribution statistics</summary>
           <div class="overflow-x-auto px-5 pb-5">
-            <table class="w-full text-left text-sm">
+            <table class="min-w-[76rem] w-full text-left text-sm">
               <thead class="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th class="py-2 font-medium">Condition</th><th class="py-2 font-medium">Reference</th><th class="py-2 text-right font-medium">Programs</th><th class="py-2 text-right font-medium">p10</th><th class="py-2 text-right font-medium">Median</th><th class="py-2 text-right font-medium">p90</th><th class="py-2 text-right font-medium">bqn-gpu faster</th></tr></thead>
               <tbody id="distribution-table" class="divide-y divide-slate-100 font-mono text-xs"></tbody>
             </table>
@@ -98,7 +103,7 @@
             <p class="mt-1 text-sm text-slate-500">Static primitive glyph occurrences in the submitted BQN source. This is a source-level proxy, not asymptotic complexity.</p>
           </div>
           <div class="overflow-x-auto p-5">
-            <table class="w-full text-left text-sm">
+            <table class="min-w-[64rem] w-full text-left text-sm">
               <thead class="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th class="pb-2 font-medium">Primitives</th><th class="pb-2 text-right font-medium">Programs</th><th class="pb-2 text-right font-medium">bqn-gpu</th><th class="pb-2 text-right font-medium">vs cBQN</th><th class="pb-2 text-right font-medium">vs native tinygrad</th><th class="pb-2 text-right font-medium">vs native Torch</th></tr></thead>
               <tbody id="complexity-table" class="divide-y divide-slate-100 font-mono text-xs"></tbody>
             </table>
@@ -108,10 +113,10 @@
         <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div class="border-b border-slate-200 p-5">
             <h2 class="text-base font-semibold">By input size</h2>
-            <p class="mt-1 text-sm text-slate-500">Aggregate resident-compute time and paired speedup at each tested element count.</p>
+            <p class="mt-1 text-sm text-slate-500">Aggregate resident-compute time and paired comparison at each tested element count.</p>
           </div>
           <div class="overflow-x-auto p-5">
-            <table class="w-full text-left text-sm">
+            <table class="min-w-[64rem] w-full text-left text-sm">
               <thead class="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th class="pb-2 font-medium">Elements</th><th class="pb-2 text-right font-medium">Programs</th><th class="pb-2 text-right font-medium">bqn-gpu</th><th class="pb-2 text-right font-medium">vs cBQN</th><th class="pb-2 text-right font-medium">vs native tinygrad</th><th class="pb-2 text-right font-medium">vs native Torch</th></tr></thead>
               <tbody id="size-table" class="divide-y divide-slate-100 font-mono text-xs"></tbody>
             </table>
@@ -125,7 +130,7 @@
           <p class="mt-1 text-sm text-slate-500">Medians over matched implementations and inputs. Device and execution mode are retained in every result and shown in the program and run tables.</p>
         </div>
         <div class="overflow-x-auto p-5">
-          <table class="w-full text-left text-sm">
+          <table class="min-w-[80rem] w-full text-left text-sm">
             <thead class="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th class="pb-2 font-medium">Condition</th><th class="pb-2 text-right font-medium">Programs</th><th class="pb-2 text-right font-medium">cBQN CPU</th><th class="pb-2 text-right font-medium">bqn-gpu</th><th class="pb-2 text-right font-medium">native tinygrad</th><th class="pb-2 text-right font-medium">native Torch</th><th class="pb-2 text-right font-medium">vs cBQN</th><th class="pb-2 text-right font-medium">vs tinygrad</th><th class="pb-2 text-right font-medium">vs Torch</th></tr></thead>
             <tbody id="workload-table" class="divide-y divide-slate-100 font-mono text-xs"></tbody>
           </table>
