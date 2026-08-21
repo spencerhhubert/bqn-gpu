@@ -23,6 +23,8 @@ The correctness suite evaluates the original source with pinned cBQN, compiles i
 
 `corpus/benchmark-profiles.json` aligns frequent and occasional measurements. The `development` profile is a fixed program-and-size subset of `certification`, so both measurements describe the same program IDs, deterministic seeds, input recipes, timing boundary, and backend identities at a commit. Development runs use fewer warmups and repetitions; certification adds the rest of the corpus and larger scale. Explicit `--size`, `--warmup`, or `--repeat` arguments override a profile for diagnosis while remaining recorded in the report.
 
+Curated construction is complemented by deterministic typed-grammar generation and equivalence mutation. Discovery candidates are checked against cBQN before they are written, but remain local diagnostic artifacts until a correctness failure, new compiler path, scaling gap, or missed simplification earns a stable corpus entry. See [generative-testing.md](generative-testing.md).
+
 ```sh
 python scripts/run_corpus.py --profile development --device CUDA \
   --backend cbqn --backend bqn-gpu-tinygrad \

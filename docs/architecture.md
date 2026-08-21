@@ -33,7 +33,7 @@ The oracle never depends on formatted textual output. Random differential cases 
 
 tinygrad supplies allocation, lazy graphs, fusion, scheduling, code generation, and CUDA execution behind a small readable implementation. Laziness is important to the project goal: a naively written BQN elementwise pipeline should be fused rather than forced into one GPU launch per source primitive.
 
-The semantic layer does not expose tinygrad UOps directly. A future raw CUDA backend will implement the same backend protocol and reuse the BQN agreement rules, program corpus, cBQN oracle, and result comparison. The staged optimization contract is described in [compiler.md](compiler.md); the broader language milestone is defined in [dense-numeric-tier.md](dense-numeric-tier.md).
+The semantic layer does not expose tinygrad UOps directly. A future raw CUDA backend will implement the same backend protocol and reuse the BQN agreement rules, program corpus, cBQN oracle, and result comparison. The staged optimization contract is described in [compiler.md](compiler.md); the broader language milestone is defined in [dense-numeric-tier.md](dense-numeric-tier.md), and [generative-testing.md](generative-testing.md) defines typed discovery and equivalence mutation.
 
 PyTorch is a second implementation of that protocol and a familiar performance baseline. The source compiler and corpus do not contain Torch-specific programs: the same BQN source IR dispatches to either tensor backend. This makes backend discrepancies visible and prevents benchmark definitions from drifting apart.
 

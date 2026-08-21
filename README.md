@@ -49,6 +49,8 @@ This is not yet a general BQN compiler. When the pinned cBQN shared library has 
 
 The tracked corpus currently contains 276 actual BQN programs and is explicitly designed to grow without a fixed cap. It includes primitive shape cases, phrases, naive/idiomatic pairs, reductions, structural transforms, ordering, Insert/Scan, and long pipelines. Every case is compiled through the BQN source frontend and compared as a complete value against pinned cBQN. See [docs/corpus.md](docs/corpus.md).
 
+Deterministic typed-grammar generation and equivalence mutation probe combinations that curated cases may miss. Candidates are checked against cBQN and remain diagnostic until a correctness failure, compiler path, scaling gap, or missed simplification earns promotion into the tracked corpus. See [docs/generative-testing.md](docs/generative-testing.md).
+
 The benchmark corpus keeps three independent forms of every workload: the actual BQN source, direct native tinygrad source, and direct native PyTorch source. The native sources are generated from the workload specification rather than parsed or lowered from BQN. `scripts/run_corpus.py` checks all results against cBQN and records four explicitly named implementations: cBQN on CPU, the custom BQN frontend/backend on tinygrad, direct tinygrad, and direct PyTorch. For example:
 
 ```sh
