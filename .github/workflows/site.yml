@@ -65,5 +65,5 @@ jobs:
           jq -n --arg token "$BENCHMARK_INGEST_TOKEN" \
             '{BENCHMARK_INGEST_TOKEN: $token}' > "$secrets_file"
           chmod 600 "$secrets_file"
-          npx wrangler deploy --secrets-file "$secrets_file"
           npx wrangler secret bulk "$secrets_file"
+          npx wrangler deploy --secrets-file "$secrets_file"
