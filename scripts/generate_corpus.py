@@ -852,6 +852,75 @@ def make_programs() -> list[dict[str, Any]]:
             atol=tolerance,
         )
 
+    log_w = monadic("⋆⁼", w)
+    log_x = monadic("⋆⁼", x)
+    dense_unders = [
+        (
+            "log_add",
+            monadic("⋆", dyadic("+", log_w, log_x)),
+            "{𝕨+⌾(⋆⁼)𝕩}",
+            2,
+            "dyadic_same",
+            {"w": "positive", "x": "positive"},
+            ["dyadic", "log-domain", "transcendental"],
+            8e-14,
+        ),
+        (
+            "log_subtract",
+            monadic("⋆", dyadic("-", log_w, log_x)),
+            "{𝕨-⌾(⋆⁼)𝕩}",
+            2,
+            "dyadic_same",
+            {"w": "positive", "x": "positive"},
+            ["dyadic", "log-domain", "transcendental"],
+            8e-14,
+        ),
+        (
+            "l2_combine",
+            monadic("√", dyadic("+", dyadic("×", w, w), dyadic("×", x, x))),
+            "{𝕨+⌾(×˜)𝕩}",
+            2,
+            "dyadic_same",
+            {"w": "signed", "x": "signed"},
+            ["dyadic", "norm", "self"],
+            8e-14,
+        ),
+        (
+            "add_three_under_square",
+            monadic("√", dyadic("+", constant(9), dyadic("×", x, x))),
+            "{3+⌾(×˜)𝕩}",
+            1,
+            "monadic_vector",
+            {"x": "signed"},
+            ["literal-left", "norm", "self"],
+            8e-14,
+        ),
+        (
+            "reverse_negate",
+            monadic("⌽", monadic("-", monadic("⌽", x))),
+            "{-⌾⌽𝕩}",
+            1,
+            "monadic_vector",
+            {"x": "signed"},
+            ["structural", "pervasive"],
+            0.0,
+        ),
+    ]
+    for name, expression, source, arity, mode, domains, tags, tolerance in dense_unders:
+        add(
+            f"dense.under.{name}",
+            "dense-under",
+            "idiomatic",
+            expression,
+            arity,
+            mode,
+            domains,
+            ["combinator", "dense", "under", *tags],
+            source=source,
+            rtol=tolerance,
+            atol=tolerance,
+        )
+
     dense_mapping = [
         {
             "name": "each_negate",

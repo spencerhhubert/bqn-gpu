@@ -183,6 +183,7 @@ _COMBINATOR_NAMES = {
     "⊸": "before-bind",
     "⟜": "after-bind",
     "⊘": "valences",
+    "⌾": "computational-under",
 }
 
 

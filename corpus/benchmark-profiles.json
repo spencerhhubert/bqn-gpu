@@ -22,6 +22,7 @@
         "dense.train.centered",
         "dense.repeat.centered_twice",
         "dense.undo.long_composition",
+        "dense.under.log_add",
         "dense.mark_firsts_major_cells.monadic_matrix",
         "dense.mapping.rank_matrix_vector",
         "dense.pair.double_reverse.naive",

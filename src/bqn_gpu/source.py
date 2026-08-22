@@ -46,6 +46,7 @@ _TWO_MODIFIERS = {
     "RANK_MODIFIER": "⎉",
     "REPEAT": "⍟",
     "VALENCES": "⊘",
+    "UNDER": "⌾",
 }
 
 
@@ -378,6 +379,7 @@ def _tokenize(source: str) -> list[Token]:
             "⎉": "RANK_MODIFIER",
             "⍟": "REPEAT",
             "⊘": "VALENCES",
+            "⌾": "UNDER",
             "‿": "STRAND",
             "𝕨": "ARG",
             "𝕩": "ARG",

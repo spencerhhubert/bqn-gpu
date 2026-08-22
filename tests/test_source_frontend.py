@@ -101,7 +101,7 @@ def test_multiline_comments_and_local_names(backend: TinygradBackend) -> None:
         ("{}", "cannot be empty"),
         ("{𝕩+}", "expected a numeric value"),
         ("{missing+1}", "unknown local name"),
-        ("{𝕩⌾1}", "unsupported BQN token"),
+        ("{𝕩◶1}", "unsupported BQN token"),
         ("{|⁼𝕩}", "monadic Undo"),
         ("{(⊢+1)𝕩}", "final component"),
         ("{-⍟¯1𝕩}", "natural count"),
@@ -236,3 +236,20 @@ def test_cli_explains_undo_lowering(capsys) -> None:
     assert explanation["semantic_bqn"] == "(2⊸×⁼ 𝕩)"
     assert explanation["rewrites"][0]["rule"] == "inline-undo"
     assert explanation["optimized_bqn"] == "(𝕩÷2)"
+
+
+def test_cli_explains_computational_under_lowering(capsys) -> None:
+    assert main(
+        [
+            "explain",
+            "{𝕨+⌾(⋆⁼)𝕩}",
+            "--w",
+            "[2,3,4]",
+            "--x",
+            "[5,6,7]",
+        ]
+    ) == 0
+    explanation = json.loads(capsys.readouterr().out)
+    assert explanation["semantic_ir"]["modifier"] == "⌾"
+    assert explanation["rewrites"][0]["rule"] == "inline-computational-under"
+    assert explanation["optimized_bqn"] == "(⋆((⋆⁼𝕨)+(⋆⁼𝕩)))"

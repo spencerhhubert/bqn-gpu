@@ -13,6 +13,7 @@
       "dense-repeat": 7,
       "dense-structural": 12,
       "dense-train": 10,
+      "dense-under": 5,
       "dense-undo": 11,
       "glyph": 103,
       "paired": 24,
@@ -12362,6 +12363,289 @@
         "modifier",
         "program",
         "undo"
+      ]
+    },
+    {
+      "id": "dense.under.log_add",
+      "category": "dense-under",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨+⌾(⋆⁼)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⋆",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "+",
+              "arguments": [
+                {
+                  "op": "call",
+                  "glyph": "⋆⁼",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "w"
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "glyph": "⋆⁼",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((((w).log()) + ((x).log()))).exp()",
+        "torch": "lambda w, x: ((((w).log()) + ((x).log()))).exp()"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "positive",
+        "x": "positive"
+      },
+      "rtol": 8e-14,
+      "atol": 8e-14,
+      "tags": [
+        "combinator",
+        "dense",
+        "dyadic",
+        "log-domain",
+        "transcendental",
+        "under"
+      ]
+    },
+    {
+      "id": "dense.under.log_subtract",
+      "category": "dense-under",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨-⌾(⋆⁼)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⋆",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "call",
+                  "glyph": "⋆⁼",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "w"
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "glyph": "⋆⁼",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((((w).log()) - ((x).log()))).exp()",
+        "torch": "lambda w, x: ((((w).log()) - ((x).log()))).exp()"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "positive",
+        "x": "positive"
+      },
+      "rtol": 8e-14,
+      "atol": 8e-14,
+      "tags": [
+        "combinator",
+        "dense",
+        "dyadic",
+        "log-domain",
+        "transcendental",
+        "under"
+      ]
+    },
+    {
+      "id": "dense.under.l2_combine",
+      "category": "dense-under",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨+⌾(×˜)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "√",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "+",
+              "arguments": [
+                {
+                  "op": "call",
+                  "glyph": "×",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "w"
+                    },
+                    {
+                      "op": "argument",
+                      "name": "w"
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "glyph": "×",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    },
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: (((((w) * (w))) + (((x) * (x))))).sqrt()",
+        "torch": "lambda w, x: (((((w) * (w))) + (((x) * (x))))).sqrt()"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 8e-14,
+      "atol": 8e-14,
+      "tags": [
+        "combinator",
+        "dense",
+        "dyadic",
+        "norm",
+        "self",
+        "under"
+      ]
+    },
+    {
+      "id": "dense.under.add_three_under_square",
+      "category": "dense-under",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{3+⌾(×˜)𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "√",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "+",
+              "arguments": [
+                {
+                  "op": "constant",
+                  "value": 9
+                },
+                {
+                  "op": "call",
+                  "glyph": "×",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    },
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (((9.0) + (((x) * (x))))).sqrt()",
+        "torch": "lambda x: (((9.0) + (((x) * (x))))).sqrt()"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 8e-14,
+      "atol": 8e-14,
+      "tags": [
+        "combinator",
+        "dense",
+        "literal-left",
+        "norm",
+        "self",
+        "under"
+      ]
+    },
+    {
+      "id": "dense.under.reverse_negate",
+      "category": "dense-under",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{-⌾⌽𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⌽",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "call",
+                  "glyph": "⌽",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((-((x).flip(0)))).flip(0)",
+        "torch": "lambda x: torch.flip(((-(torch.flip((x), dims=(0,))))), dims=(0,))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "combinator",
+        "dense",
+        "pervasive",
+        "structural",
+        "under"
       ]
     },
     {

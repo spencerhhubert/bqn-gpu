@@ -1232,7 +1232,7 @@ Delegated to cBQN by the CLI or rejected in strict mode.
 | `⌊`` | supported | Dense real arrays with at least one axis; inclusive minimum scan is over major cells. |
 | `⌈`` | supported | Dense real arrays with at least one axis; inclusive maximum scan is over major cells. |
 
-## Pure combinators
+## Combinators
 
 | Modifier | Status | Domain | Behavior |
 |---|---|---|---|
@@ -1244,7 +1244,7 @@ Delegated to cBQN by the CLI or rejected in strict mode.
 | `⊘` Valences | supported | Two supported function operands whose selected monadic or dyadic expansion remains within the dense-real backend domain. | A monadic call applies the left operand; a dyadic call applies the right operand. |
 | `˙` Constant | unsupported | General Constant modifier syntax and arbitrary data operands are not compiled; numeric constant operands are accepted only in the documented Bind and train subsets. | Delegated to cBQN by the CLI or rejected in strict mode. |
 | `◶` Choose | unsupported | Function-array operands and data-dependent function selection are not compiled. | Delegated to cBQN by the CLI or rejected in strict mode. |
-| `⌾` Under | unsupported | General inverse and structural update synthesis are not compiled. | Delegated to cBQN by the CLI or rejected in strict mode. |
+| `⌾` Under | supported | Computational Under over dense-real operands when the right operand has an inverse in the documented Undo subset and all intermediate transforms and the left-operand result remain dense and shape-compatible. Structural Under, selection/update synthesis, and right operands outside the proven inverse subset are not compiled. | Lowers monadically to 𝔾⁼(𝔽(𝔾𝕩)) and dyadically to 𝔾⁼((𝔾𝕨)𝔽(𝔾𝕩)) before ordinary tensor optimization, satisfying BQN's computational Under rule without runtime modifier dispatch. |
 | `⎊` Catch | unsupported | Error-catching control flow is not represented in the current tensor IR. | Delegated to cBQN by the CLI or rejected in strict mode. |
 
 ## Function trains
@@ -1286,7 +1286,7 @@ Both `.bqn` files and BQN strings compile to the same backend-neutral expression
 | Separators and comments | supported | Newline, `⋄`, comma, and `#` line comments. |
 | Numeric strands | supported | Literal numeric strands separated by `‿`, used for shapes, coordinates, counts, and axes. |
 | Fold `´`, Insert `˝`, and Scan `` ` `` | supported | Prefix use with the supported dyadic function operands and no dyadic initial value. |
-| Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, After `⟜`, and Valences `⊘` | supported | Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization. |
+| Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, After `⟜`, Valences `⊘`, and computational Under `⌾` | supported | Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Computational Under requires a right operand in the proven Undo subset. Combinators remain explicit in semantic IR and are inlined only after specialization. |
 | Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜` | supported | Dense uniform-result mapping. Rank accepts literal numeric atoms or strands; general computed rank operands and empty generic frames are not compiled yet. |
 | Parenthesized function trains | supported | Two-, three-, long-, and nested trains over supported primitive or derived functions, including numeric subjects in train argument positions. The train must be applied within the accepted program body. |
 | Statically bounded Repeat `⍟` | supported | A literal natural count from zero through 64, a supported operand, and an unrolled expression of at most 4,096 semantic IR nodes. Dynamic, negative, infinite, and array-valued repetition counts are not compiled yet. |

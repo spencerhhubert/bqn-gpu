@@ -105,6 +105,13 @@ tensors or captured as extra JIT inputs. This applies equally to literals
 written directly and to those introduced by Undo, Repeat, trains, or
 combinator expansion, and each decision appears in the optimization trace.
 
+Computational Under (`⌾`) uses the same inverse prover. For a transform
+`𝔾`, the compiler lowers monadic `𝔽⌾𝔾` to `𝔾⁼∘𝔽∘𝔾`; a dyadic call
+transforms both arguments before applying `𝔽`, then applies `𝔾⁼` once to the
+result. The lowered graph immediately receives ordinary scalar, algebraic, and
+JIT specialization. Structural Under still requires update-location metadata
+and is outside this claim.
+
 Monadic Classify, Occurrence Count, Mark Firsts, and Deduplicate compare major
 cells, flattening only each cell's trailing axes for equality while preserving
 BQN's leading-axis semantics. The first three have fixed list output and remain

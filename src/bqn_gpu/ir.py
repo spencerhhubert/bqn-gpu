@@ -224,6 +224,10 @@ def expand_combinator(expression: Expression) -> Expression:
     if modifier == "⊘":
         selected = left if len(arguments) == 1 else right
         return apply_function(selected, arguments)
+    if modifier == "⌾":
+        transformed = [apply_function(right, [argument]) for argument in arguments]
+        operated = apply_function(left, transformed)
+        return _apply_inverse(right, [operated])
     if modifier == "∘":
         inner_arguments = [x] if len(arguments) == 1 else [w, x]
         return apply_function(left, [apply_function(right, inner_arguments)])

@@ -108,7 +108,7 @@ def render() -> str:
     lines.extend(
         [
             "",
-            "## Pure combinators",
+            "## Combinators",
             "",
             "| Modifier | Status | Domain | Behavior |",
             "|---|---|---|---|",

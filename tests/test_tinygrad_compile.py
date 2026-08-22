@@ -229,6 +229,23 @@ def test_literal_arithmetic_is_captured_as_kernel_scalars(
         assert executable(arguments).to_host() == HostValue.from_array(expected, (3,))
 
 
+def test_computational_under_is_inlined_before_jit_capture(
+    backend: TinygradBackend,
+) -> None:
+    expression = compile_bqn("{𝕨+⌾(⋆⁼)𝕩}").expression
+    arguments = {
+        "w": backend.from_host(HostValue.from_array([2, 3, 4], (3,))),
+        "x": backend.from_host(HostValue.from_array([5, 6, 7], (3,))),
+    }
+    optimization = backend.optimize(expression, arguments)
+    assert optimization.events[0].rule == "inline-computational-under"
+    executable = backend.compile(expression, arguments)
+    actual = executable(arguments).to_host()
+    assert actual.shape == (3,)
+    assert actual.data == pytest.approx([10, 18, 28], rel=5e-13, abs=5e-13)
+    assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
+
+
 def test_ranked_matrix_vector_product_is_jit_captured(
     backend: TinygradBackend,
 ) -> None:

@@ -233,6 +233,36 @@ def test_dense_combinators_match_cbqn(
 @pytest.mark.parametrize(
     ("source", "arguments"),
     [
+        ("{𝕨+⌾(⋆⁼)𝕩}", {"w": decode_host_value([2, 3, 4]), "x": decode_host_value([5, 6, 7])}),
+        ("{𝕨-⌾(⋆⁼)𝕩}", {"w": decode_host_value([2, 3, 4]), "x": decode_host_value([5, 6, 7])}),
+        ("{𝕨+⌾(×˜)𝕩}", {"w": decode_host_value([3, 5, 8]), "x": decode_host_value([4, 12, 15])}),
+        ("{÷⌾(⋆⁼)𝕩}", {"x": decode_host_value([2, 3, 4])}),
+        ("{-⌾⌽𝕩}", {"x": V}),
+        ("{𝕨+⌾(-∘÷)𝕩}", {"w": decode_host_value([2, 4, 8]), "x": decode_host_value([3, 5, 9])}),
+    ],
+)
+def test_dense_computational_under_matches_cbqn(
+    source: str,
+    arguments: dict[str, HostValue],
+    dense_backend: Any,
+    cbqn: CBQN,
+) -> None:
+    compiled = compile_bqn(source)
+    actual = compiled.execute(dense_backend, **arguments)
+    oracle_arguments = (
+        (arguments["w"], arguments["x"])
+        if compiled.arity == 2
+        else (arguments["x"],)
+    )
+    expected = cbqn.call(source, *oracle_arguments)
+    assert actual.atom == expected.atom
+    assert actual.shape == expected.shape
+    assert actual.data == pytest.approx(expected.data, rel=5e-13, abs=5e-13)
+
+
+@pytest.mark.parametrize(
+    ("source", "arguments"),
+    [
         ("{(⊢+⌽)𝕩}", {"x": V}),
         ("{(⌽⍉)𝕩}", {"x": M}),
         ("{(+´÷≠)𝕩}", {"x": V}),

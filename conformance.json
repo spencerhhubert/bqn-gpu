@@ -854,10 +854,10 @@
     {
       "glyph": "⌾",
       "name": "Under",
-      "status": "unsupported",
-      "domain": "General inverse and structural update synthesis are not compiled.",
-      "behavior": "Delegated to cBQN by the CLI or rejected in strict mode.",
-      "tests": ["tests/test_source_frontend.py"]
+      "status": "supported",
+      "domain": "Computational Under over dense-real operands when the right operand has an inverse in the documented Undo subset and all intermediate transforms and the left-operand result remain dense and shape-compatible. Structural Under, selection/update synthesis, and right operands outside the proven inverse subset are not compiled.",
+      "behavior": "Lowers monadically to 𝔾⁼(𝔽(𝔾𝕩)) and dyadically to 𝔾⁼((𝔾𝕨)𝔽(𝔾𝕩)) before ordinary tensor optimization, satisfying BQN's computational Under rule without runtime modifier dispatch.",
+      "tests": ["tests/test_dense_primitives.py", "tests/test_source_frontend.py", "tests/test_tinygrad_compile.py"]
     },
     {
       "glyph": "⎊",
@@ -1001,9 +1001,9 @@
         "constraint": "Prefix use with the supported dyadic function operands and no dyadic initial value."
       },
       {
-        "name": "Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, After `⟜`, and Valences `⊘`",
+        "name": "Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, After `⟜`, Valences `⊘`, and computational Under `⌾`",
         "status": "supported",
-        "constraint": "Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization."
+        "constraint": "Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Computational Under requires a right operand in the proven Undo subset. Combinators remain explicit in semantic IR and are inlined only after specialization."
       },
       {
         "name": "Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜`",
