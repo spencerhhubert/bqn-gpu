@@ -29,6 +29,14 @@ class ExecutionBackend(Protocol[ValueT]):
 
     def call(self, glyph: str, *arguments: ValueT) -> ValueT: ...
 
+    def call_scalar(
+        self,
+        glyph: str,
+        scalar: Real,
+        scalar_left: bool,
+        argument: ValueT,
+    ) -> ValueT: ...
+
     def call_static(
         self,
         glyph: str,

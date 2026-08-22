@@ -100,7 +100,7 @@ def optimize(
                 **node,
                 "arguments": [visit(child) for child in node["arguments"]],
             }
-        elif operation in {"fold", "insert", "scan", "static_call"}:
+        elif operation in {"fold", "insert", "scan", "static_call", "scalar_call"}:
             rewritten = {**node, "argument": visit(node["argument"])}
         elif operation == "map":
             rewritten = {
@@ -150,7 +150,7 @@ def infer_rank(expression: Expression, argument_ranks: Mapping[str, int]) -> int
         return None if rank is None else max(0, rank - 1)
     if operation == "scan":
         return infer_rank(expression["argument"], argument_ranks)
-    if operation == "static_call":
+    if operation in {"static_call", "scalar_call"}:
         return infer_rank(expression["argument"], argument_ranks)
     if operation != "call":
         return None
@@ -201,7 +201,10 @@ def _rewrite(
         replacement, rule = _cancel_rotates(expression, argument_ranks)
         if rule is not None:
             return replacement, rule
-        return _specialize_literal_structural(expression)
+        replacement, rule = _specialize_literal_structural(expression)
+        if rule is not None:
+            return replacement, rule
+        return _specialize_literal_arithmetic(expression)
     child = arguments[0]
     if child["op"] != "call" or len(child["arguments"]) != 1:
         return expression, None
@@ -270,6 +273,30 @@ def _specialize_literal_structural(
             "argument": right,
         },
         "specialize-literal-structural-argument",
+    )
+
+
+def _specialize_literal_arithmetic(
+    expression: Expression,
+) -> tuple[Expression, str | None]:
+    if expression["glyph"] not in {"+", "-", "×", "÷"}:
+        return expression, None
+    left, right = expression["arguments"]
+    if left["op"] == "constant" and right["op"] != "constant":
+        scalar, scalar_left, argument = left["value"], True, right
+    elif right["op"] == "constant" and left["op"] != "constant":
+        scalar, scalar_left, argument = right["value"], False, left
+    else:
+        return expression, None
+    return (
+        {
+            "op": "scalar_call",
+            "glyph": expression["glyph"],
+            "scalar": scalar,
+            "scalar_left": scalar_left,
+            "argument": argument,
+        },
+        "specialize-literal-scalar-arithmetic",
     )
 
 

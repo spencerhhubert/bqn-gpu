@@ -91,6 +91,32 @@ class TinygradBackend:
             f"primitive {glyph!r} does not have supported valence {len(arguments)}"
         )
 
+    def call_scalar(
+        self,
+        glyph: str,
+        scalar: Real,
+        scalar_left: bool,
+        argument: TinygradValue,
+    ) -> TinygradValue:
+        self._check_device(argument)
+        value = float(scalar)
+        left, right = (
+            (value, argument.tensor) if scalar_left else (argument.tensor, value)
+        )
+        operations = {
+            "+": lambda: left + right,
+            "-": lambda: left - right,
+            "×": lambda: left * right,
+            "÷": lambda: left / right,
+        }
+        try:
+            tensor = operations[glyph]()
+        except KeyError:
+            raise UnsupportedPrimitive(
+                f"literal-scalar primitive {glyph!r} is not implemented"
+            ) from None
+        return TinygradValue(tensor=tensor, atom=argument.atom)
+
     def call_static(
         self,
         glyph: str,
@@ -1011,6 +1037,8 @@ class TinygradBackend:
                 for child in expression["arguments"]
             )
         if operation == "static_call":
+            return TinygradBackend._fixed_output_shape(expression["argument"])
+        if operation == "scalar_call":
             return TinygradBackend._fixed_output_shape(expression["argument"])
         if operation == "call":
             glyph = expression["glyph"]

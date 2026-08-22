@@ -76,6 +76,32 @@ class TorchBackend:
             f"primitive {glyph!r} does not have supported valence {len(arguments)}"
         )
 
+    def call_scalar(
+        self,
+        glyph: str,
+        scalar: Real,
+        scalar_left: bool,
+        argument: TorchValue,
+    ) -> TorchValue:
+        self._check_device(argument)
+        value = float(scalar)
+        left, right = (
+            (value, argument.tensor) if scalar_left else (argument.tensor, value)
+        )
+        operations = {
+            "+": lambda: left + right,
+            "-": lambda: left - right,
+            "×": lambda: left * right,
+            "÷": lambda: left / right,
+        }
+        try:
+            tensor = operations[glyph]()
+        except KeyError:
+            raise UnsupportedPrimitive(
+                f"literal-scalar primitive {glyph!r} is not implemented"
+            ) from None
+        return TorchValue(tensor=tensor, atom=argument.atom)
+
     def _call_monadic(self, glyph: str, x: TorchValue) -> TorchValue:
         self._check_device(x)
         if glyph == "⋆⁼":

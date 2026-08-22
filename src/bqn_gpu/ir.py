@@ -262,6 +262,14 @@ def evaluate(
     if operation == "call":
         values = tuple(evaluate(child, backend, arguments) for child in expression["arguments"])
         return backend.call(expression["glyph"], *values)
+    if operation == "scalar_call":
+        value = evaluate(expression["argument"], backend, arguments)
+        return backend.call_scalar(
+            expression["glyph"],
+            expression["scalar"],
+            expression["scalar_left"],
+            value,
+        )
     if operation == "static_call":
         value = evaluate(expression["argument"], backend, arguments)
         return backend.call_static(
@@ -316,7 +324,7 @@ def has_tensor_compute(expression: Expression) -> bool:
     operation = expression["op"]
     if operation in {"argument", "constant", "array"}:
         return False
-    if operation in {"fold", "insert", "scan"}:
+    if operation in {"fold", "insert", "scan", "scalar_call"}:
         return True
     if operation == "static_call":
         return True
@@ -367,6 +375,12 @@ def render_bqn(expression: Expression) -> str:
             else "‿".join(_render_number(value) for value in values)
         )
         return f"({left}{expression['glyph']}{render_bqn(expression['argument'])})"
+    if operation == "scalar_call":
+        scalar = _render_number(expression["scalar"])
+        argument = render_bqn(expression["argument"])
+        if expression["scalar_left"]:
+            return f"({scalar}{expression['glyph']}{argument})"
+        return f"({argument}{expression['glyph']}{scalar})"
     if operation == "fold":
         return f"({expression['glyph']}´{render_bqn(expression['argument'])})"
     if operation == "insert":

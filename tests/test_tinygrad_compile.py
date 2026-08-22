@@ -198,12 +198,35 @@ def test_undo_is_proven_before_jit_capture(backend: TinygradBackend) -> None:
     }
     optimization = backend.optimize(expression, arguments)
     assert optimization.events[0].rule == "inline-undo"
+    assert sum(
+        event.rule == "specialize-literal-scalar-arithmetic"
+        for event in optimization.events
+    ) == 8
     executable = backend.compile(expression, arguments)
     actual = executable(arguments).to_host()
     assert actual.atom is False
     assert actual.shape == (3,)
     assert actual.data == pytest.approx([1, 2, 3], rel=5e-14, abs=5e-14)
     assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
+
+
+def test_literal_arithmetic_is_captured_as_kernel_scalars(
+    backend: TinygradBackend,
+) -> None:
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([2, 4, 6], (3,)))
+    }
+    for source, scalar_left, expected in (
+        ("{𝕩÷2}", False, [1, 2, 3]),
+        ("{2-𝕩}", True, [0, -2, -4]),
+    ):
+        expression = compile_bqn(source).expression
+        optimization = backend.optimize(expression, arguments)
+        assert optimization.expression["op"] == "scalar_call"
+        assert optimization.expression["scalar_left"] is scalar_left
+        assert optimization.events[-1].rule == "specialize-literal-scalar-arithmetic"
+        executable = backend.compile(expression, arguments)
+        assert executable(arguments).to_host() == HostValue.from_array(expected, (3,))
 
 
 def test_ranked_matrix_vector_product_is_jit_captured(

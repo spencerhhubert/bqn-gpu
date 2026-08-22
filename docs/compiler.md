@@ -99,6 +99,12 @@ right-inverse rule. Unsupported inverse proofs remain compile errors and can be
 delegated to cBQN by the CLI; there is no runtime function dispatch in a proven
 GPU graph.
 
+Literal `+`, `-`, `×`, and `÷` arguments specialize further into kernel
+scalars after semantic lowering. They are not materialized as rank-zero device
+tensors or captured as extra JIT inputs. This applies equally to literals
+written directly and to those introduced by Undo, Repeat, trains, or
+combinator expansion, and each decision appears in the optimization trace.
+
 Monadic Classify, Occurrence Count, Mark Firsts, and Deduplicate compare major
 cells, flattening only each cell's trailing axes for equality while preserving
 BQN's leading-axis semantics. The first three have fixed list output and remain
