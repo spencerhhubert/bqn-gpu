@@ -43,7 +43,28 @@ def test_corpus_has_glyph_phrase_pair_reduction_and_long_program_layers() -> Non
         "dense-paired",
     } <= categories
     assert sum(len("".join(program.bqn.split())) >= 40 for program in PROGRAMS) >= 20
-    assert sum(len("".join(program.bqn.split())) >= 80 for program in PROGRAMS) >= 5
+    assert sum(len("".join(program.bqn.split())) >= 80 for program in PROGRAMS) >= 30
+
+    complexity_glyphs = set(
+        "+-×÷⋆√⌊⌈∧∨¬|≤<>≥=≠≡≢⊣⊢⥊∾≍⋈↑↓↕»«⌽⍉/⍋⍒⊏⊑⊐⊒∊⍷⊔!"
+        "´˝`˜⁼˘¨⌜∘○⊸⟜⎉⍟⊘⌾"
+    )
+    long_algorithms = [
+        program for program in PROGRAMS if program.category == "long-algorithm"
+    ]
+    assert len(long_algorithms) >= 28
+    assert all(len("".join(program.bqn.split())) >= 300 for program in long_algorithms)
+    assert all(
+        sum(glyph in complexity_glyphs for glyph in program.bqn) >= 25
+        for program in long_algorithms
+    )
+    for family, minimum in {
+        "statistics": 8,
+        "similarity": 8,
+        "signal": 8,
+        "matrix": 4,
+    }.items():
+        assert sum(family in program.tags for program in long_algorithms) >= minimum
 
     pair_variants: dict[str, set[str]] = {}
     for program in PROGRAMS:

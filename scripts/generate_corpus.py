@@ -1133,6 +1133,870 @@ def make_programs() -> list[dict[str, Any]]:
             atol=5e-12,
         )
 
+    class LongProgram:
+        """Build readable multi-stage BQN and its independent workload IR together."""
+
+        def __init__(self, arity: int) -> None:
+            self.arity = arity
+            self.expressions: dict[str, Expression] = {"x": x}
+            self.sources = {"x": "𝕩"}
+            if arity == 2:
+                self.expressions["w"] = w
+                self.sources["w"] = "𝕨"
+            self.statements: list[str] = []
+
+        def value(self, item: str | int | float) -> tuple[str, Expression]:
+            if isinstance(item, str):
+                return self.sources[item], self.expressions[item]
+            expression = constant(item)
+            return render_bqn(expression), expression
+
+        def bind(self, name: str, source: str, expression: Expression) -> str:
+            if name in self.expressions:
+                raise AssertionError(f"duplicate long-program binding {name!r}")
+            self.sources[name] = name
+            self.expressions[name] = expression
+            self.statements.append(f"{name}←{source}")
+            return name
+
+        def monad(self, name: str, glyph: str, item: str | int | float) -> str:
+            source, expression = self.value(item)
+            return self.bind(name, f"{glyph}{source}", monadic(glyph, expression))
+
+        def dyad(
+            self,
+            name: str,
+            left: str | int | float,
+            glyph: str,
+            right: str | int | float,
+        ) -> str:
+            left_source, left_expression = self.value(left)
+            right_source, right_expression = self.value(right)
+            return self.bind(
+                name,
+                f"{left_source}{glyph}{right_source}",
+                dyadic(glyph, left_expression, right_expression),
+            )
+
+        def fold(self, name: str, glyph: str, item: str) -> str:
+            source, expression = self.value(item)
+            return self.bind(name, f"{glyph}´{source}", fold(glyph, expression))
+
+        def insert(self, name: str, glyph: str, item: str) -> str:
+            source, expression = self.value(item)
+            return self.bind(name, f"{glyph}˝{source}", insert(glyph, expression))
+
+        def scan(self, name: str, glyph: str, item: str) -> str:
+            source, expression = self.value(item)
+            return self.bind(name, f"{glyph}`{source}", scan(glyph, expression))
+
+        def source(self, result: str) -> str:
+            if result not in self.expressions:
+                raise AssertionError(f"unknown long-program result {result!r}")
+            return "{" + " ⋄ ".join([*self.statements, result]) + "}"
+
+    def add_long(
+        identifier: str,
+        builder: LongProgram,
+        result: str,
+        input_mode: str,
+        domains: dict[str, str],
+        tags: Iterable[str],
+        *,
+        tolerance: float = 2e-9,
+    ) -> None:
+        add(
+            identifier,
+            "long-algorithm",
+            "algorithmic",
+            builder.expressions[result],
+            builder.arity,
+            input_mode,
+            domains,
+            ["algorithm", "long", *tags],
+            source=builder.source(result),
+            rtol=tolerance,
+            atol=tolerance,
+        )
+
+    statistics = LongProgram(1)
+    statistics.fold("total", "+", "x")
+    statistics.monad("count", "≠", "x")
+    statistics.dyad("mean", "total", "÷", "count")
+    statistics.dyad("center", "x", "-", "mean")
+    statistics.monad("distance", "|", "center")
+    statistics.fold("lone", "+", "distance")
+    statistics.dyad("square", "center", "×", "center")
+    statistics.fold("energy", "+", "square")
+    statistics.dyad("variance", "energy", "÷", "count")
+    statistics.dyad("safevar", "variance", "+", 1)
+    statistics.monad("scale", "√", "safevar")
+    statistics.dyad("normal", "center", "÷", "scale")
+    statistics.monad("absnormal", "|", "normal")
+    statistics.fold("normlone", "+", "absnormal")
+    statistics.dyad("cube", "square", "×", "center")
+    statistics.fold("third", "+", "cube")
+    statistics.dyad("fourth", "square", "×", "square")
+    statistics.fold("fourthsum", "+", "fourth")
+    statistics.dyad("safedenom", "energy", "+", 1)
+    statistics.dyad("skewproxy", "third", "÷", "safedenom")
+    statistics.dyad("kurtproxy", "fourthsum", "÷", "safedenom")
+    statistics.dyad("combined", "normlone", "+", "skewproxy")
+    statistics.dyad("score", "combined", "+", "kurtproxy")
+    add_long(
+        "program.statistics.standardized_moments",
+        statistics,
+        "score",
+        "monadic_vector",
+        {"x": "signed"},
+        ["statistics", "normalization", "moments", "reduction"],
+    )
+
+    softmax = LongProgram(1)
+    softmax.fold("maximum", "⌈", "x")
+    softmax.dyad("shifted", "x", "-", "maximum")
+    softmax.monad("weights", "⋆", "shifted")
+    softmax.fold("denom", "+", "weights")
+    softmax.dyad("probability", "weights", "÷", "denom")
+    softmax.dyad("square", "probability", "×", "probability")
+    softmax.dyad("cube", "square", "×", "probability")
+    softmax.fold("secondmass", "+", "square")
+    softmax.fold("thirdmass", "+", "cube")
+    softmax.monad("logprob", "⋆⁼", "probability")
+    softmax.dyad("plogp", "probability", "×", "logprob")
+    softmax.fold("rawentropy", "+", "plogp")
+    softmax.monad("entropy", "-", "rawentropy")
+    softmax.fold("peak", "⌈", "probability")
+    softmax.fold("floorprob", "⌊", "probability")
+    softmax.dyad("spread", "peak", "-", "floorprob")
+    softmax.dyad("concentration", "secondmass", "+", "thirdmass")
+    softmax.dyad("summary", "entropy", "+", "concentration")
+    softmax.dyad("score", "summary", "+", "spread")
+    add_long(
+        "program.statistics.softmax_concentration",
+        softmax,
+        "score",
+        "monadic_vector",
+        {"x": "signed"},
+        ["statistics", "softmax", "entropy", "reduction", "transcendental"],
+    )
+
+    robust = LongProgram(1)
+    robust.fold("total", "+", "x")
+    robust.monad("count", "≠", "x")
+    robust.dyad("mean", "total", "÷", "count")
+    robust.dyad("center", "x", "-", "mean")
+    robust.monad("deviation", "|", "center")
+    robust.fold("devsum", "+", "deviation")
+    robust.dyad("mad", "devsum", "÷", "count")
+    robust.dyad("threshold", "mad", "+", 0.5)
+    robust.dyad("inlier", "deviation", "≤", "threshold")
+    robust.monad("outlier", "¬", "inlier")
+    robust.dyad("inside", "center", "×", "inlier")
+    robust.dyad("outside", "center", "×", "outlier")
+    robust.dyad("insquare", "inside", "×", "inside")
+    robust.dyad("outsquare", "outside", "×", "outside")
+    robust.fold("inenergy", "+", "insquare")
+    robust.fold("outenergy", "+", "outsquare")
+    robust.fold("outcount", "+", "outlier")
+    robust.dyad("saferatio", "outenergy", "÷", "inenergy")
+    robust.dyad("ratio", "saferatio", "÷", "threshold")
+    robust.dyad("summary", "ratio", "+", "outcount")
+    robust.dyad("score", "summary", "+", "mad")
+    add_long(
+        "program.statistics.robust_dispersion",
+        robust,
+        "score",
+        "monadic_vector",
+        {"x": "signed"},
+        ["statistics", "mask", "robust", "reduction"],
+        tolerance=5e-9,
+    )
+
+    winsor = LongProgram(1)
+    winsor.fold("minimum", "⌊", "x")
+    winsor.fold("maximum", "⌈", "x")
+    winsor.dyad("width", "maximum", "-", "minimum")
+    winsor.dyad("safewidth", "width", "+", 1)
+    winsor.dyad("shifted", "x", "-", "minimum")
+    winsor.dyad("unit", "shifted", "÷", "safewidth")
+    winsor.dyad("lowmask", "unit", "<", 0.1)
+    winsor.dyad("lowdelta", 0.1, "-", "unit")
+    winsor.dyad("lowadjust", "lowdelta", "×", "lowmask")
+    winsor.dyad("lowered", "unit", "+", "lowadjust")
+    winsor.dyad("highmask", "lowered", ">", 0.9)
+    winsor.dyad("highdelta", "lowered", "-", 0.9)
+    winsor.dyad("highadjust", "highdelta", "×", "highmask")
+    winsor.dyad("clipped", "lowered", "-", "highadjust")
+    winsor.dyad("center", "clipped", "-", 0.5)
+    winsor.monad("distance", "|", "center")
+    winsor.dyad("square", "center", "×", "center")
+    winsor.dyad("cube", "square", "×", "center")
+    winsor.fold("lone", "+", "distance")
+    winsor.fold("energy", "+", "square")
+    winsor.fold("third", "+", "cube")
+    winsor.monad("count", "≠", "x")
+    winsor.dyad("meanenergy", "energy", "÷", "count")
+    winsor.dyad("meanlone", "lone", "÷", "count")
+    winsor.dyad("summary", "meanenergy", "+", "meanlone")
+    winsor.dyad("score", "summary", "+", "third")
+    add_long(
+        "program.statistics.winsorized_shape",
+        winsor,
+        "score",
+        "monadic_vector",
+        {"x": "signed"},
+        ["statistics", "clamp", "normalization", "moments"],
+    )
+
+    positive_stats = LongProgram(1)
+    positive_stats.fold("total", "+", "x")
+    positive_stats.monad("count", "≠", "x")
+    positive_stats.dyad("mean", "total", "÷", "count")
+    positive_stats.dyad("center", "x", "-", "mean")
+    positive_stats.dyad("square", "center", "×", "center")
+    positive_stats.fold("energy", "+", "square")
+    positive_stats.dyad("variance", "energy", "÷", "count")
+    positive_stats.dyad("safevariance", "variance", "+", 1)
+    positive_stats.monad("deviation", "√", "safevariance")
+    positive_stats.dyad("coefficient", "deviation", "÷", "mean")
+    positive_stats.monad("reciprocal", "÷", "x")
+    positive_stats.fold("recipsum", "+", "reciprocal")
+    positive_stats.dyad("harmonic", "count", "÷", "recipsum")
+    positive_stats.monad("logvalues", "⋆⁼", "x")
+    positive_stats.fold("logsum", "+", "logvalues")
+    positive_stats.dyad("logmean", "logsum", "÷", "count")
+    positive_stats.monad("geometric", "⋆", "logmean")
+    positive_stats.dyad("spreadone", "mean", "-", "harmonic")
+    positive_stats.dyad("spreadtwo", "geometric", "-", "harmonic")
+    positive_stats.dyad("combined", "coefficient", "+", "spreadone")
+    positive_stats.dyad("score", "combined", "+", "spreadtwo")
+    add_long(
+        "program.statistics.mean_family",
+        positive_stats,
+        "score",
+        "monadic_vector",
+        {"x": "positive"},
+        ["statistics", "harmonic-mean", "geometric-mean", "transcendental"],
+    )
+
+    polynomial = LongProgram(1)
+    polynomial.dyad("square", "x", "×", "x")
+    polynomial.dyad("cube", "square", "×", "x")
+    polynomial.dyad("fourth", "square", "×", "square")
+    polynomial.dyad("fifth", "fourth", "×", "x")
+    polynomial.dyad("sixth", "cube", "×", "cube")
+    polynomial.dyad("termone", "x", "×", 0.5)
+    polynomial.dyad("termtwo", "square", "÷", 2)
+    polynomial.dyad("termthree", "cube", "÷", 6)
+    polynomial.dyad("termfour", "fourth", "÷", 24)
+    polynomial.dyad("termfive", "fifth", "÷", 120)
+    polynomial.dyad("termsix", "sixth", "÷", 720)
+    polynomial.dyad("partialone", "termone", "+", "termtwo")
+    polynomial.dyad("partialtwo", "termthree", "+", "termfour")
+    polynomial.dyad("partialthree", "termfive", "+", "termsix")
+    polynomial.dyad("seriesone", "partialone", "+", "partialtwo")
+    polynomial.dyad("series", "seriesone", "+", "partialthree")
+    polynomial.monad("magnitude", "|", "series")
+    polynomial.dyad("energy", "series", "×", "series")
+    polynomial.fold("lone", "+", "magnitude")
+    polynomial.fold("ltwo", "+", "energy")
+    polynomial.fold("peak", "⌈", "magnitude")
+    polynomial.dyad("summary", "lone", "+", "ltwo")
+    polynomial.dyad("score", "summary", "+", "peak")
+    add_long(
+        "program.statistics.polynomial_moments",
+        polynomial,
+        "score",
+        "monadic_vector",
+        {"x": "signed"},
+        ["statistics", "polynomial", "moments", "fusible"],
+        tolerance=2e-8,
+    )
+
+    threshold = LongProgram(1)
+    threshold.dyad("positive", "x", ">", 0)
+    threshold.dyad("negative", "x", "<", 0)
+    threshold.monad("magnitude", "|", "x")
+    threshold.dyad("positivevalue", "magnitude", "×", "positive")
+    threshold.dyad("negativevalue", "magnitude", "×", "negative")
+    threshold.dyad("square", "x", "×", "x")
+    threshold.dyad("positiveenergy", "square", "×", "positive")
+    threshold.dyad("negativeenergy", "square", "×", "negative")
+    threshold.fold("positivecount", "+", "positive")
+    threshold.fold("negativecount", "+", "negative")
+    threshold.fold("positivesum", "+", "positivevalue")
+    threshold.fold("negativesum", "+", "negativevalue")
+    threshold.fold("posenergy", "+", "positiveenergy")
+    threshold.fold("negenergy", "+", "negativeenergy")
+    threshold.dyad("safeposcount", "positivecount", "+", 1)
+    threshold.dyad("safenegcount", "negativecount", "+", 1)
+    threshold.dyad("posmean", "positivesum", "÷", "safeposcount")
+    threshold.dyad("negmean", "negativesum", "÷", "safenegcount")
+    threshold.dyad("countbalance", "positivecount", "-", "negativecount")
+    threshold.dyad("meanbalance", "posmean", "-", "negmean")
+    threshold.dyad("energybalance", "posenergy", "-", "negenergy")
+    threshold.dyad("summary", "countbalance", "+", "meanbalance")
+    threshold.dyad("score", "summary", "+", "energybalance")
+    add_long(
+        "program.statistics.threshold_balance",
+        threshold,
+        "score",
+        "monadic_vector",
+        {"x": "signed"},
+        ["statistics", "mask", "comparison", "reduction"],
+    )
+
+    log_shape = LongProgram(1)
+    log_shape.monad("logs", "⋆⁼", "x")
+    log_shape.fold("logtotal", "+", "logs")
+    log_shape.monad("count", "≠", "x")
+    log_shape.dyad("logmean", "logtotal", "÷", "count")
+    log_shape.dyad("center", "logs", "-", "logmean")
+    log_shape.monad("abscen", "|", "center")
+    log_shape.dyad("square", "center", "×", "center")
+    log_shape.dyad("cube", "square", "×", "center")
+    log_shape.dyad("fourth", "square", "×", "square")
+    log_shape.fold("lone", "+", "abscen")
+    log_shape.fold("energy", "+", "square")
+    log_shape.fold("third", "+", "cube")
+    log_shape.fold("fourthsum", "+", "fourth")
+    log_shape.dyad("safeenergy", "energy", "+", 1)
+    log_shape.dyad("skew", "third", "÷", "safeenergy")
+    log_shape.dyad("kurt", "fourthsum", "÷", "safeenergy")
+    log_shape.monad("geometric", "⋆", "logmean")
+    log_shape.dyad("summaryone", "lone", "+", "skew")
+    log_shape.dyad("summarytwo", "kurt", "+", "geometric")
+    log_shape.dyad("score", "summaryone", "+", "summarytwo")
+    add_long(
+        "program.statistics.log_shape",
+        log_shape,
+        "score",
+        "monadic_vector",
+        {"x": "positive"},
+        ["statistics", "log-domain", "moments", "transcendental"],
+        tolerance=5e-9,
+    )
+
+    def distance_prefix(builder: LongProgram) -> None:
+        builder.dyad("difference", "w", "-", "x")
+        builder.monad("absolute", "|", "difference")
+        builder.dyad("square", "difference", "×", "difference")
+        builder.fold("lone", "+", "absolute")
+        builder.fold("ltwo", "+", "square")
+        builder.monad("count", "≠", "x")
+        builder.dyad("mae", "lone", "÷", "count")
+        builder.dyad("mse", "ltwo", "÷", "count")
+
+    correlation = LongProgram(2)
+    correlation.fold("wtotal", "+", "w")
+    correlation.fold("xtotal", "+", "x")
+    correlation.monad("count", "≠", "x")
+    correlation.dyad("wmean", "wtotal", "÷", "count")
+    correlation.dyad("xmean", "xtotal", "÷", "count")
+    correlation.dyad("wc", "w", "-", "wmean")
+    correlation.dyad("xc", "x", "-", "xmean")
+    correlation.dyad("cross", "wc", "×", "xc")
+    correlation.dyad("wsquare", "wc", "×", "wc")
+    correlation.dyad("xsquare", "xc", "×", "xc")
+    correlation.fold("covsum", "+", "cross")
+    correlation.fold("wenergy", "+", "wsquare")
+    correlation.fold("xenergy", "+", "xsquare")
+    correlation.dyad("energymul", "wenergy", "×", "xenergy")
+    correlation.dyad("safeenergy", "energymul", "+", 1)
+    correlation.monad("denom", "√", "safeenergy")
+    correlation.dyad("corr", "covsum", "÷", "denom")
+    correlation.dyad("residual", "wc", "-", "xc")
+    correlation.monad("absresid", "|", "residual")
+    correlation.dyad("residsq", "residual", "×", "residual")
+    correlation.fold("residlone", "+", "absresid")
+    correlation.fold("residltwo", "+", "residsq")
+    correlation.dyad("summary", "corr", "+", "residlone")
+    correlation.dyad("score", "summary", "+", "residltwo")
+    add_long(
+        "program.similarity.correlation_residual",
+        correlation,
+        "score",
+        "dyadic_same",
+        {"w": "signed", "x": "signed"},
+        ["similarity", "correlation", "normalization", "reduction"],
+        tolerance=5e-9,
+    )
+
+    cosine = LongProgram(2)
+    cosine.dyad("product", "w", "×", "x")
+    cosine.dyad("wsquare", "w", "×", "w")
+    cosine.dyad("xsquare", "x", "×", "x")
+    cosine.fold("dot", "+", "product")
+    cosine.fold("wenergy", "+", "wsquare")
+    cosine.fold("xenergy", "+", "xsquare")
+    cosine.dyad("normproduct", "wenergy", "×", "xenergy")
+    cosine.dyad("safenorm", "normproduct", "+", 1)
+    cosine.monad("denom", "√", "safenorm")
+    cosine.dyad("similarity", "dot", "÷", "denom")
+    cosine.dyad("difference", "w", "-", "x")
+    cosine.monad("absolute", "|", "difference")
+    cosine.dyad("square", "difference", "×", "difference")
+    cosine.fold("lone", "+", "absolute")
+    cosine.fold("ltwo", "+", "square")
+    cosine.monad("count", "≠", "x")
+    cosine.dyad("mae", "lone", "÷", "count")
+    cosine.dyad("mse", "ltwo", "÷", "count")
+    cosine.dyad("error", 1, "-", "similarity")
+    cosine.dyad("summary", "error", "+", "mae")
+    cosine.dyad("score", "summary", "+", "mse")
+    add_long(
+        "program.similarity.cosine_error",
+        cosine,
+        "score",
+        "dyadic_same",
+        {"w": "signed", "x": "signed"},
+        ["similarity", "cosine", "distance", "reduction"],
+        tolerance=5e-9,
+    )
+
+    normalized_error = LongProgram(2)
+    distance_prefix(normalized_error)
+    normalized_error.monad("wabs", "|", "w")
+    normalized_error.monad("xabs", "|", "x")
+    normalized_error.dyad("magnitude", "wabs", "+", "xabs")
+    normalized_error.dyad("safemag", "magnitude", "+", 1)
+    normalized_error.dyad("relative", "absolute", "÷", "safemag")
+    normalized_error.dyad("relsquare", "relative", "×", "relative")
+    normalized_error.fold("relsum", "+", "relative")
+    normalized_error.fold("relenergy", "+", "relsquare")
+    normalized_error.fold("relpeak", "⌈", "relative")
+    normalized_error.dyad("relmean", "relsum", "÷", "count")
+    normalized_error.dyad("relmse", "relenergy", "÷", "count")
+    normalized_error.dyad("summaryone", "mae", "+", "mse")
+    normalized_error.dyad("summarytwo", "relmean", "+", "relmse")
+    normalized_error.dyad("combined", "summaryone", "+", "summarytwo")
+    normalized_error.dyad("score", "combined", "+", "relpeak")
+    add_long(
+        "program.similarity.normalized_error",
+        normalized_error,
+        "score",
+        "dyadic_same",
+        {"w": "signed", "x": "signed"},
+        ["similarity", "relative-error", "distance", "reduction"],
+    )
+
+    smooth_lone = LongProgram(2)
+    distance_prefix(smooth_lone)
+    smooth_lone.dyad("small", "absolute", "≤", 1)
+    smooth_lone.monad("large", "¬", "small")
+    smooth_lone.dyad("half", "square", "÷", 2)
+    smooth_lone.dyad("linear", "absolute", "-", 0.5)
+    smooth_lone.dyad("smallloss", "half", "×", "small")
+    smooth_lone.dyad("largeloss", "linear", "×", "large")
+    smooth_lone.dyad("loss", "smallloss", "+", "largeloss")
+    smooth_lone.fold("losssum", "+", "loss")
+    smooth_lone.dyad("lossmean", "losssum", "÷", "count")
+    smooth_lone.dyad("weighted", "loss", "×", "absolute")
+    smooth_lone.fold("weightedtotal", "+", "weighted")
+    smooth_lone.fold("maximum", "⌈", "loss")
+    smooth_lone.dyad("summary", "lossmean", "+", "weightedtotal")
+    smooth_lone.dyad("score", "summary", "+", "maximum")
+    add_long(
+        "program.similarity.smooth_l1_profile",
+        smooth_lone,
+        "score",
+        "dyadic_same",
+        {"w": "signed", "x": "signed"},
+        ["similarity", "smooth-l1", "mask", "reduction"],
+    )
+
+    agreement = LongProgram(2)
+    distance_prefix(agreement)
+    agreement.dyad("near", "absolute", "≤", 0.25)
+    agreement.dyad("mediumraw", "absolute", "≤", 1)
+    agreement.dyad("medium", "mediumraw", "-", "near")
+    agreement.monad("far", "¬", "mediumraw")
+    agreement.fold("nearcount", "+", "near")
+    agreement.fold("mediumcount", "+", "medium")
+    agreement.fold("farcount", "+", "far")
+    agreement.dyad("nearweight", "absolute", "×", "near")
+    agreement.dyad("mediumweight", "absolute", "×", "medium")
+    agreement.dyad("farweight", "absolute", "×", "far")
+    agreement.fold("nearsum", "+", "nearweight")
+    agreement.fold("mediumsum", "+", "mediumweight")
+    agreement.fold("farsum", "+", "farweight")
+    agreement.dyad("countscore", "nearcount", "+", "mediumcount")
+    agreement.dyad("countscoretwo", "countscore", "+", "farcount")
+    agreement.dyad("weightsum", "nearsum", "+", "mediumsum")
+    agreement.dyad("weightsumtwo", "weightsum", "+", "farsum")
+    agreement.dyad("summary", "countscoretwo", "+", "weightsumtwo")
+    agreement.dyad("score", "summary", "+", "mse")
+    add_long(
+        "program.similarity.agreement_bands",
+        agreement,
+        "score",
+        "dyadic_same",
+        {"w": "signed", "x": "signed"},
+        ["similarity", "comparison", "mask", "bands"],
+    )
+
+    log_distance = LongProgram(2)
+    log_distance.monad("wlog", "⋆⁼", "w")
+    log_distance.monad("xlog", "⋆⁼", "x")
+    log_distance.dyad("difference", "wlog", "-", "xlog")
+    log_distance.monad("absolute", "|", "difference")
+    log_distance.dyad("square", "difference", "×", "difference")
+    log_distance.dyad("cube", "square", "×", "difference")
+    log_distance.fold("lone", "+", "absolute")
+    log_distance.fold("ltwo", "+", "square")
+    log_distance.fold("third", "+", "cube")
+    log_distance.monad("count", "≠", "x")
+    log_distance.dyad("mae", "lone", "÷", "count")
+    log_distance.dyad("mse", "ltwo", "÷", "count")
+    log_distance.dyad("signedthird", "third", "÷", "count")
+    log_distance.dyad("ratio", "w", "÷", "x")
+    log_distance.monad("ratiolog", "⋆⁼", "ratio")
+    log_distance.monad("ratioabs", "|", "ratiolog")
+    log_distance.fold("ratiosum", "+", "ratioabs")
+    log_distance.dyad("ratiomean", "ratiosum", "÷", "count")
+    log_distance.dyad("summaryone", "mae", "+", "mse")
+    log_distance.dyad("summarytwo", "signedthird", "+", "ratiomean")
+    log_distance.dyad("score", "summaryone", "+", "summarytwo")
+    add_long(
+        "program.similarity.log_ratio_distance",
+        log_distance,
+        "score",
+        "dyadic_same",
+        {"w": "positive", "x": "positive"},
+        ["similarity", "log-domain", "ratio", "transcendental"],
+        tolerance=5e-9,
+    )
+
+    regression = LongProgram(2)
+    regression.fold("wtotal", "+", "w")
+    regression.fold("xtotal", "+", "x")
+    regression.monad("count", "≠", "x")
+    regression.dyad("wmean", "wtotal", "÷", "count")
+    regression.dyad("xmean", "xtotal", "÷", "count")
+    regression.dyad("wc", "w", "-", "wmean")
+    regression.dyad("xc", "x", "-", "xmean")
+    regression.dyad("cross", "wc", "×", "xc")
+    regression.dyad("wsquare", "wc", "×", "wc")
+    regression.fold("covariance", "+", "cross")
+    regression.fold("wvariance", "+", "wsquare")
+    regression.dyad("safevariance", "wvariance", "+", 1)
+    regression.dyad("slope", "covariance", "÷", "safevariance")
+    regression.dyad("slopemean", "slope", "×", "wmean")
+    regression.dyad("intercept", "xmean", "-", "slopemean")
+    regression.dyad("scaled", "slope", "×", "w")
+    regression.dyad("prediction", "scaled", "+", "intercept")
+    regression.dyad("residual", "x", "-", "prediction")
+    regression.monad("absolute", "|", "residual")
+    regression.dyad("square", "residual", "×", "residual")
+    regression.fold("lone", "+", "absolute")
+    regression.fold("ltwo", "+", "square")
+    regression.fold("peak", "⌈", "absolute")
+    regression.dyad("summary", "lone", "+", "ltwo")
+    regression.dyad("score", "summary", "+", "peak")
+    add_long(
+        "program.similarity.regression_residual",
+        regression,
+        "score",
+        "dyadic_same",
+        {"w": "signed", "x": "signed"},
+        ["similarity", "regression", "residual", "reduction"],
+        tolerance=5e-9,
+    )
+
+    combined_norm = LongProgram(2)
+    distance_prefix(combined_norm)
+    combined_norm.dyad("sum", "w", "+", "x")
+    combined_norm.monad("sumabs", "|", "sum")
+    combined_norm.dyad("sumsquare", "sum", "×", "sum")
+    combined_norm.fold("sumlone", "+", "sumabs")
+    combined_norm.fold("sumltwo", "+", "sumsquare")
+    combined_norm.dyad("product", "w", "×", "x")
+    combined_norm.monad("productabs", "|", "product")
+    combined_norm.dyad("productsquare", "product", "×", "product")
+    combined_norm.fold("productlone", "+", "productabs")
+    combined_norm.fold("productltwo", "+", "productsquare")
+    combined_norm.dyad("first", "sumlone", "+", "sumltwo")
+    combined_norm.dyad("second", "productlone", "+", "productltwo")
+    combined_norm.dyad("third", "mae", "+", "mse")
+    combined_norm.dyad("combined", "first", "+", "second")
+    combined_norm.dyad("score", "combined", "+", "third")
+    add_long(
+        "program.similarity.combined_norms",
+        combined_norm,
+        "score",
+        "dyadic_same",
+        {"w": "signed", "x": "signed"},
+        ["similarity", "norm", "product", "reduction"],
+        tolerance=5e-9,
+    )
+
+    def lag_program(identifier: str, lag: int) -> None:
+        builder = LongProgram(1)
+        builder.dyad("front", -lag, "↓", "x")
+        builder.dyad("back", lag, "↓", "x")
+        builder.dyad("difference", "back", "-", "front")
+        builder.monad("absolute", "|", "difference")
+        builder.dyad("square", "difference", "×", "difference")
+        builder.dyad("cube", "square", "×", "difference")
+        builder.dyad("cross", "front", "×", "back")
+        builder.dyad("frontsquare", "front", "×", "front")
+        builder.dyad("backsquare", "back", "×", "back")
+        builder.fold("lone", "+", "absolute")
+        builder.fold("ltwo", "+", "square")
+        builder.fold("third", "+", "cube")
+        builder.fold("crosssum", "+", "cross")
+        builder.fold("frontenergy", "+", "frontsquare")
+        builder.fold("backenergy", "+", "backsquare")
+        builder.dyad("energymul", "frontenergy", "×", "backenergy")
+        builder.dyad("safeenergy", "energymul", "+", 1)
+        builder.monad("denom", "√", "safeenergy")
+        builder.dyad("correlation", "crosssum", "÷", "denom")
+        builder.monad("count", "≠", "difference")
+        builder.dyad("meanvariation", "lone", "÷", "count")
+        builder.dyad("meanenergy", "ltwo", "÷", "count")
+        builder.dyad("summaryone", "meanvariation", "+", "meanenergy")
+        builder.dyad("summarytwo", "third", "+", "correlation")
+        builder.dyad("score", "summaryone", "+", "summarytwo")
+        add_long(
+            identifier,
+            builder,
+            "score",
+            "monadic_vector",
+            {"x": "signed"},
+            ["signal", "lag", f"lag-{lag}", "autocorrelation", "difference"],
+            tolerance=5e-9,
+        )
+
+    for lag in (1, 2, 4, 8):
+        lag_program(f"program.signal.lag_{lag}_profile", lag)
+
+    def second_difference(identifier: str, spacing: int) -> None:
+        builder = LongProgram(1)
+        builder.dyad("left", -(2 * spacing), "↓", "x")
+        builder.dyad("withoutlast", -spacing, "↓", "x")
+        builder.dyad("middle", spacing, "↓", "withoutlast")
+        builder.dyad("right", 2 * spacing, "↓", "x")
+        builder.dyad("twomiddle", 2, "×", "middle")
+        builder.dyad("edge", "left", "+", "right")
+        builder.dyad("curvature", "edge", "-", "twomiddle")
+        builder.monad("absolute", "|", "curvature")
+        builder.dyad("square", "curvature", "×", "curvature")
+        builder.dyad("cube", "square", "×", "curvature")
+        builder.fold("lone", "+", "absolute")
+        builder.fold("ltwo", "+", "square")
+        builder.fold("third", "+", "cube")
+        builder.fold("peak", "⌈", "absolute")
+        builder.monad("count", "≠", "curvature")
+        builder.dyad("meanabsolute", "lone", "÷", "count")
+        builder.dyad("meanenergy", "ltwo", "÷", "count")
+        builder.dyad("meanthird", "third", "÷", "count")
+        builder.dyad("summaryone", "meanabsolute", "+", "meanenergy")
+        builder.dyad("summarytwo", "meanthird", "+", "peak")
+        builder.dyad("score", "summaryone", "+", "summarytwo")
+        add_long(
+            identifier,
+            builder,
+            "score",
+            "monadic_vector",
+            {"x": "signed"},
+            ["signal", "finite-difference", f"spacing-{spacing}", "curvature"],
+            tolerance=5e-9,
+        )
+
+    second_difference("program.signal.second_difference_1", 1)
+    second_difference("program.signal.second_difference_2", 2)
+
+    bidirectional = LongProgram(1)
+    bidirectional.scan("forward", "+", "x")
+    bidirectional.monad("reverse", "⌽", "x")
+    bidirectional.scan("backwardraw", "+", "reverse")
+    bidirectional.monad("backward", "⌽", "backwardraw")
+    bidirectional.dyad("combined", "forward", "+", "backward")
+    bidirectional.fold("total", "+", "x")
+    bidirectional.dyad("centered", "combined", "-", "total")
+    bidirectional.monad("absolute", "|", "centered")
+    bidirectional.dyad("square", "centered", "×", "centered")
+    bidirectional.dyad("cube", "square", "×", "centered")
+    bidirectional.fold("lone", "+", "absolute")
+    bidirectional.fold("ltwo", "+", "square")
+    bidirectional.fold("third", "+", "cube")
+    bidirectional.fold("peak", "⌈", "absolute")
+    bidirectional.monad("count", "≠", "x")
+    bidirectional.dyad("meanabsolute", "lone", "÷", "count")
+    bidirectional.dyad("meanenergy", "ltwo", "÷", "count")
+    bidirectional.dyad("meanthird", "third", "÷", "count")
+    bidirectional.dyad("summaryone", "meanabsolute", "+", "meanenergy")
+    bidirectional.dyad("summarytwo", "meanthird", "+", "peak")
+    bidirectional.dyad("score", "summaryone", "+", "summarytwo")
+    add_long(
+        "program.signal.bidirectional_prefix",
+        bidirectional,
+        "score",
+        "monadic_vector",
+        {"x": "signed"},
+        ["signal", "scan", "reverse", "prefix"],
+        tolerance=2e-8,
+    )
+
+    ordered_prefix = LongProgram(1)
+    ordered_prefix.monad("ordered", "∧", "x")
+    ordered_prefix.scan("prefix", "+", "ordered")
+    ordered_prefix.monad("reverse", "⌽", "ordered")
+    ordered_prefix.scan("suffixraw", "+", "reverse")
+    ordered_prefix.monad("suffix", "⌽", "suffixraw")
+    ordered_prefix.dyad("balance", "prefix", "-", "suffix")
+    ordered_prefix.monad("absolute", "|", "balance")
+    ordered_prefix.dyad("square", "balance", "×", "balance")
+    ordered_prefix.dyad("cube", "square", "×", "balance")
+    ordered_prefix.fold("lone", "+", "absolute")
+    ordered_prefix.fold("ltwo", "+", "square")
+    ordered_prefix.fold("third", "+", "cube")
+    ordered_prefix.fold("peak", "⌈", "absolute")
+    ordered_prefix.fold("minimum", "⌊", "balance")
+    ordered_prefix.fold("maximum", "⌈", "balance")
+    ordered_prefix.dyad("spread", "maximum", "-", "minimum")
+    ordered_prefix.monad("count", "≠", "x")
+    ordered_prefix.dyad("meanabsolute", "lone", "÷", "count")
+    ordered_prefix.dyad("meanenergy", "ltwo", "÷", "count")
+    ordered_prefix.dyad("summaryone", "meanabsolute", "+", "meanenergy")
+    ordered_prefix.dyad("summarytwo", "third", "+", "spread")
+    ordered_prefix.dyad("score", "summaryone", "+", "summarytwo")
+    add_long(
+        "program.signal.ordered_prefix_balance",
+        ordered_prefix,
+        "score",
+        "monadic_vector",
+        {"x": "signed"},
+        ["signal", "scan", "ordering", "prefix"],
+        tolerance=2e-8,
+    )
+
+    matrix_axis = LongProgram(1)
+    matrix_axis.insert("columnsum", "+", "x")
+    matrix_axis.monad("transpose", "⍉", "x")
+    matrix_axis.insert("rowsum", "+", "transpose")
+    matrix_axis.monad("columnabs", "|", "columnsum")
+    matrix_axis.monad("rowabs", "|", "rowsum")
+    matrix_axis.dyad("columnsquare", "columnsum", "×", "columnsum")
+    matrix_axis.dyad("rowsquare", "rowsum", "×", "rowsum")
+    matrix_axis.fold("columnlone", "+", "columnabs")
+    matrix_axis.fold("rowlone", "+", "rowabs")
+    matrix_axis.fold("columnenergy", "+", "columnsquare")
+    matrix_axis.fold("rowenergy", "+", "rowsquare")
+    matrix_axis.fold("columnpeak", "⌈", "columnabs")
+    matrix_axis.fold("rowpeak", "⌈", "rowabs")
+    matrix_axis.dyad("lonesummary", "columnlone", "+", "rowlone")
+    matrix_axis.dyad("energysummary", "columnenergy", "+", "rowenergy")
+    matrix_axis.dyad("peaksummary", "columnpeak", "+", "rowpeak")
+    matrix_axis.dyad("first", "lonesummary", "+", "energysummary")
+    matrix_axis.dyad("score", "first", "+", "peaksummary")
+    add_long(
+        "program.matrix.axis_summary",
+        matrix_axis,
+        "score",
+        "monadic_matrix",
+        {"x": "signed"},
+        ["matrix", "insert", "transpose", "axis"],
+        tolerance=2e-8,
+    )
+
+    matrix_scan = LongProgram(1)
+    matrix_scan.scan("forward", "+", "x")
+    matrix_scan.monad("reverse", "⌽", "x")
+    matrix_scan.scan("backwardraw", "+", "reverse")
+    matrix_scan.monad("backward", "⌽", "backwardraw")
+    matrix_scan.dyad("combined", "forward", "+", "backward")
+    matrix_scan.monad("flat", "⥊", "combined")
+    matrix_scan.monad("absolute", "|", "flat")
+    matrix_scan.dyad("square", "flat", "×", "flat")
+    matrix_scan.dyad("cube", "square", "×", "flat")
+    matrix_scan.fold("lone", "+", "absolute")
+    matrix_scan.fold("ltwo", "+", "square")
+    matrix_scan.fold("third", "+", "cube")
+    matrix_scan.fold("peak", "⌈", "absolute")
+    matrix_scan.monad("count", "≠", "flat")
+    matrix_scan.dyad("meanabsolute", "lone", "÷", "count")
+    matrix_scan.dyad("meanenergy", "ltwo", "÷", "count")
+    matrix_scan.dyad("meanthird", "third", "÷", "count")
+    matrix_scan.dyad("summaryone", "meanabsolute", "+", "meanenergy")
+    matrix_scan.dyad("summarytwo", "meanthird", "+", "peak")
+    matrix_scan.dyad("score", "summaryone", "+", "summarytwo")
+    add_long(
+        "program.matrix.bidirectional_axis_scan",
+        matrix_scan,
+        "score",
+        "monadic_matrix",
+        {"x": "signed"},
+        ["matrix", "scan", "reverse", "deshape"],
+        tolerance=2e-8,
+    )
+
+    matrix_layout = LongProgram(1)
+    matrix_layout.monad("reverse", "⌽", "x")
+    matrix_layout.monad("transpose", "⍉", "reverse")
+    matrix_layout.monad("reverseagain", "⌽", "transpose")
+    matrix_layout.monad("flat", "⥊", "reverseagain")
+    matrix_layout.monad("absolute", "|", "flat")
+    matrix_layout.dyad("square", "flat", "×", "flat")
+    matrix_layout.dyad("cube", "square", "×", "flat")
+    matrix_layout.dyad("fourth", "square", "×", "square")
+    matrix_layout.fold("total", "+", "flat")
+    matrix_layout.fold("lone", "+", "absolute")
+    matrix_layout.fold("ltwo", "+", "square")
+    matrix_layout.fold("third", "+", "cube")
+    matrix_layout.fold("fourthsum", "+", "fourth")
+    matrix_layout.fold("minimum", "⌊", "flat")
+    matrix_layout.fold("maximum", "⌈", "flat")
+    matrix_layout.dyad("spread", "maximum", "-", "minimum")
+    matrix_layout.dyad("first", "total", "+", "lone")
+    matrix_layout.dyad("second", "ltwo", "+", "third")
+    matrix_layout.dyad("thirdsummary", "fourthsum", "+", "spread")
+    matrix_layout.dyad("combined", "first", "+", "second")
+    matrix_layout.dyad("score", "combined", "+", "thirdsummary")
+    add_long(
+        "program.matrix.layout_moments",
+        matrix_layout,
+        "score",
+        "monadic_matrix",
+        {"x": "signed"},
+        ["matrix", "layout", "transpose", "reverse", "moments"],
+        tolerance=2e-8,
+    )
+
+    major_cells = LongProgram(1)
+    major_cells.monad("firstmask", "∊", "x")
+    major_cells.monad("occurrence", "⊒", "x")
+    major_cells.monad("classes", "⊐", "x")
+    major_cells.monad("unique", "⍷", "x")
+    major_cells.fold("uniquecount", "+", "firstmask")
+    major_cells.fold("occurrencesum", "+", "occurrence")
+    major_cells.fold("classsum", "+", "classes")
+    major_cells.dyad("occurrencesquare", "occurrence", "×", "occurrence")
+    major_cells.dyad("classsquare", "classes", "×", "classes")
+    major_cells.fold("occurrenceenergy", "+", "occurrencesquare")
+    major_cells.fold("classenergy", "+", "classsquare")
+    major_cells.monad("uniqueflat", "⥊", "unique")
+    major_cells.monad("uniqueabs", "|", "uniqueflat")
+    major_cells.dyad("uniquesquare", "uniqueflat", "×", "uniqueflat")
+    major_cells.fold("uniquelone", "+", "uniqueabs")
+    major_cells.fold("uniqueenergy", "+", "uniquesquare")
+    major_cells.dyad("first", "uniquecount", "+", "occurrencesum")
+    major_cells.dyad("second", "classsum", "+", "occurrenceenergy")
+    major_cells.dyad("third", "classenergy", "+", "uniquelone")
+    major_cells.dyad("fourth", "third", "+", "uniqueenergy")
+    major_cells.dyad("combined", "first", "+", "second")
+    major_cells.dyad("score", "combined", "+", "fourth")
+    add_long(
+        "program.matrix.major_cell_profile",
+        major_cells,
+        "score",
+        "monadic_matrix",
+        {"x": "signed"},
+        ["matrix", "major-cell", "self-search", "classification", "unique"],
+        tolerance=2e-8,
+    )
+
     for index in range(5):
         steps = (safe_steps[index:] + safe_steps[:index]) * 3
         expression = fold("+", apply_steps(x, steps[: 24 + index]))
