@@ -284,11 +284,12 @@ async function performance(env: Env, url: URL): Promise<Response> {
     const value = url.searchParams.get(parameter);
     if (value) { conditions.push(`${column} = ?`); values.push(value); }
   }
-  const result = await env.DB.prepare(`SELECT x.*, r.project_commit, r.started_at, r.device,
+  const result = await env.DB.prepare(`SELECT * FROM (SELECT x.*, r.project_commit, r.started_at, r.device,
     r.dtype, r.input_profile_json, e.cpu_model, e.accelerator_models
     FROM results x JOIN runs r ON r.id = x.run_id
     JOIN environments e ON e.fingerprint = r.environment_fingerprint
-    WHERE ${conditions.join(" AND ")} ORDER BY r.started_at ASC LIMIT ?`).bind(...values, max).all();
+    WHERE ${conditions.join(" AND ")} ORDER BY r.started_at DESC LIMIT ?) AS recent
+    ORDER BY recent.started_at ASC`).bind(...values, max).all();
   return json({ results: result.results.map((row: Record<string, unknown>) => parseResultRow(row)) });
 }
 
@@ -296,14 +297,16 @@ async function capability(env: Env, url: URL): Promise<Response> {
   const max = limit(url, 200, 1000);
   const backend = url.searchParams.get("backend");
   const result = await (backend
-    ? env.DB.prepare(`SELECT c.*, r.project_commit, r.started_at, r.device, e.accelerator_models
+    ? env.DB.prepare(`SELECT * FROM (SELECT c.*, r.project_commit, r.started_at, r.device, e.accelerator_models
         FROM capability_snapshots c JOIN runs r ON r.id = c.run_id
         JOIN environments e ON e.fingerprint = r.environment_fingerprint
-        WHERE c.backend = ? ORDER BY r.started_at ASC LIMIT ?`).bind(backend, max)
-    : env.DB.prepare(`SELECT c.*, r.project_commit, r.started_at, r.device, e.accelerator_models
+        WHERE c.backend = ? ORDER BY r.started_at DESC LIMIT ?) AS recent
+        ORDER BY recent.started_at ASC`).bind(backend, max)
+    : env.DB.prepare(`SELECT * FROM (SELECT c.*, r.project_commit, r.started_at, r.device, e.accelerator_models
         FROM capability_snapshots c JOIN runs r ON r.id = c.run_id
         JOIN environments e ON e.fingerprint = r.environment_fingerprint
-        ORDER BY r.started_at ASC LIMIT ?`).bind(max)).all();
+        ORDER BY r.started_at DESC LIMIT ?) AS recent
+        ORDER BY recent.started_at ASC`).bind(max)).all();
   return json({ snapshots: result.results.map((row: Record<string, unknown>) => parseCapabilityRow(row)) });
 }
 
