@@ -19,6 +19,7 @@ from .ir import (
     expand_train,
     has_tensor_compute,
 )
+from .jit_replay import ReplayCache
 from .mapping import plan_mapping
 from .optimizer import OptimizationResult, optimize
 
@@ -932,6 +933,7 @@ class TinygradBackend:
             return execute_specialized
 
         jitted = TinyJit(execute_tensors)
+        replay = ReplayCache()
 
         def execute_compiled(
             supplied: Mapping[str, TinygradValue],
@@ -940,10 +942,17 @@ class TinygradBackend:
                 raise DomainError(
                     f"compiled program expected arguments {names}, got {tuple(sorted(supplied))}"
                 )
-            tensor = jitted(*(supplied[name].tensor for name in names))
+            tensors = tuple(supplied[name].tensor for name in names)
+            replayed = replay.execute(jitted, tensors)
+            if replayed is not None:
+                execute_compiled.replay_mode = "cached-inputs"  # type: ignore[attr-defined]
+                return TinygradValue(tensor=replayed, atom=output_atom[0])
+            tensor = jitted(*tensors)
+            replay.remember(jitted, tensors)
             return TinygradValue(tensor=tensor, atom=output_atom[0])
 
         execute_compiled.execution_mode = "jit-captured"  # type: ignore[attr-defined]
+        execute_compiled.replay_mode = "prepared-inputs"  # type: ignore[attr-defined]
         execute_compiled.execution_reason = plan.reason  # type: ignore[attr-defined]
         return execute_compiled
 

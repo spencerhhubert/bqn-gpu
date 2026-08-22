@@ -62,6 +62,16 @@ benchmark results. This conservative static policy is a starting point for
 measured, hardware-keyed decisions rather than a permanent list of special
 cases.
 
+Replaying a captured graph re-derives buffer references and variable bindings
+from the argument tensors on every invocation, which measured as roughly two
+thirds of the host time of a small program. That derivation depends only on the
+arguments, so it is cached and reused while the same tensors backed by the same
+buffers are supplied again; any other argument takes the ordinary path and
+re-establishes the cache. Results are unchanged. The execution plan is still
+`jit-captured`; benchmark records carry a separate `replay_mode` of
+`cached-inputs` or `prepared-inputs` so the two dispatch costs stay
+distinguishable.
+
 Dense mapping remains explicit as Cells/Rank/Each/Table IR until argument shapes
 and frames are known. Pervasive Each calls and primitive Table calls lower to
 one broadcast tensor expression. The common BQN matrix-vector form

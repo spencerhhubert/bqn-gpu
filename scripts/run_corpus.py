@@ -469,6 +469,8 @@ def benchmark_backend(
     )
     if executable is not None and hasattr(executable, "execution_reason"):
         result["execution_reason"] = executable.execution_reason
+    if executable is not None and hasattr(executable, "replay_mode"):
+        result["replay_mode"] = executable.replay_mode
     add_measurement_metadata(result, measurement_mode, batch_size, batch_timings)
     optimizer = getattr(backend, "optimize", None)
     if optimizer is not None:

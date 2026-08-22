@@ -132,6 +132,34 @@ def test_literal_drop_keeps_jit_replay(backend: TinygradBackend) -> None:
     assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
 
 
+def test_repeated_replay_reuses_input_metadata(backend: TinygradBackend) -> None:
+    expression = compile_bqn("{𝕩+𝕩}").expression
+    arguments = {"x": backend.from_host(HostValue.from_array([1, 2, 3], (3,)))}
+    executable = backend.compile(expression, arguments)
+
+    # TinyJit executes, captures, then replays; only replays can reuse metadata.
+    for _ in range(4):
+        assert executable(arguments).to_host() == HostValue.from_array([2, 4, 6], (3,))
+
+    assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
+    assert executable.replay_mode == "cached-inputs"  # type: ignore[attr-defined]
+
+
+def test_reused_metadata_never_answers_for_different_arguments(
+    backend: TinygradBackend,
+) -> None:
+    expression = compile_bqn("{𝕩+𝕩}").expression
+    first = {"x": backend.from_host(HostValue.from_array([1, 2, 3], (3,)))}
+    second = {"x": backend.from_host(HostValue.from_array([10, 20, 30], (3,)))}
+    executable = backend.compile(expression, first)
+    for _ in range(4):
+        executable(first)
+
+    assert executable(second).to_host() == HostValue.from_array([20, 40, 60], (3,))
+    assert executable(first).to_host() == HostValue.from_array([2, 4, 6], (3,))
+    assert executable(second).to_host() == HostValue.from_array([20, 40, 60], (3,))
+
+
 def test_tensor_consumers_still_use_jit_replay(backend: TinygradBackend) -> None:
     arguments = {
         "x": backend.from_host(HostValue.from_array([1, 2, 3, 4], (2, 2)))
