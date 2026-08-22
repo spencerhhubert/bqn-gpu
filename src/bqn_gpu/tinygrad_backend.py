@@ -671,31 +671,57 @@ class TinygradBackend:
         return TinygradValue(tensor=output, atom=x.atom)
 
     def _self_search(self, glyph: str, x: TinygradValue) -> TinygradValue:
-        if len(x.shape) != 1:
-            raise DomainError("self-search is currently supported for numeric lists")
-        values = x.tensor.reshape((x.shape[0],))
-        if glyph == "⍷":
-            host = tuple(float(item) for item in values.tolist())
-            seen: set[float] = set()
-            indices = []
-            for index, value in enumerate(host):
-                if value not in seen:
-                    seen.add(value)
-                    indices.append(index)
-            output = values[self._integer_indices(indices)] if indices else Tensor.empty(0, dtype=dtypes.float64, device=self.device)
-            return TinygradValue(tensor=output, atom=False)
+        if len(x.shape) == 0:
+            raise DomainError("self-search requires an array with at least one axis")
         count = x.shape[0]
         if count == 0:
-            return x
-        equal = values.reshape((count, 1)) == values.reshape((1, count))
+            if glyph == "⍷":
+                return x
+            return self.array((), (0,))
+        cells = x.tensor.reshape((count, -1))
+        cell_size = cells.shape[1]
+        if cell_size == 0:
+            equal = Tensor.ones(
+                count,
+                count,
+                dtype=dtypes.bool,
+                device=self.device,
+            )
+        else:
+            equal = (
+                cells.reshape((count, 1, cell_size))
+                == cells.reshape((1, count, cell_size))
+            ).all(axis=2)
         positions = Tensor.arange(count, device=self.device).reshape((1, count))
         if glyph == "⊐":
-            output = equal.where(positions, count).min(axis=1).cast(dtypes.float64)
+            first_positions = equal.where(positions, count).min(axis=1)
+            own_positions = Tensor.arange(count, device=self.device)
+            firsts = first_positions == own_positions
+            class_numbers = firsts.cast(dtypes.float64).cumsum(axis=0) - 1
+            output = class_numbers[first_positions]
         else:
             rows = Tensor.arange(count, device=self.device).reshape((count, 1))
             earlier = positions < rows
             occurrences = (equal * earlier).sum(axis=1).cast(dtypes.float64)
-            output = (occurrences == 0).cast(dtypes.float64) if glyph == "∊" else occurrences
+            firsts = occurrences == 0
+            if glyph == "⍷":
+                indices = [
+                    index
+                    for index, first in enumerate(firsts.tolist())
+                    if bool(first)
+                ]
+                output_shape = (len(indices),) + x.shape[1:]
+                output = (
+                    x.tensor[self._integer_indices(indices)]
+                    if indices
+                    else Tensor.empty(
+                        *output_shape,
+                        dtype=dtypes.float64,
+                        device=self.device,
+                    )
+                )
+                return TinygradValue(tensor=output, atom=False)
+            output = firsts.cast(dtypes.float64) if glyph == "∊" else occurrences
         return TinygradValue(tensor=output, atom=False)
 
     def _search(

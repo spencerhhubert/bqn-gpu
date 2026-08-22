@@ -9,7 +9,49 @@ from tinygrad import Device, Tensor, TinyJit, dtypes
 from .corpus import Program
 from .errors import DeviceError
 from .host_value import HostValue
-from .ir import has_tensor_compute
+from .tinygrad_backend import TinygradBackend
+
+
+def major_cell_self_search(x: Tensor, glyph: str) -> Tensor:
+    """Independent direct-tinygrad implementation of monadic self-search."""
+
+    if len(x.shape) == 0:
+        raise ValueError("self-search requires an array with at least one axis")
+    count = int(x.shape[0])
+    if count == 0:
+        return x if glyph == "⍷" else Tensor.empty(0, dtype=dtypes.float64, device=x.device)
+    cells = x.reshape((count, -1))
+    cell_size = int(cells.shape[1])
+    equal = (
+        Tensor.ones(count, count, dtype=dtypes.bool, device=x.device)
+        if cell_size == 0
+        else (
+            cells.reshape((count, 1, cell_size))
+            == cells.reshape((1, count, cell_size))
+        ).all(axis=2)
+    )
+    positions = Tensor.arange(count, device=x.device).reshape((1, count))
+    if glyph == "⊐":
+        first_positions = equal.where(positions, count).min(axis=1)
+        own_positions = Tensor.arange(count, device=x.device)
+        firsts = first_positions == own_positions
+        class_numbers = firsts.cast(dtypes.float64).cumsum(axis=0) - 1
+        return class_numbers[first_positions]
+    rows = Tensor.arange(count, device=x.device).reshape((count, 1))
+    occurrences = (equal * (positions < rows)).sum(axis=1).cast(dtypes.float64)
+    firsts = occurrences == 0
+    if glyph == "⍷":
+        indices = [
+            index for index, first in enumerate(firsts.tolist()) if bool(first)
+        ]
+        if indices:
+            return x[Tensor(indices, dtype=dtypes.int32, device=x.device)]
+        return Tensor.empty(
+            *((0,) + tuple(int(length) for length in x.shape[1:])),
+            dtype=dtypes.float64,
+            device=x.device,
+        )
+    return firsts.cast(dtypes.float64) if glyph == "∊" else occurrences
 
 
 class NativeTinygradRuntime:
@@ -38,11 +80,15 @@ class NativeTinygradRuntime:
             raise ValueError(f"{program.id}: native tinygrad argument mismatch")
         function = eval(  # noqa: S307 - generated, tracked corpus source
             program.native_tinygrad,
-            {"Tensor": Tensor, "dtypes": dtypes},
+            {
+                "Tensor": Tensor,
+                "dtypes": dtypes,
+                "major_cell_self_search": major_cell_self_search,
+            },
         )
         for value in arguments.values():
             value.realize()
-        if not has_tensor_compute(program.native_expression):
+        if not TinygradBackend.can_compile(program.native_expression):
             self.execution_mode = "native-eager"
 
             def execute_eager(supplied: Mapping[str, Tensor]) -> Tensor:

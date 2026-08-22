@@ -150,7 +150,9 @@ def infer_rank(expression: Expression, argument_ranks: Mapping[str, int]) -> int
     child_rank = infer_rank(arguments[0], argument_ranks)
     if glyph in {"=", "≠", "≡", "⊑"}:
         return 0
-    if glyph in {"≢", "⥊", "↕", "/", "⍋", "⍒", "⊐", "⊒", "∊", "⍷"}:
+    if glyph == "⍷":
+        return child_rank
+    if glyph in {"≢", "⥊", "↕", "/", "⍋", "⍒", "⊐", "⊒", "∊"}:
         return 1
     if glyph == "≍":
         return None if child_rank is None else child_rank + 1

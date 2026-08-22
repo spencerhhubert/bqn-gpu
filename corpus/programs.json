@@ -8,8 +8,8 @@
       "dense-mapping": 7,
       "dense-modifier": 12,
       "dense-paired": 10,
-      "dense-phrase": 10,
-      "dense-primitive": 34,
+      "dense-phrase": 11,
+      "dense-primitive": 38,
       "dense-repeat": 7,
       "dense-structural": 10,
       "dense-train": 10,
@@ -8174,6 +8174,180 @@
         "glyph",
         "monadic",
         "monadic_vector"
+      ]
+    },
+    {
+      "id": "dense.classify_major_cells.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⊐𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊐",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: major_cell_self_search((x), '⊐')",
+        "torch": "lambda x: major_cell_self_search((x), '⊐')"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "classify_major_cells",
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_matrix"
+      ]
+    },
+    {
+      "id": "dense.occurrence_count_major_cells.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⊒𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⊒",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: major_cell_self_search((x), '⊒')",
+        "torch": "lambda x: major_cell_self_search((x), '⊒')"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_matrix",
+        "occurrence_count_major_cells"
+      ]
+    },
+    {
+      "id": "dense.mark_firsts_major_cells.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(∊𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "∊",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: major_cell_self_search((x), '∊')",
+        "torch": "lambda x: major_cell_self_search((x), '∊')"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "mark_firsts_major_cells",
+        "monadic",
+        "monadic_matrix"
+      ]
+    },
+    {
+      "id": "dense.deduplicate_major_cells.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(⍷𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⍷",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: major_cell_self_search((x), '⍷')",
+        "torch": "lambda x: major_cell_self_search((x), '⍷')"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "deduplicate_major_cells",
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_matrix"
+      ]
+    },
+    {
+      "id": "dense.major_cells.unique_count",
+      "category": "dense-phrase",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{+´∊𝕩}",
+      "native": {
+        "expression": {
+          "op": "fold",
+          "glyph": "+",
+          "argument": {
+            "op": "call",
+            "glyph": "∊",
+            "arguments": [
+              {
+                "op": "argument",
+                "name": "x"
+              }
+            ]
+          }
+        },
+        "tinygrad": "lambda x: (major_cell_self_search((x), '∊')).sum()",
+        "torch": "lambda x: (major_cell_self_search((x), '∊')).sum()"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "major-cell",
+        "reduction",
+        "self-search",
+        "unique"
       ]
     },
     {

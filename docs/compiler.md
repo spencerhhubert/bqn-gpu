@@ -84,6 +84,14 @@ repetition specializes to the right argument; positive monadic or dyadic
 repetition becomes one fixed graph, with the dyadic left argument reused on each
 application as required by BQN.
 
+Monadic Classify, Occurrence Count, Mark Firsts, and Deduplicate compare major
+cells, flattening only each cell's trailing axes for equality while preserving
+BQN's leading-axis semantics. The first three have fixed list output and remain
+JIT-capturable. Deduplicate has a data-dependent leading-axis length and uses an
+explicit eager boundary. The initial equality plan is quadratic in the number
+of major cells; the recorded benchmark sentinel makes a future exact hash or
+sort-based GPU kernel directly comparable.
+
 ## Measurement discipline
 
 Development uses a compact sentinel set covering elementwise fusion, structural index-map fusion, reductions, scans, selection, sorting/search, and mixed complex programs. Full multi-size measurements are recorded only for tagged milestones. Raw repetitions, exact commits, hardware, compiler choices, and correctness evidence remain reproducible through the results service.

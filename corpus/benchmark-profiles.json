@@ -20,6 +20,7 @@
         "dense.combinator.atop_l1_distance",
         "dense.train.centered",
         "dense.repeat.centered_twice",
+        "dense.mark_firsts_major_cells.monadic_matrix",
         "dense.mapping.rank_matrix_vector",
         "dense.pair.double_reverse.naive",
         "dense.pair.double_reverse.idiomatic",

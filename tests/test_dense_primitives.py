@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from bqn_gpu import HostValue, TinygradBackend, compile_bqn
+from bqn_gpu import DomainError, HostValue, TinygradBackend, compile_bqn
 from bqn_gpu.cbqn import CBQN
 from bqn_gpu.json_values import decode_host_value
 
@@ -13,6 +13,14 @@ from bqn_gpu.json_values import decode_host_value
 V = decode_host_value([3, 1, 2, 1])
 M = decode_host_value([[1, 2, 3], [4, 5, 6]])
 E = decode_host_value([])
+ROWS = decode_host_value([[1, 2], [3, 4], [1, 2], [5, 6], [3, 4]])
+PLANES = decode_host_value(
+    [
+        [[1, 2], [3, 4]],
+        [[5, 6], [7, 8]],
+        [[1, 2], [3, 4]],
+    ]
+)
 
 
 @pytest.fixture(scope="module", params=("tinygrad", "torch"))
@@ -113,6 +121,44 @@ def test_dense_numeric_primitive_matches_cbqn(
     )
     expected = cbqn.call(source, *oracle_arguments)
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("source", "argument"),
+    [
+        ("{⊐𝕩}", ROWS),
+        ("{⊒𝕩}", ROWS),
+        ("{∊𝕩}", ROWS),
+        ("{⍷𝕩}", ROWS),
+        ("{⊐𝕩}", PLANES),
+        ("{⍷𝕩}", PLANES),
+        ("{⊒𝕩}", HostValue.from_array((), (3, 0))),
+        ("{∊𝕩}", HostValue.from_array((), (3, 0))),
+        ("{⍷𝕩}", HostValue.from_array((), (3, 0))),
+        ("{⊐𝕩}", HostValue.from_array((), (0, 3))),
+        ("{⍷𝕩}", HostValue.from_array((), (0, 3))),
+    ],
+)
+def test_dense_major_cell_self_search_matches_cbqn(
+    source: str,
+    argument: HostValue,
+    dense_backend: Any,
+    cbqn: CBQN,
+) -> None:
+    actual = compile_bqn(source).execute(dense_backend, x=argument)
+    assert actual == cbqn.call(source, argument)
+
+
+def test_dense_self_search_rejects_units(dense_backend: Any) -> None:
+    with pytest.raises(DomainError, match="at least one axis"):
+        compile_bqn("{∊𝕩}").execute(dense_backend, x=HostValue.from_atom(3))
+
+
+def test_classify_numbers_distinct_cells_by_first_appearance(
+    dense_backend: Any,
+) -> None:
+    actual = compile_bqn("{⊐𝕩}").execute(dense_backend, x=ROWS)
+    assert actual == decode_host_value([0, 1, 0, 2, 1])
 
 
 @pytest.mark.parametrize(

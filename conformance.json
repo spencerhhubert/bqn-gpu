@@ -557,8 +557,8 @@
       "name": "Classify / Index Of",
       "monadic": {
         "status": "supported",
-        "domain": "Real numeric lists.",
-        "behavior": "Returns the index of each element's first occurrence."
+        "domain": "Dense real arrays with at least one axis, including empty arrays and higher-rank major cells.",
+        "behavior": "Assigns each distinct major-cell value a compact natural class number in order of first appearance."
       },
       "dyadic": {
         "status": "supported",
@@ -572,8 +572,8 @@
       "name": "Occurrence Count / Progressive Index Of",
       "monadic": {
         "status": "supported",
-        "domain": "Real numeric lists.",
-        "behavior": "Counts earlier occurrences of each element."
+        "domain": "Dense real arrays with at least one axis, including empty arrays and higher-rank major cells.",
+        "behavior": "Counts earlier matching major cells and returns one number per major cell."
       },
       "dyadic": {
         "status": "supported",
@@ -587,8 +587,8 @@
       "name": "Mark Firsts / Member Of",
       "monadic": {
         "status": "supported",
-        "domain": "Real numeric lists.",
-        "behavior": "Marks each element whose occurrence count is zero."
+        "domain": "Dense real arrays with at least one axis, including empty arrays and higher-rank major cells.",
+        "behavior": "Marks each major cell that does not match an earlier major cell."
       },
       "dyadic": {
         "status": "supported",
@@ -602,8 +602,8 @@
       "name": "Deduplicate / Find",
       "monadic": {
         "status": "supported",
-        "domain": "Real numeric lists.",
-        "behavior": "Keeps the first occurrence of each distinct value."
+        "domain": "Dense real arrays with at least one axis, including empty arrays and higher-rank major cells.",
+        "behavior": "Keeps the first occurrence of each distinct major cell, preserving rank and trailing cell shape."
       },
       "dyadic": {
         "status": "supported",

@@ -11,6 +11,40 @@ from .errors import DeviceError
 from .host_value import HostValue
 
 
+def major_cell_self_search(x: torch.Tensor, glyph: str) -> torch.Tensor:
+    """Independent direct-Torch implementation of monadic self-search."""
+
+    if len(x.shape) == 0:
+        raise ValueError("self-search requires an array with at least one axis")
+    count = int(x.shape[0])
+    if count == 0:
+        return x if glyph == "⍷" else torch.empty(0, dtype=torch.float64, device=x.device)
+    cells = x.reshape((count, -1))
+    cell_size = int(cells.shape[1])
+    equal = (
+        torch.ones((count, count), dtype=torch.bool, device=x.device)
+        if cell_size == 0
+        else torch.all(
+            cells.reshape((count, 1, cell_size))
+            == cells.reshape((1, count, cell_size)),
+            dim=2,
+        )
+    )
+    positions = torch.arange(count, device=x.device).reshape((1, count))
+    if glyph == "⊐":
+        first_positions = torch.where(equal, positions, count).min(dim=1).values
+        own_positions = torch.arange(count, device=x.device)
+        firsts = first_positions == own_positions
+        class_numbers = torch.cumsum(firsts.to(torch.float64), dim=0) - 1
+        return class_numbers[first_positions]
+    rows = torch.arange(count, device=x.device).reshape((count, 1))
+    occurrences = (equal & (positions < rows)).sum(dim=1).to(torch.float64)
+    firsts = occurrences == 0
+    if glyph == "⍷":
+        return x[firsts]
+    return firsts.to(torch.float64) if glyph == "∊" else occurrences
+
+
 class NativeTorchRuntime:
     """Run generated direct PyTorch sources without the BQN frontend/backend."""
 
@@ -39,7 +73,7 @@ class NativeTorchRuntime:
             raise ValueError(f"{program.id}: native Torch argument mismatch")
         function = eval(  # noqa: S307 - generated, tracked corpus source
             program.native_torch,
-            {"torch": torch},
+            {"torch": torch, "major_cell_self_search": major_cell_self_search},
         )
 
         def execute(supplied: Mapping[str, torch.Tensor]) -> torch.Tensor:

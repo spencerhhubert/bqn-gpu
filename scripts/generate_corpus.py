@@ -323,6 +323,10 @@ def make_programs() -> list[dict[str, Any]]:
         ("grade_down", "⍒", "monadic_vector"),
         ("first_cell", "⊏", "monadic_matrix"),
         ("first", "⊑", "monadic_vector"),
+        ("classify_major_cells", "⊐", "monadic_matrix"),
+        ("occurrence_count_major_cells", "⊒", "monadic_matrix"),
+        ("mark_firsts_major_cells", "∊", "monadic_matrix"),
+        ("deduplicate_major_cells", "⍷", "monadic_matrix"),
     ]
     for name, glyph, mode in dense_monads:
         add(
@@ -335,6 +339,18 @@ def make_programs() -> list[dict[str, Any]]:
             {"x": "signed"},
             ["dense", "glyph", "monadic", name, mode],
         )
+
+    add(
+        "dense.major_cells.unique_count",
+        "dense-phrase",
+        "idiomatic",
+        fold("+", monadic("∊", x)),
+        1,
+        "monadic_matrix",
+        {"x": "signed"},
+        ["dense", "major-cell", "reduction", "self-search", "unique"],
+        source="{+´∊𝕩}",
+    )
 
     for name, glyph in (("and", "∧"), ("or", "∨"), ("span", "¬")):
         for mode in modes:

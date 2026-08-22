@@ -165,6 +165,8 @@ def _monadic(glyph: str, value: str, framework: str) -> str:
         return f"({value}).permute({axes})"
     if glyph in {"⍋", "⍒"}:
         return f"({value}).argsort(dim=0, descending={glyph == '⍒'})"
+    if glyph in {"⊐", "⊒", "∊", "⍷"}:
+        return f"major_cell_self_search(({value}), {glyph!r})"
     if glyph == "⊏":
         return f"({value})[0]"
     if glyph == "⊑":

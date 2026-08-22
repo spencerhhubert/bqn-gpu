@@ -40,6 +40,22 @@ def test_native_tinygrad_noop_uses_eager_dispatch() -> None:
     assert executable(device_inputs) is device_inputs["x"]
 
 
+def test_native_tinygrad_dynamic_deduplicate_uses_eager_dispatch() -> None:
+    program = next(
+        item
+        for item in load_programs()
+        if item.id == "dense.deduplicate_major_cells.monadic_matrix"
+    )
+    runtime = NativeTinygradRuntime("CPU")
+    inputs = generate_inputs(program, size=37)
+    device_inputs = {name: runtime.from_host(value) for name, value in inputs.items()}
+
+    executable = runtime.compile(program, device_inputs)
+
+    assert runtime.execution_mode == "native-eager"
+    assert executable(device_inputs).shape[1:] == device_inputs["x"].shape[1:]
+
+
 def test_every_native_torch_program_matches_cbqn(cbqn) -> None:
     # cBQN reserves JIT address space and must initialize before importing Torch.
     from bqn_gpu.native_torch import NativeTorchRuntime

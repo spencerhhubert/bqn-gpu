@@ -584,30 +584,41 @@ class TorchBackend:
         return TorchValue(tensor=output.to(torch.float64).reshape(x.shape), atom=x.atom)
 
     def _self_search(self, glyph: str, x: TorchValue) -> TorchValue:
-        if len(x.shape) != 1:
-            raise DomainError("self-search is currently supported for numeric lists")
-        values = x.tensor.reshape((x.shape[0],))
-        if glyph == "⍷":
-            host = tuple(float(item) for item in values.tolist())
-            seen: set[float] = set()
-            indices = []
-            for index, value in enumerate(host):
-                if value not in seen:
-                    seen.add(value)
-                    indices.append(index)
-            index = torch.tensor(indices, dtype=torch.int64, device=self.torch_device)
-            return TorchValue(tensor=torch.index_select(values, 0, index), atom=False)
+        if len(x.shape) == 0:
+            raise DomainError("self-search requires an array with at least one axis")
         count = x.shape[0]
         if count == 0:
-            return x
-        equal = values.reshape((count, 1)) == values.reshape((1, count))
+            if glyph == "⍷":
+                return x
+            return self.array((), (0,))
+        cells = x.tensor.reshape((count, -1))
+        cell_size = cells.shape[1]
+        if cell_size == 0:
+            equal = torch.ones(
+                (count, count),
+                dtype=torch.bool,
+                device=self.torch_device,
+            )
+        else:
+            equal = torch.all(
+                cells.reshape((count, 1, cell_size))
+                == cells.reshape((1, count, cell_size)),
+                dim=2,
+            )
         positions = torch.arange(count, device=self.torch_device).reshape((1, count))
         if glyph == "⊐":
-            output = torch.where(equal, positions, count).min(dim=1).values.to(torch.float64)
+            first_positions = torch.where(equal, positions, count).min(dim=1).values
+            own_positions = torch.arange(count, device=self.torch_device)
+            firsts = first_positions == own_positions
+            class_numbers = torch.cumsum(firsts.to(torch.float64), dim=0) - 1
+            output = class_numbers[first_positions]
         else:
             rows = torch.arange(count, device=self.torch_device).reshape((count, 1))
             occurrences = (equal & (positions < rows)).sum(dim=1).to(torch.float64)
-            output = (occurrences == 0).to(torch.float64) if glyph == "∊" else occurrences
+            firsts = occurrences == 0
+            if glyph == "⍷":
+                return TorchValue(tensor=x.tensor[firsts], atom=False)
+            output = firsts.to(torch.float64) if glyph == "∊" else occurrences
         return TorchValue(tensor=output, atom=False)
 
     def _search(self, glyph: str, w: TorchValue, x: TorchValue) -> TorchValue:

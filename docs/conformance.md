@@ -967,9 +967,9 @@ Indexes successive axes; a full coordinate returns an atom.
 
 Status: **supported**
 
-Domain: Real numeric lists.
+Domain: Dense real arrays with at least one axis, including empty arrays and higher-rank major cells.
 
-Returns the index of each element's first occurrence.
+Assigns each distinct major-cell value a compact natural class number in order of first appearance.
 
 ### Dyadic
 
@@ -993,9 +993,9 @@ Returns each query's first index, or the principal length when absent.
 
 Status: **supported**
 
-Domain: Real numeric lists.
+Domain: Dense real arrays with at least one axis, including empty arrays and higher-rank major cells.
 
-Counts earlier occurrences of each element.
+Counts earlier matching major cells and returns one number per major cell.
 
 ### Dyadic
 
@@ -1019,9 +1019,9 @@ Finds successive occurrences for repeated queries, returning the principal lengt
 
 Status: **supported**
 
-Domain: Real numeric lists.
+Domain: Dense real arrays with at least one axis, including empty arrays and higher-rank major cells.
 
-Marks each element whose occurrence count is zero.
+Marks each major cell that does not match an earlier major cell.
 
 ### Dyadic
 
@@ -1045,9 +1045,9 @@ Returns numeric membership booleans with the shape of the left argument.
 
 Status: **supported**
 
-Domain: Real numeric lists.
+Domain: Dense real arrays with at least one axis, including empty arrays and higher-rank major cells.
 
-Keeps the first occurrence of each distinct value.
+Keeps the first occurrence of each distinct major cell, preserving rank and trailing cell shape.
 
 ### Dyadic
 
