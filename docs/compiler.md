@@ -76,6 +76,11 @@ right-associated three-train fork rules. Nested trains and derived functions
 expand recursively, producing the same ordinary tensor IR as an explicitly
 written block and recording each train-inline decision in the explanation.
 
+Valences (`⊘`) remains explicit in semantic IR until call valence is known.
+It then selects its left operand for a monadic call or its right operand for a
+dyadic call before ordinary optimization, so the unselected branch creates no
+backend work.
+
 Repeat with a literal natural count remains explicit in semantic IR and is
 unrolled only after the complete source expression is known. Counts are capped
 at 64, and the expanded expression is capped at 4,096 semantic IR nodes, so an

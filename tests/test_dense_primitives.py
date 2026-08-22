@@ -183,6 +183,8 @@ def test_classify_numbers_distinct_cells_by_first_appearance(
         ("{¯1⊸⌽𝕩}", {"x": decode_host_value([1, 2, 3, 4])}),
         ("{-⟜1 𝕩}", {"x": HostValue.from_atom(8)}),
         ("{+´∘|𝕩}", {"x": decode_host_value([-1, 2, -3])}),
+        ("{-⊘+𝕩}", {"x": V}),
+        ("{𝕨-⊘+𝕩}", {"w": V, "x": decode_host_value([4, 3, 2, 1])}),
     ],
 )
 def test_dense_combinators_match_cbqn(

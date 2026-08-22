@@ -1133,6 +1133,7 @@ Returns the uniform dense array of sliding windows.
 | `○` Over | supported | Supported primitive operands whose expansion remains within the dense-real backend domain. | The right operand is applied monadically to each argument before the left operand is applied. |
 | `⊸` Before / Bind Left | supported | Supported primitive operands or a numeric literal left operand, with a dense-real result. | The left operand transforms the left argument (or the duplicated right argument monadically) before the right operand receives it and the original right argument. |
 | `⟜` After / Bind Right | supported | Supported primitive operands or a numeric literal right operand, with a dense-real result. | The right operand transforms the right argument before the left operand receives the original left argument and transformed right argument. |
+| `⊘` Valences | supported | Two supported function operands whose selected monadic or dyadic expansion remains within the dense-real backend domain. | A monadic call applies the left operand; a dyadic call applies the right operand. |
 
 ## Function trains
 
@@ -1171,7 +1172,7 @@ Both `.bqn` files and BQN strings compile to the same backend-neutral expression
 | Separators and comments | supported | Newline, `⋄`, comma, and `#` line comments. |
 | Numeric strands | supported | Literal numeric strands separated by `‿`, used for shapes, coordinates, counts, and axes. |
 | Fold `´`, Insert `˝`, and Scan `` ` `` | supported | Prefix use with the supported dyadic function operands and no dyadic initial value. |
-| Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜` | supported | Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization. |
+| Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, After `⟜`, and Valences `⊘` | supported | Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization. |
 | Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜` | supported | Dense uniform-result mapping. Rank accepts literal numeric atoms or strands; general computed rank operands and empty generic frames are not compiled yet. |
 | Parenthesized function trains | supported | Two-, three-, long-, and nested trains over supported primitive or derived functions, including numeric subjects in train argument positions. The train must be applied within the accepted program body. |
 | Statically bounded Repeat `⍟` | supported | A literal natural count from zero through 64, a supported operand, and an unrolled expression of at most 4,096 semantic IR nodes. Dynamic, negative, infinite, and array-valued repetition counts are not compiled yet. |

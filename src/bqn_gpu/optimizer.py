@@ -165,6 +165,7 @@ _COMBINATOR_NAMES = {
     "○": "over",
     "⊸": "before-bind",
     "⟜": "after-bind",
+    "⊘": "valences",
 }
 
 

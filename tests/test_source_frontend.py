@@ -183,6 +183,14 @@ def test_cli_explains_combinator_lowering(capsys) -> None:
     assert explanation["rewrites"][0]["rule"] == "inline-atop"
 
 
+def test_cli_explains_valences_selection(capsys) -> None:
+    assert main(["explain", "{-⊘+𝕩}", "--x", "[1,-2,3]"]) == 0
+    explanation = json.loads(capsys.readouterr().out)
+    assert explanation["semantic_bqn"] == "(-⊘+ 𝕩)"
+    assert explanation["optimized_bqn"] == "(-𝕩)"
+    assert explanation["rewrites"][0]["rule"] == "inline-valences"
+
+
 def test_cli_explains_rank_mapping(capsys) -> None:
     source = "{𝕨+˝∘×⎉1𝕩}"
     assert main(

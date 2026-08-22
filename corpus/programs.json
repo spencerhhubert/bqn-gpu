@@ -4,7 +4,7 @@
     "growth": "append durable cases as bugs, optimizations, and workloads are discovered",
     "initial_floor": 100,
     "categories": {
-      "dense-combinator": 11,
+      "dense-combinator": 13,
       "dense-mapping": 7,
       "dense-modifier": 12,
       "dense-paired": 10,
@@ -10683,6 +10683,77 @@
         "combinator",
         "dense",
         "modifier"
+      ]
+    },
+    {
+      "id": "dense.combinator.valences_monadic_negate",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{-⊘+𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "-",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (-(x))",
+        "torch": "lambda x: (-(x))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "combinator",
+        "dense",
+        "modifier",
+        "valences_monadic_negate"
+      ]
+    },
+    {
+      "id": "dense.combinator.valences_dyadic_add",
+      "category": "dense-combinator",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨-⊘+𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "+",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) + (x))",
+        "torch": "lambda w, x: ((w) + (x))"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "combinator",
+        "dense",
+        "modifier",
+        "valences_dyadic_add"
       ]
     },
     {

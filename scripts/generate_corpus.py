@@ -591,6 +591,22 @@ def make_programs() -> list[dict[str, Any]]:
             "dyadic_same",
             {"w": "signed", "x": "signed"},
         ),
+        (
+            "valences_monadic_negate",
+            monadic("-", x),
+            "{-⊘+𝕩}",
+            1,
+            "monadic_vector",
+            {"x": "signed"},
+        ),
+        (
+            "valences_dyadic_add",
+            dyadic("+", w, x),
+            "{𝕨-⊘+𝕩}",
+            2,
+            "dyadic_same",
+            {"w": "signed", "x": "signed"},
+        ),
     ]
     for name, expression, source, arity, mode, domains in dense_combinators:
         add(

@@ -202,6 +202,9 @@ def expand_combinator(expression: Expression) -> Expression:
         return apply_function(left, [x, w])
     if right is None:
         raise ValueError(f"combinator {modifier!r} requires two operands")
+    if modifier == "⊘":
+        selected = left if len(arguments) == 1 else right
+        return apply_function(selected, arguments)
     if modifier == "∘":
         inner_arguments = [x] if len(arguments) == 1 else [w, x]
         return apply_function(left, [apply_function(right, inner_arguments)])

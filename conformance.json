@@ -764,6 +764,14 @@
       "domain": "Supported primitive operands or a numeric literal right operand, with a dense-real result.",
       "behavior": "The right operand transforms the right argument before the left operand receives the original left argument and transformed right argument.",
       "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⊘",
+      "name": "Valences",
+      "status": "supported",
+      "domain": "Two supported function operands whose selected monadic or dyadic expansion remains within the dense-real backend domain.",
+      "behavior": "A monadic call applies the left operand; a dyadic call applies the right operand.",
+      "tests": ["tests/test_dense_primitives.py", "tests/test_source_frontend.py"]
     }
   ],
   "trains": [
@@ -883,7 +891,7 @@
         "constraint": "Prefix use with the supported dyadic function operands and no dyadic initial value."
       },
       {
-        "name": "Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜`",
+        "name": "Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, After `⟜`, and Valences `⊘`",
         "status": "supported",
         "constraint": "Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization."
       },
