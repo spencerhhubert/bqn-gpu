@@ -50,6 +50,11 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     assert all(result["median_warm_ns"] > 0 for result in report["results"])
     assert all(result["timing_scope"] == "resident-compute" for result in report["results"])
     assert report["timing_scope"] == "resident-compute"
+    assert report["measurement_mode"] == "latency"
+    assert report["throughput_batch_size"] == 1
+    assert all(result["measurement_mode"] == "latency" for result in report["results"])
+    assert all(result["batch_size"] == 1 for result in report["results"])
+    assert all(result["batch_warm_ns"] == result["warm_ns"] for result in report["results"])
     assert report["environment"]["fingerprint"]
     assert report["environment"]["cpu"]["threads"] > 0
     assert report["environment"]["software"]["tinygrad-renderer"].endswith(
@@ -107,6 +112,15 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     assert len(payload["results"]) == 4
     assert all(result["timing_scope"] == "resident-compute" for result in payload["results"])
     assert all(len(result["timings_ns"]) == 1 for result in payload["results"])
+    assert payload["run"]["metadata"]["measurement"] == {
+        "mode": "latency",
+        "batch_size": 1,
+        "sample_count": 1,
+    }
+    assert all(
+        result["metadata"]["measurement"]["batch_size"] == 1
+        for result in payload["results"]
+    )
     native = next(result for result in payload["results"] if result["backend"] == "native-torch")
     assert native["metadata"]["implementation_kind"] == "native-framework"
     assert payload["programs"][0]["metadata"]["native_implementations"]["torch"].startswith("lambda")
@@ -128,6 +142,60 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
         if feature["glyph"] == "≤" and feature["valence"] == "monadic"
     )
     assert less_equal_monad["metadata"]["language_defined"] is False
+
+
+def test_corpus_runner_records_amortized_resident_throughput(tmp_path) -> None:
+    output = tmp_path / "throughput.json"
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_corpus.py",
+            "--backend",
+            "cbqn",
+            "--backend",
+            "bqn-gpu-tinygrad",
+            "--backend",
+            "native-tinygrad",
+            "--backend",
+            "native-torch",
+            "--match",
+            "glyph.add.dyadic_same",
+            "--size",
+            "17",
+            "--warmup",
+            "1",
+            "--repeat",
+            "2",
+            "--measurement-mode",
+            "throughput",
+            "--throughput-batch-size",
+            "4",
+            "--output",
+            str(output),
+        ],
+        cwd=ROOT,
+        check=True,
+    )
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["timing_scope"] == "resident-throughput"
+    assert report["measurement_mode"] == "throughput"
+    assert report["throughput_batch_size"] == 4
+    assert "--measurement-mode" in report["command"]
+    assert "--throughput-batch-size" in report["command"]
+    for result in report["results"]:
+        assert result["timing_scope"] == "resident-throughput"
+        assert result["measurement_mode"] == "throughput"
+        assert result["batch_size"] == 4
+        assert len(result["warm_ns"]) == 2
+        assert len(result["batch_warm_ns"]) == 2
+        assert all(value > 0 for value in result["warm_ns"])
+        assert all(value > 0 for value in result["batch_warm_ns"])
+        assert all(
+            per_invocation == max(1, batch // 4)
+            for per_invocation, batch in zip(
+                result["warm_ns"], result["batch_warm_ns"], strict=True
+            )
+        )
 
 
 def test_development_profile_is_a_multi_size_certification_subset(tmp_path) -> None:

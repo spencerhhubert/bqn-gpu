@@ -162,6 +162,11 @@ def build_payload(
             "metadata": {
                 "requested_backends": report["requested_backends"],
                 "skipped_backends": report["skipped_backends"],
+                "measurement": {
+                    "mode": report.get("measurement_mode", "latency"),
+                    "batch_size": report.get("throughput_batch_size", 1),
+                    "sample_count": report["repeat"],
+                },
             },
         },
         "programs": [program_record(program) for program in selected],
@@ -246,6 +251,14 @@ def result_record(result: dict[str, Any], versions: dict[str, str]) -> dict[str,
             "implementation_kind": result.get("implementation_kind"),
             "framework": result.get("framework"),
             "optimization": result.get("optimization"),
+            "measurement": {
+                "mode": result.get("measurement_mode", "latency"),
+                "batch_size": result.get("batch_size", 1),
+                "batch_timings_ns": result.get(
+                    "batch_warm_ns", result.get("warm_ns", [])
+                ),
+                "reported_timings": "per-invocation nanoseconds",
+            },
         },
     }
 

@@ -80,6 +80,21 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--warmup", type=int)
     parser.add_argument("--repeat", type=int)
     parser.add_argument(
+        "--measurement-mode",
+        choices=("latency", "throughput"),
+        default="latency",
+        help=(
+            "measure one synchronized invocation, or amortized steady-state "
+            "throughput from a queued batch with one final synchronization"
+        ),
+    )
+    parser.add_argument(
+        "--throughput-batch-size",
+        type=int,
+        default=32,
+        help="invocations queued per throughput sample (default: 32)",
+    )
+    parser.add_argument(
         "--cbqn-timing-scope",
         choices=("resident", "boundary"),
         default="resident",
@@ -107,8 +122,23 @@ def main() -> int:
         if arguments.repeat is not None
         else int(profile.get("repeat", 10))
     )
-    if any(size < 1 for size in sizes) or arguments.warmup < 0 or arguments.repeat < 1:
-        raise SystemExit("size and repeat must be positive; warmup must be non-negative")
+    if (
+        any(size < 1 for size in sizes)
+        or arguments.warmup < 0
+        or arguments.repeat < 1
+        or arguments.throughput_batch_size < 1
+    ):
+        raise SystemExit(
+            "size, repeat, and throughput batch size must be positive; "
+            "warmup must be non-negative"
+        )
+    if (
+        arguments.measurement_mode == "throughput"
+        and arguments.cbqn_timing_scope != "resident"
+    ):
+        raise SystemExit(
+            "throughput measurement requires --cbqn-timing-scope resident"
+        )
 
     programs = select_programs(
         load_programs(),
@@ -155,6 +185,8 @@ def main() -> int:
                             arguments.warmup,
                             arguments.repeat,
                             arguments.cbqn_timing_scope,
+                            arguments.measurement_mode,
+                            arguments.throughput_batch_size,
                         )
                     elif name.startswith("bqn-gpu-"):
                         result = benchmark_backend(
@@ -166,6 +198,8 @@ def main() -> int:
                             expected,
                             arguments.warmup,
                             arguments.repeat,
+                            arguments.measurement_mode,
+                            arguments.throughput_batch_size,
                         )
                     else:
                         result = benchmark_native(
@@ -176,6 +210,8 @@ def main() -> int:
                             expected,
                             arguments.warmup,
                             arguments.repeat,
+                            arguments.measurement_mode,
+                            arguments.throughput_batch_size,
                         )
                     result["size"] = size
                     results.append(result)
@@ -192,10 +228,12 @@ def main() -> int:
         "python_version": platform.python_version(),
         "platform": platform.platform(),
         "device": arguments.device.upper(),
-        "timing_scope": (
-            "resident-compute"
-            if arguments.cbqn_timing_scope == "resident"
-            else "backend-specific"
+        "timing_scope": report_timing_scope(arguments),
+        "measurement_mode": arguments.measurement_mode,
+        "throughput_batch_size": (
+            arguments.throughput_batch_size
+            if arguments.measurement_mode == "throughput"
+            else 1
         ),
         "benchmark_profile": arguments.profile,
         "sizes": sizes,
@@ -294,10 +332,19 @@ def benchmark_cbqn(
     warmup: int,
     repeat: int,
     timing_scope: str,
+    measurement_mode: str,
+    throughput_batch_size: int,
 ) -> dict[str, Any]:
     if timing_scope == "resident":
         return benchmark_cbqn_resident(
-            cbqn, program, arguments, expected, warmup, repeat
+            cbqn,
+            program,
+            arguments,
+            expected,
+            warmup,
+            repeat,
+            measurement_mode,
+            throughput_batch_size,
         )
 
     cold_start = time.perf_counter_ns()
@@ -314,6 +361,9 @@ def benchmark_cbqn(
     result = timing_result(program, "cbqn", "CPU", cold_ns, timings)
     result["execution_mode"] = "embedding-call"
     result["timing_scope"] = "host-value-boundary"
+    result["measurement_mode"] = "latency"
+    result["batch_size"] = 1
+    result["batch_warm_ns"] = timings
     return result
 
 
@@ -324,6 +374,8 @@ def benchmark_cbqn_resident(
     expected: Any,
     warmup: int,
     repeat: int,
+    measurement_mode: str,
+    throughput_batch_size: int,
 ) -> dict[str, Any]:
     with cbqn.prepare(program.bqn, *arguments) as executable:
         cold_start = time.perf_counter_ns()
@@ -336,16 +388,21 @@ def benchmark_cbqn_resident(
             raw_result = executable.invoke()
             executable.free(raw_result)
 
+        batch_size = throughput_batch_size if measurement_mode == "throughput" else 1
         timings = []
+        batch_timings = []
         for _ in range(repeat):
             start = time.perf_counter_ns()
-            raw_result = executable.invoke()
-            timings.append(time.perf_counter_ns() - start)
-            executable.free(raw_result)
+            for _ in range(batch_size):
+                raw_result = executable.invoke()
+                executable.free(raw_result)
+            elapsed = time.perf_counter_ns() - start
+            batch_timings.append(elapsed)
+            timings.append(max(1, elapsed // batch_size))
 
     result = timing_result(program, "cbqn", "CPU", cold_ns, timings)
     result["execution_mode"] = "embedding-resident"
-    result["timing_scope"] = "resident-compute"
+    add_measurement_metadata(result, measurement_mode, batch_size, batch_timings)
     return result
 
 
@@ -358,6 +415,8 @@ def benchmark_backend(
     expected: Any,
     warmup: int,
     repeat: int,
+    measurement_mode: str,
+    throughput_batch_size: int,
 ) -> dict[str, Any]:
     device_inputs = {key: backend.from_host(value) for key, value in inputs.items()}
     compiler = getattr(backend, "compile", None)
@@ -368,9 +427,7 @@ def benchmark_backend(
         else None
     )
 
-    def run_once() -> tuple[Any, int]:
-        backend.synchronize()
-        start = time.perf_counter_ns()
+    def execute_once() -> Any:
         value = (
             executable(device_inputs)
             if executable is not None
@@ -379,6 +436,12 @@ def benchmark_backend(
         realize = getattr(value.tensor, "realize", None)
         if realize is not None:
             realize()
+        return value
+
+    def run_once() -> tuple[Any, int]:
+        backend.synchronize()
+        start = time.perf_counter_ns()
+        value = execute_once()
         backend.synchronize()
         return value, time.perf_counter_ns() - start
 
@@ -386,7 +449,18 @@ def benchmark_backend(
     assert_close(actual.to_host(), expected, program)
     for _ in range(warmup):
         run_once()
-    timings = [run_once()[1] for _ in range(repeat)]
+    batch_size = throughput_batch_size if measurement_mode == "throughput" else 1
+    timings = []
+    batch_timings = []
+    for _ in range(repeat):
+        backend.synchronize()
+        start = time.perf_counter_ns()
+        for _ in range(batch_size):
+            execute_once()
+        backend.synchronize()
+        elapsed = time.perf_counter_ns() - start
+        batch_timings.append(elapsed)
+        timings.append(max(1, elapsed // batch_size))
     result = timing_result(program, name, str(backend.device).upper(), cold_ns, timings)
     result["execution_mode"] = (
         getattr(executable, "execution_mode", "jit-captured")
@@ -395,7 +469,7 @@ def benchmark_backend(
     )
     if executable is not None and hasattr(executable, "execution_reason"):
         result["execution_reason"] = executable.execution_reason
-    result["timing_scope"] = "resident-compute"
+    add_measurement_metadata(result, measurement_mode, batch_size, batch_timings)
     optimizer = getattr(backend, "optimize", None)
     if optimizer is not None:
         optimization = optimizer(compiled.expression, device_inputs)
@@ -426,17 +500,23 @@ def benchmark_native(
     expected: Any,
     warmup: int,
     repeat: int,
+    measurement_mode: str,
+    throughput_batch_size: int,
 ) -> dict[str, Any]:
     """Benchmark a direct framework program that does not parse or lower BQN."""
 
     device_inputs = {key: runtime.from_host(value) for key, value in inputs.items()}
     executable = runtime.compile(program, device_inputs)
 
+    def execute_once() -> Any:
+        value = executable(device_inputs)
+        runtime.realize(value)
+        return value
+
     def run_once() -> tuple[Any, int]:
         runtime.synchronize()
         start = time.perf_counter_ns()
-        value = executable(device_inputs)
-        runtime.realize(value)
+        value = execute_once()
         runtime.synchronize()
         return value, time.perf_counter_ns() - start
 
@@ -444,11 +524,38 @@ def benchmark_native(
     assert_close(runtime.to_host(actual, atom=expected.atom), expected, program)
     for _ in range(warmup):
         run_once()
-    timings = [run_once()[1] for _ in range(repeat)]
+    batch_size = throughput_batch_size if measurement_mode == "throughput" else 1
+    timings = []
+    batch_timings = []
+    for _ in range(repeat):
+        runtime.synchronize()
+        start = time.perf_counter_ns()
+        for _ in range(batch_size):
+            execute_once()
+        runtime.synchronize()
+        elapsed = time.perf_counter_ns() - start
+        batch_timings.append(elapsed)
+        timings.append(max(1, elapsed // batch_size))
     result = timing_result(program, name, str(runtime.device).upper(), cold_ns, timings)
     result["execution_mode"] = getattr(runtime, "execution_mode", "native-eager")
-    result["timing_scope"] = "resident-compute"
+    add_measurement_metadata(result, measurement_mode, batch_size, batch_timings)
     return result
+
+
+def add_measurement_metadata(
+    result: dict[str, Any],
+    measurement_mode: str,
+    batch_size: int,
+    batch_timings: list[int],
+) -> None:
+    result["timing_scope"] = (
+        "resident-throughput"
+        if measurement_mode == "throughput"
+        else "resident-compute"
+    )
+    result["measurement_mode"] = measurement_mode
+    result["batch_size"] = batch_size
+    result["batch_warm_ns"] = batch_timings
 
 
 def timing_result(
@@ -556,17 +663,33 @@ def benchmark_command(arguments: argparse.Namespace, backends: list[str]) -> lis
             str(arguments.warmup),
             "--repeat",
             str(arguments.repeat),
+            "--measurement-mode",
+            arguments.measurement_mode,
             "--cbqn-timing-scope",
             arguments.cbqn_timing_scope,
             "--match",
             arguments.match,
         )
     )
+    if arguments.measurement_mode == "throughput":
+        command.extend(
+            ("--throughput-batch-size", str(arguments.throughput_batch_size))
+        )
     for tag in arguments.tag or ():
         command.extend(("--tag", tag))
     if arguments.limit is not None:
         command.extend(("--limit", str(arguments.limit)))
     return command
+
+
+def report_timing_scope(arguments: argparse.Namespace) -> str:
+    if arguments.cbqn_timing_scope != "resident":
+        return "backend-specific"
+    return (
+        "resident-throughput"
+        if arguments.measurement_mode == "throughput"
+        else "resident-compute"
+    )
 
 
 def environment_profile(versions: dict[str, str], device: str) -> dict[str, Any]:

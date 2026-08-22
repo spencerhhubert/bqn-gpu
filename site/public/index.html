@@ -43,7 +43,7 @@
         <label class="text-xs font-medium text-slate-600">Machine
           <select id="hardware-filter" class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></select>
         </label>
-        <label class="text-xs font-medium text-slate-600">Timing scope
+        <label class="text-xs font-medium text-slate-600" title="Synchronous latency waits after every invocation. Steady-state throughput queues a recorded batch and synchronizes once.">Timing scope
           <select id="timing-filter" class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></select>
         </label>
       </section>
@@ -113,7 +113,7 @@
         <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div class="border-b border-slate-200 p-5">
             <h2 class="text-base font-semibold">By input size</h2>
-            <p class="mt-1 text-sm text-slate-500">Aggregate resident-compute time and paired comparison at each tested element count.</p>
+            <p class="mt-1 text-sm text-slate-500">Aggregate time and paired comparison under the selected latency or throughput scope.</p>
           </div>
           <div class="overflow-x-auto p-5">
             <table class="min-w-[64rem] w-full text-left text-sm">

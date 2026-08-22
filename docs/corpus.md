@@ -36,6 +36,13 @@ The correctness suite evaluates the original source with pinned cBQN, compiles i
 
 `scripts/run_corpus.py` selects by stable ID glob and tags, scales deterministic inputs, checks every requested implementation against cBQN, and records cold and repeated warm timings as JSON. Its unambiguous implementation names are `cbqn`, `bqn-gpu-tinygrad`, `bqn-gpu-torch`, `native-tinygrad`, and `native-torch`. The default comparison is cBQN CPU, bqn-gpu on tinygrad, direct tinygrad, and direct PyTorch. Tensor input transfer occurs before timing and output transfer after it. bqn-gpu/tinygrad selects an explainable optimized no-op, specialized eager layout path, or reusable JIT-captured graph. Native tinygrad uses reusable JIT capture and native PyTorch is eager. Each result records its language, implementation kind, framework, device, execution mode, and timing scope.
 
+The default `latency` measurement synchronizes every invocation. The separate
+`throughput` measurement warms the executable, queues a fixed recorded batch,
+synchronizes once, and stores both raw batch durations and normalized
+per-invocation timings. This models persistent asynchronous use without hiding
+single-call latency; website and ingestion timing-scope keys prevent the two
+measurements from being paired or aggregated together.
+
 The environment fingerprint also records the concrete tinygrad renderer and
 compiler classes. When NVRTC is selected, its installed package version is
 recorded without retaining a machine-specific library path.

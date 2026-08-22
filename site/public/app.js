@@ -66,7 +66,7 @@ function initializeFilters() {
   setOptions($("#hardware-filter"), [{ value: "all", label: "All machines" }, ...hardware.map((value) => ({ value, label: truncate(value, 42) }))], hardware.length === 1 ? hardware[0] : "all");
   const timings = unique(state.performance.map((row) => row.timing_scope).filter(Boolean)).sort();
   const preferredTiming = timings.includes("resident-compute") ? "resident-compute" : timings[0];
-  setOptions($("#timing-filter"), timings.map((value) => ({ value, label: value })), preferredTiming);
+  setOptions($("#timing-filter"), timings.map((value) => ({ value, label: timingScopeLabel(value) })), preferredTiming);
 }
 
 function setOptions(select, options, selected) {
@@ -116,7 +116,7 @@ function renderContext(rows) {
   const sizeCount = unique(rows.map((row) => row.input_size)).length;
   const hardware = hardwareName(latest);
   const programCount = unique(rows.map((row) => row.program_id)).length;
-  $("#page-context").textContent = `${shortCommit(latest.project_commit)} · ${formatDate(latest.started_at)} · ${hardware} · ${programCount} programs · ${sizeCount} input size${sizeCount === 1 ? "" : "s"}`;
+  $("#page-context").textContent = `${shortCommit(latest.project_commit)} · ${formatDate(latest.started_at)} · ${hardware} · ${timingScopeLabel(latest.timing_scope)} · ${programCount} programs · ${sizeCount} input size${sizeCount === 1 ? "" : "s"}`;
 }
 
 function renderMetrics(rows) {
@@ -375,7 +375,7 @@ function renderMeasurementConditions(rows) {
     ["CPU", unique(rows.map((row) => row.cpu_model).filter(Boolean)).join(", ") || "—"],
     ["Accelerator", unique(rows.map((row) => row.accelerator_models).filter(Boolean)).join(", ") || "—"],
     ["Input sizes", unique(rows.map((row) => row.input_size).filter(Number.isFinite)).sort((a, b) => a - b).map(formatInteger).join(", ") || "—"],
-    ["Timing", unique(rows.map((row) => row.timing_scope).filter(Boolean)).join(", ") || "—"],
+    ["Timing", unique(rows.map((row) => row.timing_scope).filter(Boolean)).map(timingScopeLabel).join(", ") || "—"],
     ["Implementations", unique(rows.map((row) => `${backendLabel(row)} on ${resultDevice(row)}${row.backend_version ? ` (${shortVersion(row.backend_version)})` : ""}`)).join("; ") || "—"],
     ["Dtype", first?.dtype ?? "—"],
   ];
@@ -415,7 +415,7 @@ async function openRun(id) {
     const accelerators = (profile.accelerators ?? []).map((device) => `${device.count ?? 1}× ${device.model}${device.driver ? ` · driver ${device.driver}` : ""}`).join("; ") || "—";
     const software = Object.entries(profile.software ?? {}).map(([name, version]) => `${name} ${version}`).join(" · ") || "—";
     body.innerHTML = `
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">${detailCell("Status", run.status)}${detailCell("Commit", shortCommit(run.project_commit))}${detailCell("Suite", run.suite)}${detailCell("Timing", run.timing_scope)}${detailCell("Input", formatInputProfile(run.input_profile))}${detailCell("Warmups / repeats", `${run.warmups} / ${run.repetitions}`)}${detailCell("Device", run.device)}${detailCell("Dtype", run.dtype ?? "—")}</div>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">${detailCell("Status", run.status)}${detailCell("Commit", shortCommit(run.project_commit))}${detailCell("Suite", run.suite)}${detailCell("Timing", timingScopeLabel(run.timing_scope))}${detailCell("Input", formatInputProfile(run.input_profile))}${detailCell("Warmups / repeats", `${run.warmups} / ${run.repetitions}`)}${detailCell("Device", run.device)}${detailCell("Dtype", run.dtype ?? "—")}</div>
       <h3 class="mt-6 text-sm font-semibold">Command</h3><pre class="mt-2 overflow-x-auto rounded-md bg-slate-950 p-4 font-mono text-xs leading-5 text-slate-100">${escapeHtml(run.command ?? "—")}</pre>
       <h3 class="mt-6 text-sm font-semibold">Machine</h3><dl class="mt-2 grid gap-3 rounded-md border border-slate-200 p-4 text-sm sm:grid-cols-2">${detailTerm("CPU", profile.cpu?.model ?? "—")}${detailTerm("Accelerator", accelerators)}${detailTerm("OS / kernel", `${profile.operating_system ?? "—"} · ${profile.kernel ?? "—"}`)}${detailTerm("Software", software)}</dl>
       <div class="mt-6 flex items-center justify-between gap-3"><h3 class="text-sm font-semibold">Results (${formatInteger(bundle.results.length)})</h3><a class="text-sm text-blue-700 hover:underline" href="/api/v1/runs/${encodeURIComponent(id)}">Raw JSON ↗</a></div>
@@ -488,6 +488,15 @@ function backendLabel(row) {
   return labels[backendKey(row)] ?? row.backend;
 }
 function resultDevice(row) { return row.metadata?.device ?? (backendKey(row) === "cbqn" ? "CPU" : row.device ?? "—"); }
+function timingScopeLabel(scope) {
+  const labels = {
+    "resident-compute": "Synchronous latency",
+    "resident-throughput": "Steady-state throughput",
+    "host-value-boundary": "Host-value boundary latency",
+    "backend-specific": "Mixed backend timing",
+  };
+  return labels[scope] ?? scope ?? "—";
+}
 function unique(values) { return [...new Set(values)]; }
 function median(values) { return quantile(values, .5); }
 function quantile(values, q) {
