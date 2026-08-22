@@ -4,7 +4,7 @@ const REFERENCE_BACKENDS = [
   { backend: "native-tinygrad", label: "native tinygrad", color: "#15803d" },
   { backend: "native-torch", label: "native Torch", color: "#c2410c" },
 ];
-const PRIMITIVE_GLYPHS = new Set(Array.from("+-×÷|⌊⌈⋆√¬∧∨<≤=≥>≠≡≢⊣⊢⥊∾≍⋈↑↓↕⌽⍉/⍋⍒⊏⊑⊐⊒∊⍷⊔!˙˜˘¨⌜⁼´˝`"));
+const PRIMITIVE_GLYPHS = new Set(Array.from("+-×÷|⌊⌈⋆√¬∧∨<≤=≥>≠≡≢⊣⊢⥊∾≍⋈↑↓↕»«⌽⍉/⍋⍒⊏⊑⊐⊒∊⍷⊔!˙˜∘○⊸⟜⊘◶⌾⎊˘¨⌜⎉⛇⁼⍟´˝`"));
 const state = { summary: null, runs: [], performance: [], capability: [], programs: [], selectedProgram: null };
 
 const $ = (selector) => document.querySelector(selector);
@@ -337,16 +337,22 @@ function renderCapability() {
   const mappingCount = (snapshot.manifest?.mapping_modifiers ?? []).filter((item) => item.status === "supported").length;
   const trainCount = (snapshot.manifest?.trains ?? []).filter((item) => item.status === "supported").length;
   const iterationCount = (snapshot.manifest?.iteration_modifiers ?? []).filter((item) => item.status === "supported").length;
+  const metadata = snapshot.metadata ?? {};
+  const primitiveClaims = snapshot.manifest?.primitives ?? [];
+  const monadicTotal = metadata.monadic_forms_defined
+    ?? primitiveClaims.filter((item) => item.monadic?.defined !== false).length;
+  const dyadicTotal = metadata.dyadic_forms_defined
+    ?? primitiveClaims.filter((item) => item.dyadic?.defined !== false).length;
   const items = [
-    ["Monadic forms", snapshot.monadic_supported],
-    ["Dyadic forms", snapshot.dyadic_supported],
-    ["Fold operands", snapshot.folds_supported],
-    ["Insert operands", insertCount],
-    ["Scan operands", scanCount],
-    ["Pure combinators", combinatorCount],
-    ["Mapping modifiers", mappingCount],
-    ["Function train forms", trainCount],
-    ["Iteration modifiers", iterationCount],
+    ["Monadic forms", countOf(snapshot.monadic_supported, monadicTotal)],
+    ["Dyadic forms", countOf(snapshot.dyadic_supported, dyadicTotal)],
+    ["Fold operands", countOf(snapshot.folds_supported, metadata.folds_total ?? (snapshot.manifest?.folds ?? []).length)],
+    ["Insert operands", countOf(insertCount, metadata.inserts_total ?? (snapshot.manifest?.inserts ?? []).length)],
+    ["Scan operands", countOf(scanCount, metadata.scans_total ?? (snapshot.manifest?.scans ?? []).length)],
+    ["Combinators", countOf(combinatorCount, metadata.combinators_total ?? (snapshot.manifest?.combinators ?? []).length)],
+    ["Mapping modifiers", countOf(mappingCount, metadata.mapping_modifiers_total ?? (snapshot.manifest?.mapping_modifiers ?? []).length)],
+    ["Function train forms", countOf(trainCount, metadata.train_forms_total ?? (snapshot.manifest?.trains ?? []).length)],
+    ["Iteration modifiers", countOf(iterationCount, metadata.iteration_modifiers_total ?? (snapshot.manifest?.iteration_modifiers ?? []).length)],
     ["Tests", `${snapshot.tests_passed} passed`],
   ];
   for (const [label, value] of items) {
@@ -355,6 +361,10 @@ function renderCapability() {
     item.innerHTML = `<dt class="text-xs text-slate-500">${escapeHtml(label)}</dt><dd class="mt-1 font-mono text-lg font-semibold">${escapeHtml(value)}</dd>`;
     values.append(item);
   }
+}
+
+function countOf(supported, total) {
+  return total > 0 ? `${formatInteger(supported)} / ${formatInteger(total)}` : formatInteger(supported);
 }
 
 function renderMeasurementConditions(rows) {

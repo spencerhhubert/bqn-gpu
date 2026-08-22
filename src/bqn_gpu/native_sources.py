@@ -167,6 +167,8 @@ def _monadic(glyph: str, value: str, framework: str) -> str:
         return f"({value}).argsort(dim=0, descending={glyph == '⍒'})"
     if glyph in {"⊐", "⊒", "∊", "⍷"}:
         return f"major_cell_self_search(({value}), {glyph!r})"
+    if glyph in {"»", "«"}:
+        return f"dense_shift(({value}), {glyph!r})"
     if glyph == "⊏":
         return f"({value})[0]"
     if glyph == "⊑":
@@ -256,6 +258,8 @@ def _dyadic_structural(
     right: str,
     framework: str,
 ) -> str | None:
+    if glyph in {"»", "«"}:
+        return f"dense_shift(({right}), {glyph!r}, ({left}))"
     if glyph == "∾":
         if framework == "tinygrad":
             return f"({left}).cat(({right}), dim=0)"

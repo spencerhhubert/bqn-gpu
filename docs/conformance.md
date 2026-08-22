@@ -50,6 +50,10 @@ Additional adapter: **PyTorch** `>=2.7`, using `float64` on `CPU`, `CUDA`; teste
 | `∊` Mark Firsts / Member Of | supported | supported | `tests/test_dense_primitives.py` |
 | `⍷` Deduplicate / Find | supported | supported | `tests/test_dense_primitives.py` |
 | `↕` Range / Windows | supported | supported | `tests/test_corpus.py`<br>`tests/test_dense_primitives.py` |
+| `»` Nudge / Shift Before | supported | supported | `tests/test_corpus.py`<br>`tests/test_dense_primitives.py` |
+| `«` Nudge Back / Shift After | supported | supported | `tests/test_corpus.py`<br>`tests/test_dense_primitives.py` |
+| `⊔` Group Indices / Group | unsupported | unsupported | `tests/test_tinygrad_backend.py` |
+| `!` Assert / Assert With Message | unsupported | unsupported | `tests/test_tinygrad_backend.py` |
 
 ## `+` — Conjugate / Add
 
@@ -1091,6 +1095,110 @@ Returns the uniform dense array of sliding windows.
 - Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
 - The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
 
+## `»` — Nudge / Shift Before
+
+### Monadic
+
+Status: **supported**
+
+Domain: Dense real arrays with at least one axis; empty arrays are supported.
+
+Moves major cells toward the end, inserting one numeric fill cell of zeros at the beginning while preserving shape.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: A dense real right array with at least one axis and a left argument of equal rank or one lower, with matching trailing cell shape.
+
+Inserts left major cells at the beginning and discards the same number from the end, preserving the right shape.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `«` — Nudge Back / Shift After
+
+### Monadic
+
+Status: **supported**
+
+Domain: Dense real arrays with at least one axis; empty arrays are supported.
+
+Moves major cells toward the beginning, inserting one numeric fill cell of zeros at the end while preserving shape.
+
+### Dyadic
+
+Status: **supported**
+
+Domain: A dense real right array with at least one axis and a left argument of equal rank or one lower, with matching trailing cell shape.
+
+Inserts left major cells at the end and discards the same number from the beginning, preserving the right shape.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `⊔` — Group Indices / Group
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: General Group Indices returns nested arrays, outside the current dense-real value boundary.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **unsupported**
+
+Domain: General Group returns nested arrays, outside the current dense-real value boundary.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
+## `!` — Assert / Assert With Message
+
+### Monadic
+
+Status: **unsupported**
+
+Domain: Assertion side effects and error payloads are not compiled by the current pure dense-real backend.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Dyadic
+
+Status: **unsupported**
+
+Domain: String or arbitrary-value assertion messages are outside the current value boundary.
+
+Delegated to cBQN by the CLI or rejected in strict mode.
+
+### Limitations
+
+- Nested arrays and characters are not supported.
+- Values are represented as float64; preservation of cBQN's packed integer storage is not claimed.
+- Signed-zero preservation is not claimed, consistent with BQN portability guidance.
+- Comparison results are BQN numeric booleans represented as float64 zero or one on the backend.
+- The CLI delegates unsupported programs to cBQN only when the result fits the current dense-real numeric boundary; `--fallback error` requires acceleration instead.
+
 ## Fold
 
 | Function operand | Status | Domain |
@@ -1134,6 +1242,10 @@ Returns the uniform dense array of sliding windows.
 | `⊸` Before / Bind Left | supported | Supported primitive operands or a numeric literal left operand, with a dense-real result. | The left operand transforms the left argument (or the duplicated right argument monadically) before the right operand receives it and the original right argument. |
 | `⟜` After / Bind Right | supported | Supported primitive operands or a numeric literal right operand, with a dense-real result. | The right operand transforms the right argument before the left operand receives the original left argument and transformed right argument. |
 | `⊘` Valences | supported | Two supported function operands whose selected monadic or dyadic expansion remains within the dense-real backend domain. | A monadic call applies the left operand; a dyadic call applies the right operand. |
+| `˙` Constant | unsupported | General Constant modifier syntax and arbitrary data operands are not compiled; numeric constant operands are accepted only in the documented Bind and train subsets. | Delegated to cBQN by the CLI or rejected in strict mode. |
+| `◶` Choose | unsupported | Function-array operands and data-dependent function selection are not compiled. | Delegated to cBQN by the CLI or rejected in strict mode. |
+| `⌾` Under | unsupported | General inverse and structural update synthesis are not compiled. | Delegated to cBQN by the CLI or rejected in strict mode. |
+| `⎊` Catch | unsupported | Error-catching control flow is not represented in the current tensor IR. | Delegated to cBQN by the CLI or rejected in strict mode. |
 
 ## Function trains
 
@@ -1149,6 +1261,7 @@ Returns the uniform dense array of sliding windows.
 | Modifier | Status | Domain | Behavior |
 |---|---|---|---|
 | `⍟` Repeat | supported | A supported function operand and one literal natural-number count from zero through 64 whose unrolled expression contains at most 4,096 semantic IR nodes, with monadic or dyadic dense-real arguments. | Zero returns the right argument. Positive counts apply the operand that many times; a dyadic call reuses the original left argument each time. The compiler unrolls the bounded repetition before execution planning. |
+| `⁼` Undo | unsupported | General primitive and derived-function inverses are not compiled. | Delegated to cBQN by the CLI or rejected in strict mode. |
 
 ## Dense mapping modifiers
 
@@ -1158,6 +1271,7 @@ Returns the uniform dense array of sliding windows.
 | `⎉` Rank | supported | Literal numeric rank atoms or one-to-three-item strands, dense real arguments with mapped frames that have no zero-length axes, and supported operands that return one uniform dense shape. Pervasive numeric operands also support empty arrays. | Natural ranks select trailing cells, negative ranks select a frame-axis count, ranks clamp to the argument rank, positive infinity selects the entire argument, negative infinity selects atoms, and dyadic frames use leading-axis agreement. |
 | `¨` Each | supported | Dense real atoms and arrays with supported operands that return one uniform dense shape; general non-pervasive operands require mapped frames with no zero-length axes. Pervasive numeric operands support empty arrays. | Applies the operand to elements with leading-axis agreement for two arguments and always returns an array, including a rank-0 array for atom input. |
 | `⌜` Table | supported | Dense real atoms and arrays with supported operands that return one uniform dense shape; general non-pervasive operands require argument frames with no zero-length axes. | Monadic Table maps over elements; dyadic Table applies the operand to every element pair and concatenates the two argument shapes as the result frame. |
+| `⛇` Depth | unsupported | Recursive mapping over nested arrays is outside the current dense-real value boundary. | Delegated to cBQN by the CLI or rejected in strict mode. |
 
 ## BQN source frontend
 

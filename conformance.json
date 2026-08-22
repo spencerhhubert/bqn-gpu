@@ -227,6 +227,7 @@
       "name": "Less Than or Equal",
       "monadic": {
         "status": "unsupported",
+        "defined": false,
         "domain": "This glyph has no monadic primitive meaning.",
         "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
       },
@@ -242,6 +243,7 @@
       "name": "Greater Than or Equal",
       "monadic": {
         "status": "unsupported",
+        "defined": false,
         "domain": "This glyph has no monadic primitive meaning.",
         "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
       },
@@ -626,6 +628,66 @@
         "behavior": "Returns the uniform dense array of sliding windows."
       },
       "tests": ["tests/test_corpus.py", "tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "»",
+      "name": "Nudge / Shift Before",
+      "monadic": {
+        "status": "supported",
+        "domain": "Dense real arrays with at least one axis; empty arrays are supported.",
+        "behavior": "Moves major cells toward the end, inserting one numeric fill cell of zeros at the beginning while preserving shape."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "A dense real right array with at least one axis and a left argument of equal rank or one lower, with matching trailing cell shape.",
+        "behavior": "Inserts left major cells at the beginning and discards the same number from the end, preserving the right shape."
+      },
+      "tests": ["tests/test_corpus.py", "tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "«",
+      "name": "Nudge Back / Shift After",
+      "monadic": {
+        "status": "supported",
+        "domain": "Dense real arrays with at least one axis; empty arrays are supported.",
+        "behavior": "Moves major cells toward the beginning, inserting one numeric fill cell of zeros at the end while preserving shape."
+      },
+      "dyadic": {
+        "status": "supported",
+        "domain": "A dense real right array with at least one axis and a left argument of equal rank or one lower, with matching trailing cell shape.",
+        "behavior": "Inserts left major cells at the end and discards the same number from the beginning, preserving the right shape."
+      },
+      "tests": ["tests/test_corpus.py", "tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⊔",
+      "name": "Group Indices / Group",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "General Group Indices returns nested arrays, outside the current dense-real value boundary.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "unsupported",
+        "domain": "General Group returns nested arrays, outside the current dense-real value boundary.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "tests": ["tests/test_tinygrad_backend.py"]
+    },
+    {
+      "glyph": "!",
+      "name": "Assert / Assert With Message",
+      "monadic": {
+        "status": "unsupported",
+        "domain": "Assertion side effects and error payloads are not compiled by the current pure dense-real backend.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "dyadic": {
+        "status": "unsupported",
+        "domain": "String or arbitrary-value assertion messages are outside the current value boundary.",
+        "behavior": "Delegated to cBQN by the CLI or rejected in strict mode."
+      },
+      "tests": ["tests/test_tinygrad_backend.py"]
     }
   ],
   "folds": [
@@ -772,6 +834,38 @@
       "domain": "Two supported function operands whose selected monadic or dyadic expansion remains within the dense-real backend domain.",
       "behavior": "A monadic call applies the left operand; a dyadic call applies the right operand.",
       "tests": ["tests/test_dense_primitives.py", "tests/test_source_frontend.py"]
+    },
+    {
+      "glyph": "˙",
+      "name": "Constant",
+      "status": "unsupported",
+      "domain": "General Constant modifier syntax and arbitrary data operands are not compiled; numeric constant operands are accepted only in the documented Bind and train subsets.",
+      "behavior": "Delegated to cBQN by the CLI or rejected in strict mode.",
+      "tests": ["tests/test_source_frontend.py"]
+    },
+    {
+      "glyph": "◶",
+      "name": "Choose",
+      "status": "unsupported",
+      "domain": "Function-array operands and data-dependent function selection are not compiled.",
+      "behavior": "Delegated to cBQN by the CLI or rejected in strict mode.",
+      "tests": ["tests/test_source_frontend.py"]
+    },
+    {
+      "glyph": "⌾",
+      "name": "Under",
+      "status": "unsupported",
+      "domain": "General inverse and structural update synthesis are not compiled.",
+      "behavior": "Delegated to cBQN by the CLI or rejected in strict mode.",
+      "tests": ["tests/test_source_frontend.py"]
+    },
+    {
+      "glyph": "⎊",
+      "name": "Catch",
+      "status": "unsupported",
+      "domain": "Error-catching control flow is not represented in the current tensor IR.",
+      "behavior": "Delegated to cBQN by the CLI or rejected in strict mode.",
+      "tests": ["tests/test_source_frontend.py"]
     }
   ],
   "trains": [
@@ -816,6 +910,14 @@
       "domain": "A supported function operand and one literal natural-number count from zero through 64 whose unrolled expression contains at most 4,096 semantic IR nodes, with monadic or dyadic dense-real arguments.",
       "behavior": "Zero returns the right argument. Positive counts apply the operand that many times; a dyadic call reuses the original left argument each time. The compiler unrolls the bounded repetition before execution planning.",
       "tests": ["tests/test_dense_primitives.py", "tests/test_tinygrad_compile.py"]
+    },
+    {
+      "glyph": "⁼",
+      "name": "Undo",
+      "status": "unsupported",
+      "domain": "General primitive and derived-function inverses are not compiled.",
+      "behavior": "Delegated to cBQN by the CLI or rejected in strict mode.",
+      "tests": ["tests/test_source_frontend.py"]
     }
   ],
   "mapping_modifiers": [
@@ -850,6 +952,14 @@
       "domain": "Dense real atoms and arrays with supported operands that return one uniform dense shape; general non-pervasive operands require argument frames with no zero-length axes.",
       "behavior": "Monadic Table maps over elements; dyadic Table applies the operand to every element pair and concatenates the two argument shapes as the result frame.",
       "tests": ["tests/test_dense_primitives.py"]
+    },
+    {
+      "glyph": "⛇",
+      "name": "Depth",
+      "status": "unsupported",
+      "domain": "Recursive mapping over nested arrays is outside the current dense-real value boundary.",
+      "behavior": "Delegated to cBQN by the CLI or rejected in strict mode.",
+      "tests": ["tests/test_source_frontend.py"]
     }
   ],
   "source_frontend": {

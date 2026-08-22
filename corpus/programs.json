@@ -9,9 +9,9 @@
       "dense-modifier": 12,
       "dense-paired": 10,
       "dense-phrase": 11,
-      "dense-primitive": 38,
+      "dense-primitive": 42,
       "dense-repeat": 7,
-      "dense-structural": 10,
+      "dense-structural": 12,
       "dense-train": 10,
       "glyph": 103,
       "paired": 24,
@@ -8041,6 +8041,142 @@
       ]
     },
     {
+      "id": "dense.nudge_vector.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(»𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "»",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: dense_shift((x), '»')",
+        "torch": "lambda x: dense_shift((x), '»')"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_vector",
+        "nudge_vector"
+      ]
+    },
+    {
+      "id": "dense.nudge_matrix.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(»𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "»",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: dense_shift((x), '»')",
+        "torch": "lambda x: dense_shift((x), '»')"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_matrix",
+        "nudge_matrix"
+      ]
+    },
+    {
+      "id": "dense.nudge_back_vector.monadic_vector",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(«𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "«",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: dense_shift((x), '«')",
+        "torch": "lambda x: dense_shift((x), '«')"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_vector",
+        "nudge_back_vector"
+      ]
+    },
+    {
+      "id": "dense.nudge_back_matrix.monadic_matrix",
+      "category": "dense-primitive",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(«𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "«",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: dense_shift((x), '«')",
+        "torch": "lambda x: dense_shift((x), '«')"
+      },
+      "input_mode": "monadic_matrix",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "glyph",
+        "monadic",
+        "monadic_matrix",
+        "nudge_back_matrix"
+      ]
+    },
+    {
       "id": "dense.grade_up.monadic_vector",
       "category": "dense-primitive",
       "variant": "primitive",
@@ -9340,6 +9476,80 @@
         "monadic_vector",
         "structural",
         "windows_three"
+      ]
+    },
+    {
+      "id": "dense.shift_before_one.monadic_vector",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(1»𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "»",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": 1
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: dense_shift((x), '»', (1.0))",
+        "torch": "lambda x: dense_shift((x), '»', (1.0))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "monadic_vector",
+        "shift_before_one",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.shift_after_one.monadic_vector",
+      "category": "dense-structural",
+      "variant": "primitive",
+      "arity": 1,
+      "bqn": "{(1«𝕩)}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "«",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": 1
+            },
+            {
+              "op": "argument",
+              "name": "x"
+            }
+          ]
+        },
+        "tinygrad": "lambda x: dense_shift((x), '«', (1.0))",
+        "torch": "lambda x: dense_shift((x), '«', (1.0))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 0.0,
+      "atol": 0.0,
+      "tags": [
+        "dense",
+        "monadic_vector",
+        "shift_after_one",
+        "structural"
       ]
     },
     {

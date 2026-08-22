@@ -14,6 +14,8 @@ def test_only_fixed_shape_tensor_work_is_compiled() -> None:
     assert TinygradBackend.can_compile(compile_bqn("{⍉𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{1↓𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{3↕𝕩}").expression)
+    assert TinygradBackend.can_compile(compile_bqn("{»𝕩}").expression)
+    assert TinygradBackend.can_compile(compile_bqn("{𝕨«𝕩}").expression)
     assert not TinygradBackend.can_compile(compile_bqn("{𝕨↓𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{⊐𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{⊒𝕩}").expression)

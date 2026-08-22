@@ -97,6 +97,11 @@ explicit eager boundary. The initial equality plan is quadratic in the number
 of major cells; the recorded benchmark sentinel makes a future exact hash or
 sort-based GPU kernel directly comparable.
 
+Nudge and Shift (`»«`) lower to fixed-shape leading-axis slice and
+concatenation graphs. Monadic numeric shifts synthesize one zero-fill major
+cell; dyadic shifts accept one cell or an array of cells and retain exactly the
+right argument's shape.
+
 ## Measurement discipline
 
 Development uses a compact sentinel set covering elementwise fusion, structural index-map fusion, reductions, scans, selection, sorting/search, and mixed complex programs. Full multi-size measurements are recorded only for tagged milestones. Raw repetitions, exact commits, hardware, compiler choices, and correctness evidence remain reproducible through the results service.

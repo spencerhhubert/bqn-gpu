@@ -78,6 +78,8 @@ class TorchBackend:
 
     def _call_monadic(self, glyph: str, x: TorchValue) -> TorchValue:
         self._check_device(x)
+        if glyph in {"»", "«"}:
+            return self._shift(glyph, None, x)
         if glyph in {"∧", "∨"}:
             if len(x.shape) != 1:
                 raise DomainError("Sort is currently supported for numeric lists")
@@ -195,6 +197,8 @@ class TorchBackend:
             return self._replicate(w, x)
         if glyph == "↕":
             return self._windows(w, x)
+        if glyph in {"»", "«"}:
+            return self._shift(glyph, w, x)
         if glyph == "⊏":
             return self._select(w, x)
         if glyph == "⊑":
@@ -456,6 +460,46 @@ class TorchBackend:
         if tuple(w_tensor.shape[1:]) != tuple(x_tensor.shape[1:]):
             raise ShapeError("Join To requires matching trailing cell shapes")
         return TorchValue(tensor=torch.cat((w_tensor, x_tensor), dim=0), atom=False)
+
+    def _shift(
+        self,
+        glyph: str,
+        w: TorchValue | None,
+        x: TorchValue,
+    ) -> TorchValue:
+        if len(x.shape) == 0:
+            raise DomainError("Shift requires a right argument with at least one axis")
+        length = x.shape[0]
+        if w is None:
+            if length == 0:
+                return x
+            inserted = torch.zeros(
+                (1,) + x.shape[1:],
+                dtype=torch.float64,
+                device=self.torch_device,
+            )
+        elif len(w.shape) == len(x.shape) - 1:
+            inserted = w.tensor.reshape((1,) + w.shape)
+        elif len(w.shape) == len(x.shape):
+            inserted = w.tensor
+        else:
+            raise DomainError(
+                "Shift left argument rank must equal the right rank or be one less"
+            )
+        if tuple(inserted.shape[1:]) != x.shape[1:]:
+            raise ShapeError("Shift requires matching trailing cell shapes")
+        if length == 0:
+            return x
+        inserted_length = int(inserted.shape[0])
+        if inserted_length == 0:
+            return x
+        if inserted_length >= length:
+            output = inserted[:length] if glyph == "»" else inserted[-length:]
+        elif glyph == "»":
+            output = torch.cat((inserted, x.tensor[: length - inserted_length]), dim=0)
+        else:
+            output = torch.cat((x.tensor[inserted_length:], inserted), dim=0)
+        return TorchValue(tensor=output, atom=False)
 
     def _couple(self, w: TorchValue, x: TorchValue) -> TorchValue:
         if w.atom != x.atom or w.shape != x.shape:

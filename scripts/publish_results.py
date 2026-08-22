@@ -264,9 +264,17 @@ def capability_record(
     features = []
     supported_monadic = 0
     supported_dyadic = 0
+    defined_monadic = 0
+    defined_dyadic = 0
     for index, primitive in enumerate(manifest["primitives"]):
         for valence in ("monadic", "dyadic"):
             claim = primitive[valence]
+            defined = claim.get("defined", True)
+            if defined:
+                if valence == "monadic":
+                    defined_monadic += 1
+                else:
+                    defined_dyadic += 1
             if claim["status"] == "supported":
                 if valence == "monadic":
                     supported_monadic += 1
@@ -282,6 +290,7 @@ def capability_record(
                     "domain": claim.get("domain"),
                     "behavior": claim.get("behavior"),
                     "evidence": primitive.get("tests", []),
+                    "metadata": {"language_defined": defined},
                 }
             )
     fold_names = {
@@ -413,6 +422,15 @@ def capability_record(
             "mapping_modifiers_supported": supported_mapping_modifiers,
             "train_forms_supported": supported_trains,
             "iteration_modifiers_supported": supported_iteration_modifiers,
+            "monadic_forms_defined": defined_monadic,
+            "dyadic_forms_defined": defined_dyadic,
+            "folds_total": len(manifest.get("folds", [])),
+            "inserts_total": len(manifest.get("inserts", [])),
+            "scans_total": len(manifest.get("scans", [])),
+            "combinators_total": len(manifest.get("combinators", [])),
+            "mapping_modifiers_total": len(manifest.get("mapping_modifiers", [])),
+            "train_forms_total": len(manifest.get("trains", [])),
+            "iteration_modifiers_total": len(manifest.get("iteration_modifiers", [])),
         },
     }
 

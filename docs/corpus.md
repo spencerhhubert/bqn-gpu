@@ -2,14 +2,14 @@
 
 `corpus/programs.json` is a generated, tracked corpus of actual BQN sources. The initial floor is 100 programs, not a target or limit. New semantic bugs, optimization boundaries, real workloads, useful phrases, and backend discrepancies should add durable cases with stable IDs.
 
-The current 318-case seed has fourteen layers:
+The current 324-case seed has fourteen layers:
 
 - individual glyphs over monadic and dyadic valence, atom extension, equal shapes, and leading-axis agreement;
 - short elementwise phrases;
 - naive and idiomatic paired formulations of the same computation;
 - monadic and dyadic reductions; and
 - long elementwise pipelines ending in reductions;
-- dense structural primitives such as reverse, transpose, take/drop, windows, selection, and reshaping;
+- dense structural primitives such as reverse, transpose, take/drop, shifts, windows, selection, and reshaping;
 - ordering, grading, match, logic, identity, and major-cell self-search functions;
 - Fold, Insert, and Scan families;
 - structural and modifier phrases; and

@@ -69,6 +69,19 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     assert compiled["optimization"]["optimized_bqn"]
     assert isinstance(compiled["optimization"]["rewrites"], list)
 
+    validation_path = tmp_path / "validation.json"
+    validation_path.write_text(
+        json.dumps(
+            {
+                "repository_commit": report["repository_commit"],
+                "result": "pass",
+                "profile": "test",
+                "random_seed": 1,
+                "random_cases": 0,
+            }
+        ),
+        encoding="utf-8",
+    )
     payload_path = tmp_path / "payload.json"
     subprocess.run(
         [
@@ -79,6 +92,8 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
             "test-smoke",
             "--dry-run",
             "--allow-dirty",
+            "--validation-manifest",
+            str(validation_path),
             "--output-payload",
             str(payload_path),
         ],
@@ -101,6 +116,18 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
         if result["backend"] == "bqn-gpu-tinygrad"
     )
     assert accelerated["metadata"]["optimization"]["optimized_bqn"]
+    capability = payload["capability"]
+    manifest = json.loads((ROOT / "conformance.json").read_text(encoding="utf-8"))
+    assert capability["glyphs_total"] == len(manifest["primitives"]) == 44
+    assert capability["metadata"]["monadic_forms_defined"] == 42
+    assert capability["metadata"]["dyadic_forms_defined"] == 44
+    assert capability["metadata"]["combinators_total"] == 10
+    less_equal_monad = next(
+        feature
+        for feature in capability["features"]
+        if feature["glyph"] == "≤" and feature["valence"] == "monadic"
+    )
+    assert less_equal_monad["metadata"]["language_defined"] is False
 
 
 def test_development_profile_is_a_multi_size_certification_subset(tmp_path) -> None:

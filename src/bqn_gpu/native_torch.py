@@ -11,6 +11,45 @@ from .errors import DeviceError
 from .host_value import HostValue
 
 
+def dense_shift(
+    x: torch.Tensor,
+    glyph: str,
+    w: torch.Tensor | float | None = None,
+) -> torch.Tensor:
+    """Independent direct-Torch implementation of dense Shift."""
+
+    if len(x.shape) == 0:
+        raise ValueError("Shift requires a right argument with at least one axis")
+    length = int(x.shape[0])
+    if w is None:
+        if length == 0:
+            return x
+        inserted = torch.zeros(
+            (1,) + tuple(int(item) for item in x.shape[1:]),
+            dtype=torch.float64,
+            device=x.device,
+        )
+    else:
+        if not isinstance(w, torch.Tensor):
+            w = torch.tensor(w, dtype=torch.float64, device=x.device)
+    if w is not None and len(w.shape) == len(x.shape) - 1:
+        inserted = w.reshape((1,) + tuple(int(item) for item in w.shape))
+    elif w is not None and len(w.shape) == len(x.shape):
+        inserted = w
+    elif w is not None:
+        raise ValueError("Shift arguments have incompatible ranks")
+    if tuple(inserted.shape[1:]) != tuple(x.shape[1:]):
+        raise ValueError("Shift arguments have incompatible cell shapes")
+    if length == 0 or int(inserted.shape[0]) == 0:
+        return x
+    inserted_length = int(inserted.shape[0])
+    if inserted_length >= length:
+        return inserted[:length] if glyph == "»" else inserted[-length:]
+    if glyph == "»":
+        return torch.cat((inserted, x[: length - inserted_length]), dim=0)
+    return torch.cat((x[inserted_length:], inserted), dim=0)
+
+
 def major_cell_self_search(x: torch.Tensor, glyph: str) -> torch.Tensor:
     """Independent direct-Torch implementation of monadic self-search."""
 
@@ -73,7 +112,11 @@ class NativeTorchRuntime:
             raise ValueError(f"{program.id}: native Torch argument mismatch")
         function = eval(  # noqa: S307 - generated, tracked corpus source
             program.native_torch,
-            {"torch": torch, "major_cell_self_search": major_cell_self_search},
+            {
+                "torch": torch,
+                "dense_shift": dense_shift,
+                "major_cell_self_search": major_cell_self_search,
+            },
         )
 
         def execute(supplied: Mapping[str, torch.Tensor]) -> torch.Tensor:
