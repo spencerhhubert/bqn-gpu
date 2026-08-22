@@ -99,6 +99,14 @@ def apply_function(
         }
     if kind == "modifier":
         modifier = function["modifier"]
+        if modifier == "⁼":
+            undone = {
+                "op": "undo",
+                "function": function["left"],
+                "arguments": list(arguments),
+            }
+            expand_undo(undone)
+            return undone
         if modifier == "⍟":
             right = function.get("right")
             if right is None or right["kind"] != "constant":
@@ -184,6 +192,17 @@ def expand_repeat(expression: Expression) -> Expression:
     return result
 
 
+def expand_undo(expression: Expression) -> Expression:
+    """Lower a documented Undo subset to ordinary semantic IR."""
+
+    if expression["op"] != "undo":
+        raise ValueError("expected an Undo expression")
+    arguments = expression["arguments"]
+    if len(arguments) not in {1, 2}:
+        raise ValueError("BQN Undo requires one or two arguments")
+    return _apply_inverse(expression["function"], arguments)
+
+
 def expand_combinator(expression: Expression) -> Expression:
     """Expand a pure combinator call without making backend decisions."""
 
@@ -266,6 +285,8 @@ def evaluate(
         return evaluate(expand_train(expression), backend, arguments)
     if operation == "repeat":
         return evaluate(expand_repeat(expression), backend, arguments)
+    if operation == "undo":
+        return evaluate(expand_undo(expression), backend, arguments)
     if operation == "map":
         values = tuple(
             evaluate(child, backend, arguments) for child in expression["arguments"]
@@ -305,6 +326,8 @@ def has_tensor_compute(expression: Expression) -> bool:
         return has_tensor_compute(expand_train(expression))
     if operation == "repeat":
         return has_tensor_compute(expand_repeat(expression))
+    if operation == "undo":
+        return has_tensor_compute(expand_undo(expression))
     if operation == "map":
         return True
     if operation == "call":
@@ -383,6 +406,15 @@ def render_bqn(expression: Expression) -> str:
             return f"({repeated} {render_bqn(arguments[0])})"
         return (
             f"({render_bqn(arguments[0])} {repeated} "
+            f"{render_bqn(arguments[1])})"
+        )
+    if operation == "undo":
+        function = f"{render_function(expression['function'])}⁼"
+        arguments = expression["arguments"]
+        if len(arguments) == 1:
+            return f"({function} {render_bqn(arguments[0])})"
+        return (
+            f"({render_bqn(arguments[0])} {function} "
             f"{render_bqn(arguments[1])})"
         )
     if operation == "map":
@@ -471,6 +503,112 @@ def _validate_train_components(functions: Sequence[FunctionExpression]) -> None:
     _validate_train_components(functions[2:])
 
 
+def _apply_inverse(
+    function: FunctionExpression,
+    arguments: Sequence[Expression],
+) -> Expression:
+    """Apply the portable inverse cases supported by the dense compiler."""
+
+    kind = function["kind"]
+    if kind == "primitive":
+        return _apply_primitive_inverse(function["glyph"], arguments)
+    if kind == "modifier":
+        modifier = function["modifier"]
+        left = function["left"]
+        if modifier == "⁼":
+            return apply_function(left, arguments)
+        if modifier == "⊘":
+            selected = left if len(arguments) == 1 else function["right"]
+            return _apply_inverse(selected, arguments)
+        if modifier == "∘":
+            right = function["right"]
+            target = _apply_inverse(left, [arguments[-1]])
+            right_arguments = [target] if len(arguments) == 1 else [arguments[0], target]
+            return _apply_inverse(right, right_arguments)
+        if modifier in {"˘", "¨", "⌜"}:
+            if modifier == "⌜" and len(arguments) != 1:
+                raise ValueError("Undo of Table is currently monadic only")
+            return apply_function(
+                {**function, "left": modified_function("⁼", left)},
+                arguments,
+            )
+        if modifier == "⊸" and left["kind"] == "constant":
+            return _apply_inverse(function["right"], [left["value"], arguments[-1]])
+        if modifier == "˜":
+            return _apply_self_inverse(left, arguments)
+        raise ValueError(f"Undo for modifier {modifier!r} is not implemented")
+    if kind == "train" and len(function["functions"]) == 2:
+        outer, inner = function["functions"]
+        target = _apply_inverse(outer, [arguments[-1]])
+        inner_arguments = [target] if len(arguments) == 1 else [arguments[0], target]
+        return _apply_inverse(inner, inner_arguments)
+    raise ValueError("Undo is not implemented for this function form")
+
+
+def _apply_primitive_inverse(
+    glyph: str,
+    arguments: Sequence[Expression],
+) -> Expression:
+    x = arguments[-1]
+    if len(arguments) == 1:
+        if glyph in {"+", "⊣", "⊢"}:
+            return x
+        if glyph in {"-", "÷", "¬", "⌽"}:
+            return monadic(glyph, x)
+        if glyph == "√":
+            return dyadic("×", x, x)
+        if glyph == "⋆":
+            return monadic("⋆⁼", x)
+        raise ValueError(f"monadic Undo for primitive {glyph!r} is not implemented")
+
+    w = arguments[0]
+    if glyph == "+":
+        return dyadic("-", x, w)
+    if glyph == "-":
+        return dyadic("-", w, x)
+    if glyph == "×":
+        return dyadic("÷", x, w)
+    if glyph == "÷":
+        return dyadic("÷", w, x)
+    if glyph == "√":
+        return dyadic("⋆", x, w)
+    if glyph == "⋆":
+        return dyadic("÷", monadic("⋆⁼", x), monadic("⋆⁼", w))
+    if glyph == "⊢":
+        return x
+    if glyph == "⌽":
+        return dyadic("⌽", monadic("-", w), x)
+    raise ValueError(f"dyadic Undo for primitive {glyph!r} is not implemented")
+
+
+def _apply_self_inverse(
+    operand: FunctionExpression,
+    arguments: Sequence[Expression],
+) -> Expression:
+    if operand["kind"] != "primitive":
+        raise ValueError("Undo of Self currently requires a primitive operand")
+    glyph = operand["glyph"]
+    x = arguments[-1]
+    if len(arguments) == 1:
+        if glyph == "+":
+            return dyadic("÷", x, constant(2))
+        if glyph == "×":
+            return monadic("√", x)
+        raise ValueError(f"monadic Undo for Self primitive {glyph!r} is not implemented")
+    w = arguments[0]
+    if glyph == "+":
+        return dyadic("-", x, w)
+    if glyph == "-":
+        return dyadic("+", w, x)
+    if glyph == "×":
+        return dyadic("÷", x, w)
+    if glyph == "÷":
+        return dyadic("×", w, x)
+    if glyph == "⋆":
+        return dyadic("√", w, x)
+    raise ValueError(f"dyadic Undo for Self primitive {glyph!r} is not implemented")
+
+
 def _bounded_expanded_expression_size(expression: Expression, limit: int) -> int:
     """Count execution IR nodes, stopping once ``limit`` has been exceeded.
 
@@ -488,6 +626,8 @@ def _bounded_expanded_expression_size(expression: Expression, limit: int) -> int
         return _bounded_expanded_expression_size(expand_combinator(expression), limit)
     if operation == "repeat":
         return _bounded_expanded_expression_size(expand_repeat(expression), limit)
+    if operation == "undo":
+        return _bounded_expanded_expression_size(expand_undo(expression), limit)
 
     total = 1
     for key in ("argument",):

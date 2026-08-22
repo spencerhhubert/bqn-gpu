@@ -33,6 +33,7 @@ _NUMBER = re.compile(
 _MISSING = object()
 _ONE_MODIFIERS = {
     "SELF": "˜",
+    "UNDO": "⁼",
     "CELLS": "˘",
     "EACH": "¨",
     "TABLE": "⌜",
@@ -366,6 +367,7 @@ def _tokenize(source: str) -> list[Token]:
             "˝": "INSERT",
             "`": "SCAN",
             "˜": "SELF",
+            "⁼": "UNDO",
             "∘": "ATOP",
             "○": "OVER",
             "⊸": "BEFORE",
@@ -458,6 +460,12 @@ def _argument_names(expression: Mapping[str, object]) -> set[str]:
             result.update(_function_argument_names(function))
         return result
     if operation == "repeat":
+        result: set[str] = set()
+        for child in expression["arguments"]:  # type: ignore[union-attr]
+            result.update(_argument_names(child))
+        result.update(_function_argument_names(expression["function"]))  # type: ignore[arg-type]
+        return result
+    if operation == "undo":
         result: set[str] = set()
         for child in expression["arguments"]:  # type: ignore[union-attr]
             result.update(_argument_names(child))

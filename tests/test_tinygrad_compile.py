@@ -16,6 +16,8 @@ def test_only_fixed_shape_tensor_work_is_compiled() -> None:
     assert TinygradBackend.can_compile(compile_bqn("{3↕𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{»𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{𝕨«𝕩}").expression)
+    assert TinygradBackend.can_compile(compile_bqn("{2⊸×⁼𝕩}").expression)
+    assert TinygradBackend.can_compile(compile_bqn("{⋆⁼𝕩}").expression)
     assert not TinygradBackend.can_compile(compile_bqn("{𝕨↓𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{⊐𝕩}").expression)
     assert TinygradBackend.can_compile(compile_bqn("{⊒𝕩}").expression)
@@ -181,6 +183,22 @@ def test_static_repeat_is_unrolled_before_execution_planning(
     zero_executable = backend.compile(zero, arguments)
     assert zero_executable(arguments) is arguments["x"]
     assert zero_executable.execution_mode == "optimized-noop"  # type: ignore[attr-defined]
+
+
+def test_undo_is_proven_before_jit_capture(backend: TinygradBackend) -> None:
+    source = (
+        "{((2⊸×)∘(1⊸+)∘(3⊸×)∘(4⊸+)"
+        "∘(5⊸×)∘(6⊸+)∘(7⊸×)∘(8⊸+))⁼𝕩}"
+    )
+    expression = compile_bqn(source).expression
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([2096, 2306, 2516], (3,)))
+    }
+    optimization = backend.optimize(expression, arguments)
+    assert optimization.events[0].rule == "inline-undo"
+    executable = backend.compile(expression, arguments)
+    assert executable(arguments).to_host() == HostValue.from_array([1, 2, 3], (3,))
+    assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
 
 
 def test_ranked_matrix_vector_product_is_jit_captured(

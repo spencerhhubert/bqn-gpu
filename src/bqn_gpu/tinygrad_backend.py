@@ -113,6 +113,8 @@ class TinygradBackend:
 
     def _call_monadic(self, glyph: str, x: TinygradValue) -> TinygradValue:
         self._check_device(x)
+        if glyph == "⋆⁼":
+            return TinygradValue(tensor=x.tensor.log(), atom=x.atom)
         if glyph in {"»", "«"}:
             return self._shift(glyph, None, x)
         if glyph in {"∧", "∨"}:

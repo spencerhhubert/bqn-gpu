@@ -78,6 +78,8 @@ class TorchBackend:
 
     def _call_monadic(self, glyph: str, x: TorchValue) -> TorchValue:
         self._check_device(x)
+        if glyph == "⋆⁼":
+            return TorchValue(tensor=x.tensor.log(), atom=x.atom)
         if glyph in {"»", "«"}:
             return self._shift(glyph, None, x)
         if glyph in {"∧", "∨"}:

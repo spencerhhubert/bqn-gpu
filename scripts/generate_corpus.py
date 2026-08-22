@@ -812,6 +812,46 @@ def make_programs() -> list[dict[str, Any]]:
             atol=5e-12,
         )
 
+    long_undo = x
+    for glyph, value in (("÷", 2), ("-", 1), ("÷", 3), ("-", 4), ("÷", 5), ("-", 6), ("÷", 7), ("-", 8)):
+        long_undo = dyadic(glyph, long_undo, constant(value))
+    dense_undos = [
+        ("identity", x, "{+⁼𝕩}", 1, "monadic_vector", {"x": "signed"}, ["primitive"], 0.0),
+        ("negate", monadic("-", x), "{-⁼𝕩}", 1, "monadic_vector", {"x": "signed"}, ["primitive"], 0.0),
+        ("logarithm", monadic("⋆⁼", x), "{⋆⁼𝕩}", 1, "monadic_vector", {"x": "positive"}, ["primitive", "transcendental"], 5e-14),
+        ("square", dyadic("×", x, x), "{√⁼𝕩}", 1, "monadic_vector", {"x": "signed"}, ["primitive", "self"], 0.0),
+        ("reverse", monadic("⌽", x), "{⌽⁼𝕩}", 1, "monadic_vector", {"x": "signed"}, ["primitive", "structural"], 0.0),
+        ("dyadic_add", dyadic("-", x, w), "{𝕨+⁼𝕩}", 2, "dyadic_same", {"w": "signed", "x": "signed"}, ["dyadic"], 0.0),
+        ("dyadic_multiply", dyadic("÷", x, w), "{𝕨×⁼𝕩}", 2, "dyadic_same", {"w": "nonzero", "x": "signed"}, ["dyadic"], 5e-14),
+        ("bound_scale", dyadic("÷", x, constant(2)), "{2⊸×⁼𝕩}", 1, "monadic_vector", {"x": "signed"}, ["bind"], 0.0),
+        ("self_square", monadic("√", x), "{×˜⁼𝕩}", 1, "monadic_vector", {"x": "positive"}, ["self"], 5e-14),
+        ("each_negate", monadic("-", x), "{-¨⁼𝕩}", 1, "monadic_vector", {"x": "signed"}, ["mapping"], 0.0),
+        (
+            "long_composition",
+            long_undo,
+            "{((2⊸×)∘(1⊸+)∘(3⊸×)∘(4⊸+)∘(5⊸×)∘(6⊸+)∘(7⊸×)∘(8⊸+))⁼𝕩}",
+            1,
+            "monadic_vector",
+            {"x": "signed"},
+            ["atop", "bind", "long", "program"],
+            5e-14,
+        ),
+    ]
+    for name, expression, source, arity, mode, domains, tags, tolerance in dense_undos:
+        add(
+            f"dense.undo.{name}",
+            "dense-undo",
+            "idiomatic",
+            expression,
+            arity,
+            mode,
+            domains,
+            ["dense", "modifier", "undo", *tags],
+            source=source,
+            rtol=tolerance,
+            atol=tolerance,
+        )
+
     dense_mapping = [
         {
             "name": "each_negate",

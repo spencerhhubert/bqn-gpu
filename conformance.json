@@ -914,10 +914,10 @@
     {
       "glyph": "⁼",
       "name": "Undo",
-      "status": "unsupported",
-      "domain": "General primitive and derived-function inverses are not compiled.",
-      "behavior": "Delegated to cBQN by the CLI or rejected in strict mode.",
-      "tests": ["tests/test_source_frontend.py"]
+      "status": "supported",
+      "domain": "Dense-real monadic inverses for +, -, ÷, ⋆, √, ¬, ⊣, ⊢, and ⌽; dyadic right inverses for +, -, ×, ÷, ⋆, √, ⊢, and ⌽; the documented +˜ and ×˜ monadic cases and +, -, ×, ÷, and ⋆ dyadic Self cases; double Undo; Valences; Cells, Each, and monadic Table; constant-left Before; and invertible Atop or two-function train compositions built from those cases. Inputs must lie in the documented inverse domain; general blocks, headers, structural inverses, and inverse-result validation are not yet compiled.",
+      "behavior": "The compiler proves the selected inverse from function structure and lowers it to ordinary tensor IR before execution. It follows the BQN right-inverse rule, treating any left argument as fixed, and introduces no runtime function dispatch.",
+      "tests": ["tests/test_dense_primitives.py", "tests/test_source_frontend.py", "tests/test_tinygrad_compile.py"]
     }
   ],
   "mapping_modifiers": [
@@ -1019,6 +1019,11 @@
         "name": "Statically bounded Repeat `⍟`",
         "status": "supported",
         "constraint": "A literal natural count from zero through 64, a supported operand, and an unrolled expression of at most 4,096 semantic IR nodes. Dynamic, negative, infinite, and array-valued repetition counts are not compiled yet."
+      },
+      {
+        "name": "Proven dense Undo `⁼`",
+        "status": "supported",
+        "constraint": "The required arithmetic inverses and documented structural, Self, mapping, Valences, Bind, composition, two-train, and double-Undo cases listed above. The inverse must be provable statically within the dense-real domain."
       },
       {
         "name": "General BQN syntax",

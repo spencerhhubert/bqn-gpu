@@ -102,6 +102,7 @@ def test_multiline_comments_and_local_names(backend: TinygradBackend) -> None:
         ("{𝕩+}", "expected a numeric value"),
         ("{missing+1}", "unknown local name"),
         ("{𝕩⌾1}", "unsupported BQN token"),
+        ("{|⁼𝕩}", "monadic Undo"),
         ("{(⊢+1)𝕩}", "final component"),
         ("{-⍟¯1𝕩}", "natural count"),
         ("{-⍟65𝕩}", "no larger than 64"),
@@ -226,3 +227,12 @@ def test_cli_explains_static_repeat_unrolling(capsys) -> None:
     assert explanation["semantic_ir"]["count"] == 4
     assert explanation["rewrites"][0]["rule"] == "unroll-static-repeat"
     assert explanation["optimized_bqn"] == "(1+(1+(1+(1+𝕩))))"
+
+
+def test_cli_explains_undo_lowering(capsys) -> None:
+    assert main(["explain", "{2⊸×⁼𝕩}", "--x", "[4,6,8]"]) == 0
+    explanation = json.loads(capsys.readouterr().out)
+    assert explanation["semantic_ir"]["op"] == "undo"
+    assert explanation["semantic_bqn"] == "(2⊸×⁼ 𝕩)"
+    assert explanation["rewrites"][0]["rule"] == "inline-undo"
+    assert explanation["optimized_bqn"] == "(𝕩÷2)"

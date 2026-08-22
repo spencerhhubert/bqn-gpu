@@ -10,6 +10,7 @@ from .ir import (
     expand_combinator,
     expand_repeat,
     expand_train,
+    expand_undo,
     monadic,
     render_bqn,
 )
@@ -80,6 +81,20 @@ def optimize(
                 )
             )
             return visit(replacement)
+        if operation == "undo":
+            rewritten = {
+                **node,
+                "arguments": [visit(child) for child in node["arguments"]],
+            }
+            replacement = expand_undo(rewritten)
+            events.append(
+                OptimizationEvent(
+                    rule="inline-undo",
+                    before=render_bqn(rewritten),
+                    after=render_bqn(replacement),
+                )
+            )
+            return visit(replacement)
         if operation == "call":
             rewritten = {
                 **node,
@@ -118,6 +133,8 @@ def infer_rank(expression: Expression, argument_ranks: Mapping[str, int]) -> int
         return infer_rank(expand_train(expression), argument_ranks)
     if operation == "repeat":
         return infer_rank(expand_repeat(expression), argument_ranks)
+    if operation == "undo":
+        return infer_rank(expand_undo(expression), argument_ranks)
     if operation == "map":
         return None
     if operation == "argument":

@@ -126,6 +126,8 @@ def _monadic(glyph: str, value: str, framework: str) -> str:
         return f"({value})"
     if glyph == "-":
         return f"(-({value}))"
+    if glyph == "⋆⁼":
+        return f"({value}).log()"
     methods = {
         "×": "sign",
         "⋆": "exp",

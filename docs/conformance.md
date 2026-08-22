@@ -1261,7 +1261,7 @@ Delegated to cBQN by the CLI or rejected in strict mode.
 | Modifier | Status | Domain | Behavior |
 |---|---|---|---|
 | `⍟` Repeat | supported | A supported function operand and one literal natural-number count from zero through 64 whose unrolled expression contains at most 4,096 semantic IR nodes, with monadic or dyadic dense-real arguments. | Zero returns the right argument. Positive counts apply the operand that many times; a dyadic call reuses the original left argument each time. The compiler unrolls the bounded repetition before execution planning. |
-| `⁼` Undo | unsupported | General primitive and derived-function inverses are not compiled. | Delegated to cBQN by the CLI or rejected in strict mode. |
+| `⁼` Undo | supported | Dense-real monadic inverses for +, -, ÷, ⋆, √, ¬, ⊣, ⊢, and ⌽; dyadic right inverses for +, -, ×, ÷, ⋆, √, ⊢, and ⌽; the documented +˜ and ×˜ monadic cases and +, -, ×, ÷, and ⋆ dyadic Self cases; double Undo; Valences; Cells, Each, and monadic Table; constant-left Before; and invertible Atop or two-function train compositions built from those cases. Inputs must lie in the documented inverse domain; general blocks, headers, structural inverses, and inverse-result validation are not yet compiled. | The compiler proves the selected inverse from function structure and lowers it to ordinary tensor IR before execution. It follows the BQN right-inverse rule, treating any left argument as fixed, and introduces no runtime function dispatch. |
 
 ## Dense mapping modifiers
 
@@ -1290,6 +1290,7 @@ Both `.bqn` files and BQN strings compile to the same backend-neutral expression
 | Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜` | supported | Dense uniform-result mapping. Rank accepts literal numeric atoms or strands; general computed rank operands and empty generic frames are not compiled yet. |
 | Parenthesized function trains | supported | Two-, three-, long-, and nested trains over supported primitive or derived functions, including numeric subjects in train argument positions. The train must be applied within the accepted program body. |
 | Statically bounded Repeat `⍟` | supported | A literal natural count from zero through 64, a supported operand, and an unrolled expression of at most 4,096 semantic IR nodes. Dynamic, negative, infinite, and array-valued repetition counts are not compiled yet. |
+| Proven dense Undo `⁼` | supported | The required arithmetic inverses and documented structural, Self, mapping, Valences, Bind, composition, two-train, and double-Undo cases listed above. The inverse must be provable statically within the dense-real domain. |
 | General BQN syntax | unsupported | General array notation, standalone function-valued programs, headers, computed or named function values, remaining modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
 
 Source frontend tests:

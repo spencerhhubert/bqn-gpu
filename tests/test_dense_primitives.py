@@ -295,6 +295,65 @@ def test_dense_static_repeat_matches_cbqn(
 @pytest.mark.parametrize(
     ("source", "arguments"),
     [
+        ("{+⁼𝕩}", {"x": V}),
+        ("{-⁼𝕩}", {"x": V}),
+        ("{÷⁼𝕩}", {"x": decode_host_value([0.5, 2, 4])}),
+        ("{√⁼𝕩}", {"x": decode_host_value([2, 3, 4])}),
+        ("{⋆⁼𝕩}", {"x": decode_host_value([1, 2, 4])}),
+        ("{¬⁼𝕩}", {"x": decode_host_value([0, 0.25, 1])}),
+        ("{⊣⁼𝕩}", {"x": V}),
+        ("{⊢⁼𝕩}", {"x": V}),
+        ("{⌽⁼𝕩}", {"x": V}),
+        ("{𝕨+⁼𝕩}", {"w": V, "x": decode_host_value([5, 7, 9, 11])}),
+        ("{𝕨-⁼𝕩}", {"w": V, "x": decode_host_value([0, 0, 0, 0])}),
+        ("{𝕨×⁼𝕩}", {"w": V, "x": decode_host_value([2, 8, 18, 32])}),
+        ("{𝕨÷⁼𝕩}", {"w": V, "x": decode_host_value([0.5, 0.5, 0.5, 0.5])}),
+        ("{𝕨⊢⁼𝕩}", {"w": V, "x": decode_host_value([5, 7, 9, 11])}),
+        ("{2√⁼𝕩}", {"x": decode_host_value([2, 4, 8])}),
+        ("{2⋆⁼𝕩}", {"x": decode_host_value([2, 4, 8])}),
+        ("{1⌽⁼𝕩}", {"x": V}),
+        ("{(-∘÷)⁼𝕩}", {"x": decode_host_value([0.5, 0.25, 0.125])}),
+        ("{(-÷)⁼𝕩}", {"x": decode_host_value([0.5, 0.25, 0.125])}),
+        ("{2⊸×⁼𝕩}", {"x": decode_host_value([4, 6, 8, 10])}),
+        ("{×˜⁼𝕩}", {"x": decode_host_value([4, 9, 16, 25])}),
+        ("{𝕨+˜⁼𝕩}", {"w": V, "x": decode_host_value([5, 7, 9, 11])}),
+        ("{𝕨-˜⁼𝕩}", {"w": V, "x": decode_host_value([5, 7, 9, 11])}),
+        ("{𝕨×˜⁼𝕩}", {"w": V, "x": decode_host_value([2, 8, 18, 32])}),
+        ("{𝕨÷˜⁼𝕩}", {"w": V, "x": decode_host_value([0.5, 0.5, 0.5, 0.5])}),
+        (
+            "{𝕨⋆˜⁼𝕩}",
+            {
+                "w": decode_host_value([2, 2, 2, 2]),
+                "x": decode_host_value([4, 16, 64, 256]),
+            },
+        ),
+        ("{-˘⁼𝕩}", {"x": M}),
+        ("{-¨⁼𝕩}", {"x": V}),
+        ("{-⌜⁼𝕩}", {"x": V}),
+        ("{(-⁼)⁼𝕩}", {"x": V}),
+        ("{(-⊘+)⁼𝕩}", {"x": V}),
+        ("{𝕨(-⊘+)⁼𝕩}", {"w": V, "x": decode_host_value([5, 7, 9, 11])}),
+    ],
+)
+def test_dense_undo_matches_cbqn(
+    source: str,
+    arguments: dict[str, HostValue],
+    dense_backend: Any,
+    cbqn: CBQN,
+) -> None:
+    compiled = compile_bqn(source)
+    actual = compiled.execute(dense_backend, **arguments)
+    oracle_arguments = (
+        (arguments["w"], arguments["x"])
+        if compiled.arity == 2
+        else (arguments["x"],)
+    )
+    assert actual == cbqn.call(source, *oracle_arguments)
+
+
+@pytest.mark.parametrize(
+    ("source", "arguments"),
+    [
         ("{+¨𝕩}", {"x": HostValue.from_atom(3)}),
         ("{-¨𝕩}", {"x": M}),
         (

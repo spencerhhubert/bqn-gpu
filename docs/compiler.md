@@ -89,6 +89,16 @@ repetition specializes to the right argument; positive monadic or dyadic
 repetition becomes one fixed graph, with the dyadic left argument reused on each
 application as required by BQN.
 
+Undo (`⁼`) also remains explicit until semantic optimization. The compiler
+proves an inverse from the operand structure and replaces it with ordinary
+tensor IR: required arithmetic inverses, logarithm, reverse/rotate, selected
+Self cases, mapped inverses, Valences, constant-left Bind, Atop, two-function
+trains, and double Undo are covered within the documented dense-real domain.
+The lowering treats a dyadic left argument as fixed, following BQN's
+right-inverse rule. Unsupported inverse proofs remain compile errors and can be
+delegated to cBQN by the CLI; there is no runtime function dispatch in a proven
+GPU graph.
+
 Monadic Classify, Occurrence Count, Mark Firsts, and Deduplicate compare major
 cells, flattening only each cell's trailing axes for equality while preserving
 BQN's leading-axis semantics. The first three have fixed list output and remain
