@@ -52,6 +52,12 @@ def test_corpus_runner_emits_stable_correctness_and_timing_json(tmp_path) -> Non
     assert report["timing_scope"] == "resident-compute"
     assert report["environment"]["fingerprint"]
     assert report["environment"]["cpu"]["threads"] > 0
+    assert report["environment"]["software"]["tinygrad-renderer"].endswith(
+        ".ClangJITRenderer"
+    )
+    assert report["environment"]["software"]["tinygrad-compiler"].endswith(
+        ".ClangJITCompiler"
+    )
     assert next(
         result for result in report["results"] if result["backend"] == "cbqn"
     )["execution_mode"] == "embedding-resident"

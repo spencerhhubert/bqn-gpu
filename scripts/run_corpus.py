@@ -206,7 +206,7 @@ def main() -> int:
         "requested_backends": requested,
         "skipped_backends": skipped,
         "versions": versions,
-        "environment": environment_profile(versions),
+        "environment": environment_profile(versions, arguments.device.upper()),
         "results": results,
     }
     rendered = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
@@ -569,7 +569,12 @@ def benchmark_command(arguments: argparse.Namespace, backends: list[str]) -> lis
     return command
 
 
-def environment_profile(versions: dict[str, str]) -> dict[str, Any]:
+def environment_profile(versions: dict[str, str], device: str) -> dict[str, Any]:
+    software = {
+        "python": platform.python_version(),
+        **versions,
+        **tinygrad_codegen_profile(versions, device),
+    }
     profile: dict[str, Any] = {
         "architecture": platform.machine(),
         "operating_system": platform.system(),
@@ -577,13 +582,44 @@ def environment_profile(versions: dict[str, str]) -> dict[str, Any]:
         "cpu": cpu_profile(),
         "memory_bytes": memory_bytes(),
         "accelerators": accelerator_profiles(),
-        "software": {
-            "python": platform.python_version(),
-            **versions,
-        },
+        "software": software,
     }
     encoded = json.dumps(profile, sort_keys=True, separators=(",", ":")).encode()
     return {"fingerprint": hashlib.sha256(encoded).hexdigest(), **profile}
+
+
+def tinygrad_codegen_profile(
+    versions: dict[str, str],
+    device: str,
+) -> dict[str, str]:
+    """Capture the concrete tinygrad renderer/compiler without recording paths."""
+
+    if not any("tinygrad" in name for name in versions):
+        return {}
+    try:
+        from tinygrad import Device
+
+        active = Device[device]
+        renderer = type(active.renderer)
+        compiler = type(active.compiler)
+    except Exception:
+        return {}
+    profile = {
+        "tinygrad-renderer": f"{renderer.__module__}.{renderer.__name__}",
+        "tinygrad-compiler": f"{compiler.__module__}.{compiler.__name__}",
+    }
+    if "NVRTC" in compiler.__name__.upper():
+        for distribution in (
+            "nvidia-cuda-nvrtc-cu13",
+            "nvidia-cuda-nvrtc-cu12",
+            "nvidia-cuda-nvrtc-cu11",
+        ):
+            try:
+                profile["NVRTC"] = importlib.metadata.version(distribution)
+                break
+            except importlib.metadata.PackageNotFoundError:
+                continue
+    return profile
 
 
 def cpu_profile() -> dict[str, Any]:

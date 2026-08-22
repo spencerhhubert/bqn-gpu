@@ -26,6 +26,10 @@ The correctness suite evaluates the original source with pinned cBQN, compiles i
 
 `scripts/run_corpus.py` selects by stable ID glob and tags, scales deterministic inputs, checks every requested implementation against cBQN, and records cold and repeated warm timings as JSON. Its unambiguous implementation names are `cbqn`, `bqn-gpu-tinygrad`, `bqn-gpu-torch`, `native-tinygrad`, and `native-torch`. The default comparison is cBQN CPU, bqn-gpu on tinygrad, direct tinygrad, and direct PyTorch. Tensor input transfer occurs before timing and output transfer after it. bqn-gpu/tinygrad selects an explainable optimized no-op, specialized eager layout path, or reusable JIT-captured graph. Native tinygrad uses reusable JIT capture and native PyTorch is eager. Each result records its language, implementation kind, framework, device, execution mode, and timing scope.
 
+The environment fingerprint also records the concrete tinygrad renderer and
+compiler classes. When NVRTC is selected, its installed package version is
+recorded without retaining a machine-specific library path.
+
 `corpus/benchmark-profiles.json` aligns frequent and occasional measurements. The `development` profile is a fixed program-and-size subset of `certification`, so both measurements describe the same program IDs, deterministic seeds, input recipes, timing boundary, and backend identities at a commit. Development runs use fewer warmups and repetitions; certification adds the rest of the corpus and larger scale. Explicit `--size`, `--warmup`, or `--repeat` arguments override a profile for diagnosis while remaining recorded in the report.
 
 Curated construction is complemented by deterministic typed-grammar generation and equivalence mutation. Discovery candidates are checked against cBQN before they are written, but remain local diagnostic artifacts until a correctness failure, new compiler path, scaling gap, or missed simplification earns a stable corpus entry. See [generative-testing.md](generative-testing.md).
