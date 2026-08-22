@@ -15,6 +15,8 @@ The accepted subset is deliberately narrower than BQN. It includes:
   literal numeric Rank specifications;
 - parenthesized two-, three-, long-, and nested function trains over supported
   primitive or derived functions, including numeric subjects in argument slots;
+- Repeat `⍟` with a literal natural count from zero through 64 and a supported
+  monadic or dyadic function operand;
 - local subject assignment with `←`;
 - newline, `⋄`, and comma statement separators; and
 - `#` line comments.

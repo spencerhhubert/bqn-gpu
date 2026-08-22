@@ -43,6 +43,7 @@ _TWO_MODIFIERS = {
     "BEFORE": "⊸",
     "AFTER": "⟜",
     "RANK_MODIFIER": "⎉",
+    "REPEAT": "⍟",
 }
 
 
@@ -204,13 +205,23 @@ class _Parser:
         if function is not None:
             if self.current.kind in {"EOF", "RBRACE", "RPAREN", "SEP"}:
                 self.fail("derived BQN function requires an argument")
-            return apply_function(function, [self._expression()])
+            return self._apply(function, [self._expression()])
 
         left = self._subject()
         function = self._try_function()
         if function is not None:
-            return apply_function(function, [left, self._expression()])
+            return self._apply(function, [left, self._expression()])
         return left
+
+    def _apply(
+        self,
+        function: FunctionExpression,
+        arguments: Sequence[Expression],
+    ) -> Expression:
+        try:
+            return apply_function(function, arguments)
+        except ValueError as error:
+            self.fail(str(error))
 
     def _try_function(self) -> FunctionExpression | None:
         if self.current.kind == "GLYPH" or self._starts_literal_bound_function():
@@ -362,6 +373,7 @@ def _tokenize(source: str) -> list[Token]:
             "¨": "EACH",
             "⌜": "TABLE",
             "⎉": "RANK_MODIFIER",
+            "⍟": "REPEAT",
             "‿": "STRAND",
             "𝕨": "ARG",
             "𝕩": "ARG",
@@ -442,6 +454,12 @@ def _argument_names(expression: Mapping[str, object]) -> set[str]:
             result.update(_argument_names(child))
         for function in expression["functions"]:  # type: ignore[union-attr]
             result.update(_function_argument_names(function))
+        return result
+    if operation == "repeat":
+        result: set[str] = set()
+        for child in expression["arguments"]:  # type: ignore[union-attr]
+            result.update(_argument_names(child))
+        result.update(_function_argument_names(expression["function"]))  # type: ignore[arg-type]
         return result
     if operation == "map":
         result: set[str] = set()

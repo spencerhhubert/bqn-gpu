@@ -373,6 +373,22 @@ def capability_record(
                 "evidence": entry.get("tests", []),
             }
         )
+    supported_iteration_modifiers = 0
+    for index, entry in enumerate(manifest.get("iteration_modifiers", [])):
+        if entry["status"] == "supported":
+            supported_iteration_modifiers += 1
+        features.append(
+            {
+                "id": f"iteration.{index:03d}",
+                "glyph": entry["glyph"],
+                "name": entry["name"],
+                "valence": "iteration-modifier",
+                "status": entry["status"],
+                "domain": entry.get("domain"),
+                "behavior": entry.get("behavior"),
+                "evidence": entry.get("tests", []),
+            }
+        )
     return {
         "backend": manifest["backend"]["name"],
         "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
@@ -396,6 +412,7 @@ def capability_record(
             "combinators_supported": supported_combinators,
             "mapping_modifiers_supported": supported_mapping_modifiers,
             "train_forms_supported": supported_trains,
+            "iteration_modifiers_supported": supported_iteration_modifiers,
         },
     }
 

@@ -10,6 +10,7 @@
       "dense-paired": 10,
       "dense-phrase": 10,
       "dense-primitive": 34,
+      "dense-repeat": 7,
       "dense-structural": 10,
       "dense-train": 10,
       "glyph": 103,
@@ -11024,6 +11025,431 @@
         "combinator",
         "dense",
         "reduction",
+        "train"
+      ]
+    },
+    {
+      "id": "dense.repeat.identity_zero",
+      "category": "dense-repeat",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{-⍟0𝕩}",
+      "native": {
+        "expression": {
+          "op": "argument",
+          "name": "x"
+        },
+        "tinygrad": "lambda x: x",
+        "torch": "lambda x: x"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "repeat",
+        "static-count",
+        "zero"
+      ]
+    },
+    {
+      "id": "dense.repeat.negate_twice",
+      "category": "dense-repeat",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{-⍟2𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "-",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (-((-(x))))",
+        "torch": "lambda x: (-((-(x))))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "pervasive",
+        "repeat",
+        "static-count"
+      ]
+    },
+    {
+      "id": "dense.repeat.reverse_twice",
+      "category": "dense-repeat",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{⌽⍟2𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "⌽",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "⌽",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((x).flip(0)).flip(0)",
+        "torch": "lambda x: torch.flip((torch.flip((x), dims=(0,))), dims=(0,))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "repeat",
+        "static-count",
+        "structural"
+      ]
+    },
+    {
+      "id": "dense.repeat.absolute_three",
+      "category": "dense-repeat",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{|⍟3𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "|",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "|",
+              "arguments": [
+                {
+                  "op": "call",
+                  "glyph": "|",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: (((x).abs()).abs()).abs()",
+        "torch": "lambda x: (((x).abs()).abs()).abs()"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "pervasive",
+        "repeat",
+        "static-count"
+      ]
+    },
+    {
+      "id": "dense.repeat.bound_add_four",
+      "category": "dense-repeat",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{1⊸+⍟4𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "+",
+          "arguments": [
+            {
+              "op": "constant",
+              "value": 1
+            },
+            {
+              "op": "call",
+              "glyph": "+",
+              "arguments": [
+                {
+                  "op": "constant",
+                  "value": 1
+                },
+                {
+                  "op": "call",
+                  "glyph": "+",
+                  "arguments": [
+                    {
+                      "op": "constant",
+                      "value": 1
+                    },
+                    {
+                      "op": "call",
+                      "glyph": "+",
+                      "arguments": [
+                        {
+                          "op": "constant",
+                          "value": 1
+                        },
+                        {
+                          "op": "argument",
+                          "name": "x"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((1.0) + (((1.0) + (((1.0) + (((1.0) + (x))))))))",
+        "torch": "lambda x: ((1.0) + (((1.0) + (((1.0) + (((1.0) + (x))))))))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "bind",
+        "dense",
+        "pervasive",
+        "repeat",
+        "static-count"
+      ]
+    },
+    {
+      "id": "dense.repeat.dyadic_add_three",
+      "category": "dense-repeat",
+      "variant": "idiomatic",
+      "arity": 2,
+      "bqn": "{𝕨+⍟3𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "+",
+          "arguments": [
+            {
+              "op": "argument",
+              "name": "w"
+            },
+            {
+              "op": "call",
+              "glyph": "+",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "w"
+                },
+                {
+                  "op": "call",
+                  "glyph": "+",
+                  "arguments": [
+                    {
+                      "op": "argument",
+                      "name": "w"
+                    },
+                    {
+                      "op": "argument",
+                      "name": "x"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda w, x: ((w) + (((w) + (((w) + (x))))))",
+        "torch": "lambda w, x: ((w) + (((w) + (((w) + (x))))))"
+      },
+      "input_mode": "dyadic_same",
+      "domains": {
+        "w": "signed",
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "dyadic",
+        "pervasive",
+        "repeat",
+        "static-count"
+      ]
+    },
+    {
+      "id": "dense.repeat.centered_twice",
+      "category": "dense-repeat",
+      "variant": "idiomatic",
+      "arity": 1,
+      "bqn": "{(⊢-+´÷≠)⍟2𝕩}",
+      "native": {
+        "expression": {
+          "op": "call",
+          "glyph": "-",
+          "arguments": [
+            {
+              "op": "call",
+              "glyph": "-",
+              "arguments": [
+                {
+                  "op": "argument",
+                  "name": "x"
+                },
+                {
+                  "op": "call",
+                  "glyph": "÷",
+                  "arguments": [
+                    {
+                      "op": "fold",
+                      "glyph": "+",
+                      "argument": {
+                        "op": "argument",
+                        "name": "x"
+                      }
+                    },
+                    {
+                      "op": "call",
+                      "glyph": "≠",
+                      "arguments": [
+                        {
+                          "op": "argument",
+                          "name": "x"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "glyph": "÷",
+              "arguments": [
+                {
+                  "op": "fold",
+                  "glyph": "+",
+                  "argument": {
+                    "op": "call",
+                    "glyph": "-",
+                    "arguments": [
+                      {
+                        "op": "argument",
+                        "name": "x"
+                      },
+                      {
+                        "op": "call",
+                        "glyph": "÷",
+                        "arguments": [
+                          {
+                            "op": "fold",
+                            "glyph": "+",
+                            "argument": {
+                              "op": "argument",
+                              "name": "x"
+                            }
+                          },
+                          {
+                            "op": "call",
+                            "glyph": "≠",
+                            "arguments": [
+                              {
+                                "op": "argument",
+                                "name": "x"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": "call",
+                  "glyph": "≠",
+                  "arguments": [
+                    {
+                      "op": "call",
+                      "glyph": "-",
+                      "arguments": [
+                        {
+                          "op": "argument",
+                          "name": "x"
+                        },
+                        {
+                          "op": "call",
+                          "glyph": "÷",
+                          "arguments": [
+                            {
+                              "op": "fold",
+                              "glyph": "+",
+                              "argument": {
+                                "op": "argument",
+                                "name": "x"
+                              }
+                            },
+                            {
+                              "op": "call",
+                              "glyph": "≠",
+                              "arguments": [
+                                {
+                                  "op": "argument",
+                                  "name": "x"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tinygrad": "lambda x: ((((x) - ((((x).sum()) / (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))))) - ((((((x) - ((((x).sum()) / (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))))).sum()) / (Tensor(float((1 if len((((x) - ((((x).sum()) / (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))))).shape) == 0 else (((x) - ((((x).sum()) / (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))))).shape[0])), dtype=dtypes.float64, device=(((x) - ((((x).sum()) / (Tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=dtypes.float64, device=(x).device)))))).device)))))",
+        "torch": "lambda x: ((((x) - ((((x).sum()) / (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))))) - ((((((x) - ((((x).sum()) / (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))))).sum()) / (torch.tensor(float((1 if len((((x) - ((((x).sum()) / (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))))).shape) == 0 else (((x) - ((((x).sum()) / (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))))).shape[0])), dtype=torch.float64, device=(((x) - ((((x).sum()) / (torch.tensor(float((1 if len((x).shape) == 0 else (x).shape[0])), dtype=torch.float64, device=(x).device)))))).device)))))"
+      },
+      "input_mode": "monadic_vector",
+      "domains": {
+        "x": "signed"
+      },
+      "rtol": 5e-12,
+      "atol": 5e-12,
+      "tags": [
+        "dense",
+        "reduction",
+        "repeat",
+        "static-count",
         "train"
       ]
     },

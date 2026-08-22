@@ -158,6 +158,25 @@ def test_function_train_is_inlined_before_jit_capture(
     assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
 
 
+def test_static_repeat_is_unrolled_before_execution_planning(
+    backend: TinygradBackend,
+) -> None:
+    expression = compile_bqn("{1⊸+⍟4𝕩}").expression
+    arguments = {
+        "x": backend.from_host(HostValue.from_array([1, 2, 3], (3,)))
+    }
+    optimization = backend.optimize(expression, arguments)
+    assert optimization.events[0].rule == "unroll-static-repeat"
+    executable = backend.compile(expression, arguments)
+    assert executable(arguments).to_host() == HostValue.from_array([5, 6, 7], (3,))
+    assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
+
+    zero = compile_bqn("{-⍟0𝕩}").expression
+    zero_executable = backend.compile(zero, arguments)
+    assert zero_executable(arguments) is arguments["x"]
+    assert zero_executable.execution_mode == "optimized-noop"  # type: ignore[attr-defined]
+
+
 def test_ranked_matrix_vector_product_is_jit_captured(
     backend: TinygradBackend,
 ) -> None:

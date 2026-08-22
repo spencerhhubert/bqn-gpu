@@ -31,8 +31,8 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--strategy",
         action="append",
-        choices=("grammar", "mutation", "combinator", "train"),
-        help="repeat to select strategies; defaults to all four",
+        choices=("grammar", "mutation", "combinator", "train", "repeat"),
+        help="repeat to select strategies; defaults to all five",
     )
     parser.add_argument(
         "--output",
@@ -50,7 +50,7 @@ def main() -> int:
         min_steps=arguments.min_steps,
         max_steps=arguments.max_steps,
         strategies=arguments.strategy
-        or ("grammar", "mutation", "combinator", "train"),
+        or ("grammar", "mutation", "combinator", "train", "repeat"),
     )
     randomizer = random.Random(arguments.seed)
     host_input = HostValue.from_array(
@@ -80,7 +80,7 @@ def main() -> int:
         "schema_version": 1,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "generator": {
-            "kind": "typed-grammar-equivalence-mutation-combinator-and-train-expansion",
+            "kind": "typed-grammar-equivalence-mutation-combinator-train-and-repeat-expansion",
             "seed": arguments.seed,
             "count": arguments.count,
             "min_steps": arguments.min_steps,

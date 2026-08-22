@@ -336,6 +336,7 @@ function renderCapability() {
   const combinatorCount = (snapshot.manifest?.combinators ?? []).filter((item) => item.status === "supported").length;
   const mappingCount = (snapshot.manifest?.mapping_modifiers ?? []).filter((item) => item.status === "supported").length;
   const trainCount = (snapshot.manifest?.trains ?? []).filter((item) => item.status === "supported").length;
+  const iterationCount = (snapshot.manifest?.iteration_modifiers ?? []).filter((item) => item.status === "supported").length;
   const items = [
     ["Monadic forms", snapshot.monadic_supported],
     ["Dyadic forms", snapshot.dyadic_supported],
@@ -345,6 +346,7 @@ function renderCapability() {
     ["Pure combinators", combinatorCount],
     ["Mapping modifiers", mappingCount],
     ["Function train forms", trainCount],
+    ["Iteration modifiers", iterationCount],
     ["Tests", `${snapshot.tests_passed} passed`],
   ];
   for (const [label, value] of items) {

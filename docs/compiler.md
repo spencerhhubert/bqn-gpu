@@ -76,6 +76,14 @@ right-associated three-train fork rules. Nested trains and derived functions
 expand recursively, producing the same ordinary tensor IR as an explicitly
 written block and recording each train-inline decision in the explanation.
 
+Repeat with a literal natural count remains explicit in semantic IR and is
+unrolled only after the complete source expression is known. Counts are capped
+at 64, and the expanded expression is capped at 4,096 semantic IR nodes, so an
+operand that duplicates its input cannot grow the compiler graph without bound. Zero
+repetition specializes to the right argument; positive monadic or dyadic
+repetition becomes one fixed graph, with the dyadic left argument reused on each
+application as required by BQN.
+
 ## Measurement discipline
 
 Development uses a compact sentinel set covering elementwise fusion, structural index-map fusion, reductions, scans, selection, sorting/search, and mixed complex programs. Full multi-size measurements are recorded only for tagged milestones. Raw repetitions, exact commits, hardware, compiler choices, and correctness evidence remain reproducible through the results service.

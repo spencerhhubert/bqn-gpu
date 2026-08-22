@@ -800,6 +800,16 @@
       "tests": ["tests/test_dense_primitives.py", "tests/test_tinygrad_compile.py"]
     }
   ],
+  "iteration_modifiers": [
+    {
+      "glyph": "⍟",
+      "name": "Repeat",
+      "status": "supported",
+      "domain": "A supported function operand and one literal natural-number count from zero through 64 whose unrolled expression contains at most 4,096 semantic IR nodes, with monadic or dyadic dense-real arguments.",
+      "behavior": "Zero returns the right argument. Positive counts apply the operand that many times; a dyadic call reuses the original left argument each time. The compiler unrolls the bounded repetition before execution planning.",
+      "tests": ["tests/test_dense_primitives.py", "tests/test_tinygrad_compile.py"]
+    }
+  ],
   "mapping_modifiers": [
     {
       "glyph": "˘",
@@ -886,6 +896,11 @@
         "name": "Parenthesized function trains",
         "status": "supported",
         "constraint": "Two-, three-, long-, and nested trains over supported primitive or derived functions, including numeric subjects in train argument positions. The train must be applied within the accepted program body."
+      },
+      {
+        "name": "Statically bounded Repeat `⍟`",
+        "status": "supported",
+        "constraint": "A literal natural count from zero through 64, a supported operand, and an unrolled expression of at most 4,096 semantic IR nodes. Dynamic, negative, infinite, and array-valued repetition counts are not compiled yet."
       },
       {
         "name": "General BQN syntax",

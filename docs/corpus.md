@@ -2,7 +2,7 @@
 
 `corpus/programs.json` is a generated, tracked corpus of actual BQN sources. The initial floor is 100 programs, not a target or limit. New semantic bugs, optimization boundaries, real workloads, useful phrases, and backend discrepancies should add durable cases with stable IDs.
 
-The current 304-case seed has thirteen layers:
+The current 311-case seed has fourteen layers:
 
 - individual glyphs over monadic and dyadic valence, atom extension, equal shapes, and leading-axis agreement;
 - short elementwise phrases;
@@ -15,6 +15,8 @@ The current 304-case seed has thirteen layers:
 - structural and modifier phrases; and
 - pure-combinator programs covering monadic, dyadic, chained, reduction, and literal-Bind forms; and
 - two-, three-, long-, nested-, monadic-, and dyadic function trains; and
+- statically bounded Repeat programs, including zero, monadic, dyadic, bound,
+  structural, train, and reduction operands; and
 - dense Cells, Rank, Each, and Table programs, including matrix-vector multiplication; and
 - naive/idiomatic structural pairs whose results agree but whose compiler costs currently differ.
 

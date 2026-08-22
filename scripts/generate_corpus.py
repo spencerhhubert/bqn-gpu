@@ -696,6 +696,84 @@ def make_programs() -> list[dict[str, Any]]:
             atol=5e-12,
         )
 
+    repeated_add = x
+    for _ in range(4):
+        repeated_add = dyadic("+", constant(1), repeated_add)
+    repeated_dyadic_add = x
+    for _ in range(3):
+        repeated_dyadic_add = dyadic("+", w, repeated_dyadic_add)
+    centered_once = dyadic("-", x, train_mean)
+    centered_twice = dyadic(
+        "-",
+        centered_once,
+        dyadic("÷", fold("+", centered_once), monadic("≠", centered_once)),
+    )
+    dense_repeats = [
+        ("identity_zero", x, "{-⍟0𝕩}", 1, "monadic_vector", ["zero"]),
+        (
+            "negate_twice",
+            monadic("-", monadic("-", x)),
+            "{-⍟2𝕩}",
+            1,
+            "monadic_vector",
+            ["pervasive"],
+        ),
+        (
+            "reverse_twice",
+            monadic("⌽", monadic("⌽", x)),
+            "{⌽⍟2𝕩}",
+            1,
+            "monadic_vector",
+            ["structural"],
+        ),
+        (
+            "absolute_three",
+            monadic("|", monadic("|", monadic("|", x))),
+            "{|⍟3𝕩}",
+            1,
+            "monadic_vector",
+            ["pervasive"],
+        ),
+        (
+            "bound_add_four",
+            repeated_add,
+            "{1⊸+⍟4𝕩}",
+            1,
+            "monadic_vector",
+            ["bind", "pervasive"],
+        ),
+        (
+            "dyadic_add_three",
+            repeated_dyadic_add,
+            "{𝕨+⍟3𝕩}",
+            2,
+            "dyadic_same",
+            ["dyadic", "pervasive"],
+        ),
+        (
+            "centered_twice",
+            centered_twice,
+            "{(⊢-+´÷≠)⍟2𝕩}",
+            1,
+            "monadic_vector",
+            ["train", "reduction"],
+        ),
+    ]
+    for name, expression, source, arity, mode, tags in dense_repeats:
+        add(
+            f"dense.repeat.{name}",
+            "dense-repeat",
+            "idiomatic",
+            expression,
+            arity,
+            mode,
+            {argument_name: "signed" for argument_name in ("w", "x")[-arity:]},
+            ["dense", "repeat", "static-count", *tags],
+            source=source,
+            rtol=5e-12,
+            atol=5e-12,
+        )
+
     dense_mapping = [
         {
             "name": "each_negate",

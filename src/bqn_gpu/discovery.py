@@ -52,7 +52,13 @@ def generate_programs(
     count: int,
     min_steps: int = 8,
     max_steps: int = 32,
-    strategies: Iterable[str] = ("grammar", "mutation", "combinator", "train"),
+    strategies: Iterable[str] = (
+        "grammar",
+        "mutation",
+        "combinator",
+        "train",
+        "repeat",
+    ),
 ) -> list[GeneratedProgram]:
     """Generate unique, typed dense-list programs from stable per-case seeds."""
 
@@ -62,10 +68,11 @@ def generate_programs(
         raise ValueError("step bounds must satisfy 1 <= min_steps <= max_steps")
     enabled = tuple(strategies)
     if not enabled or any(
-        item not in {"grammar", "mutation", "combinator", "train"} for item in enabled
+        item not in {"grammar", "mutation", "combinator", "train", "repeat"}
+        for item in enabled
     ):
         raise ValueError(
-            "strategies must contain grammar, mutation, combinator, and/or train"
+            "strategies must contain grammar, mutation, combinator, train, and/or repeat"
         )
 
     programs: list[GeneratedProgram] = []
@@ -123,6 +130,11 @@ def _generate_one(
         equivalent_to = function_source(expression)
         bqn_override = "{" + body + "}"
         features.update(("train", feature))
+    elif strategy == "repeat":
+        expression, body, feature = _repeat_candidate(randomizer, expression)
+        equivalent_to = function_source(expression)
+        bqn_override = "{" + body + "}"
+        features.update(("repeat", "static-count", feature))
     elif randomizer.random() < 0.35:
         expression = fold(randomizer.choice(("+", "⌊", "⌈")), expression)
         features.add("fold")
@@ -272,6 +284,45 @@ def _train_candidate(
         f"(+´∘|÷≠){rendered}",
         "derived-train",
     )
+
+
+def _repeat_candidate(
+    randomizer: random.Random,
+    operand: Expression,
+) -> tuple[Expression, str, str]:
+    rendered = render_bqn(operand)
+    choice = randomizer.choice(
+        ("negate", "absolute", "reverse", "bound-add", "center-train")
+    )
+    # A centered train duplicates its input at each unrolled step. Keep those
+    # discovery cases short enough for the frequent gate while allowing the
+    # linear-size operands to explore a wider count range.
+    count = (
+        randomizer.randint(0, 3)
+        if choice == "center-train"
+        else randomizer.randint(0, 5)
+    )
+    expression = operand
+    if choice == "negate":
+        for _ in range(count):
+            expression = monadic("-", expression)
+        return expression, f"-⍟{count}{rendered}", "pervasive-repeat"
+    if choice == "absolute":
+        for _ in range(count):
+            expression = monadic("|", expression)
+        return expression, f"|⍟{count}{rendered}", "pervasive-repeat"
+    if choice == "reverse":
+        for _ in range(count):
+            expression = monadic("⌽", expression)
+        return expression, f"⌽⍟{count}{rendered}", "structural-repeat"
+    if choice == "bound-add":
+        for _ in range(count):
+            expression = dyadic("+", constant(1), expression)
+        return expression, f"1⊸+⍟{count}{rendered}", "bound-repeat"
+    for _ in range(count):
+        mean = dyadic("÷", fold("+", expression), monadic("≠", expression))
+        expression = dyadic("-", expression, mean)
+    return expression, f"(⊢-+´÷≠)⍟{count}{rendered}", "train-repeat"
 
 
 def _case_seed(seed: int, index: int) -> int:

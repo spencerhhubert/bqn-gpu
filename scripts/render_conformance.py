@@ -138,6 +138,21 @@ def render() -> str:
     lines.extend(
         [
             "",
+            "## Bounded iteration modifiers",
+            "",
+            "| Modifier | Status | Domain | Behavior |",
+            "|---|---|---|---|",
+        ]
+    )
+    for entry in manifest.get("iteration_modifiers", []):
+        lines.append(
+            f"| `{entry['glyph']}` {entry['name']} | {entry['status']} | "
+            f"{entry['domain']} | {entry['behavior']} |"
+        )
+
+    lines.extend(
+        [
+            "",
             "## Dense mapping modifiers",
             "",
             "| Modifier | Status | Domain | Behavior |",

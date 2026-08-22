@@ -11,6 +11,7 @@ from .protocol import ExecutionBackend, ValueT
 
 Expression = dict[str, Any]
 FunctionExpression = dict[str, Any]
+MAX_REPEAT_IR_NODES = 4096
 
 
 def argument(name: str) -> Expression:
@@ -98,6 +99,27 @@ def apply_function(
         }
     if kind == "modifier":
         modifier = function["modifier"]
+        if modifier == "⍟":
+            right = function.get("right")
+            if right is None or right["kind"] != "constant":
+                raise ValueError("Repeat currently requires a literal count")
+            value = right["value"]
+            if value["op"] != "constant":
+                raise ValueError("Repeat currently requires one literal count")
+            count_value = value["value"]
+            count = int(count_value)
+            if count_value != count or not 0 <= count <= 64:
+                raise ValueError(
+                    "Repeat currently requires a natural count no larger than 64"
+                )
+            repeated = {
+                "op": "repeat",
+                "function": function["left"],
+                "count": count,
+                "arguments": list(arguments),
+            }
+            expand_repeat(repeated)
+            return repeated
         if modifier in {"˘", "¨", "⌜", "⎉"}:
             rank_specification: list[Real] = []
             if modifier == "⎉":
@@ -137,6 +159,29 @@ def expand_train(expression: Expression) -> Expression:
     if len(arguments) not in {1, 2}:
         raise ValueError("BQN trains require one or two arguments")
     return _apply_train(expression["functions"], arguments)
+
+
+def expand_repeat(expression: Expression) -> Expression:
+    """Unroll a statically bounded Repeat call into ordinary semantic IR."""
+
+    if expression["op"] != "repeat":
+        raise ValueError("expected a repeat expression")
+    arguments = expression["arguments"]
+    if len(arguments) not in {1, 2}:
+        raise ValueError("BQN Repeat requires one or two arguments")
+    left = arguments[0] if len(arguments) == 2 else None
+    result = arguments[-1]
+    for _ in range(expression["count"]):
+        repeated_arguments = [result] if left is None else [left, result]
+        result = apply_function(expression["function"], repeated_arguments)
+        if (
+            _bounded_expanded_expression_size(result, MAX_REPEAT_IR_NODES)
+            > MAX_REPEAT_IR_NODES
+        ):
+            raise ValueError(
+                f"static Repeat expansion exceeds {MAX_REPEAT_IR_NODES} semantic IR nodes"
+            )
+    return result
 
 
 def expand_combinator(expression: Expression) -> Expression:
@@ -216,6 +261,8 @@ def evaluate(
         return evaluate(expand_combinator(expression), backend, arguments)
     if operation == "train":
         return evaluate(expand_train(expression), backend, arguments)
+    if operation == "repeat":
+        return evaluate(expand_repeat(expression), backend, arguments)
     if operation == "map":
         values = tuple(
             evaluate(child, backend, arguments) for child in expression["arguments"]
@@ -253,6 +300,8 @@ def has_tensor_compute(expression: Expression) -> bool:
         return has_tensor_compute(expand_combinator(expression))
     if operation == "train":
         return has_tensor_compute(expand_train(expression))
+    if operation == "repeat":
+        return has_tensor_compute(expand_repeat(expression))
     if operation == "map":
         return True
     if operation == "call":
@@ -321,6 +370,16 @@ def render_bqn(expression: Expression) -> str:
             return f"({rendered_function} {render_bqn(arguments[0])})"
         return (
             f"({render_bqn(arguments[0])} {rendered_function} "
+            f"{render_bqn(arguments[1])})"
+        )
+    if operation == "repeat":
+        function = render_function(expression["function"])
+        repeated = f"{function}⍟{expression['count']}"
+        arguments = expression["arguments"]
+        if len(arguments) == 1:
+            return f"({repeated} {render_bqn(arguments[0])})"
+        return (
+            f"({render_bqn(arguments[0])} {repeated} "
             f"{render_bqn(arguments[1])})"
         )
     if operation == "map":
@@ -407,3 +466,37 @@ def _validate_train_components(functions: Sequence[FunctionExpression]) -> None:
     if functions[1]["kind"] == "constant":
         raise ValueError("a train combining position must contain a function")
     _validate_train_components(functions[2:])
+
+
+def _bounded_expanded_expression_size(expression: Expression, limit: int) -> int:
+    """Count execution IR nodes, stopping once ``limit`` has been exceeded.
+
+    Trains and combinators retain compact source-level nodes until optimization,
+    so counting their surface representation would let a duplicating train hide
+    exponential growth inside Repeat.
+    """
+
+    if limit < 1:
+        return 1
+    operation = expression["op"]
+    if operation == "train":
+        return _bounded_expanded_expression_size(expand_train(expression), limit)
+    if operation == "combinator":
+        return _bounded_expanded_expression_size(expand_combinator(expression), limit)
+    if operation == "repeat":
+        return _bounded_expanded_expression_size(expand_repeat(expression), limit)
+
+    total = 1
+    for key in ("argument",):
+        child = expression.get(key)
+        if isinstance(child, dict):
+            total += _bounded_expanded_expression_size(child, limit - total)
+            if total > limit:
+                return total
+    for key in ("arguments",):
+        children = expression.get(key, ())
+        for child in children:
+            total += _bounded_expanded_expression_size(child, limit - total)
+            if total > limit:
+                return total
+    return total

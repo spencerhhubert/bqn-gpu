@@ -67,6 +67,11 @@ def atom(value: float) -> HostValue:
             {"x": decode_host_value([1, 2, 3])},
             decode_host_value([2, 3, 4]),
         ),
+        (
+            "{1⊸+⍟4𝕩}",
+            {"x": decode_host_value([1, 2, 3])},
+            decode_host_value([5, 6, 7]),
+        ),
         ("{π}", {}, atom(3.141592653589793)),
         ("{¯5e¯1}", {}, atom(-0.5)),
     ],
@@ -98,6 +103,10 @@ def test_multiline_comments_and_local_names(backend: TinygradBackend) -> None:
         ("{missing+1}", "unknown local name"),
         ("{𝕩⌾1}", "unsupported BQN token"),
         ("{(⊢+1)𝕩}", "final component"),
+        ("{-⍟¯1𝕩}", "natural count"),
+        ("{-⍟65𝕩}", "no larger than 64"),
+        ("{(⊢-+´÷≠)⍟64𝕩}", "exceeds 4096"),
+        ("{-⍟≠𝕩}", "literal count"),
         ("{𝕩+1", "close BQN block"),
     ],
 )
@@ -200,3 +209,12 @@ def test_cli_explains_function_train_lowering(capsys) -> None:
     assert explanation["semantic_ir"]["functions"][2]["kind"] == "fold"
     assert explanation["rewrites"][0]["rule"] == "inline-function-train"
     assert explanation["optimized_bqn"] == "(𝕩-((+´𝕩)÷(≠𝕩)))"
+
+
+def test_cli_explains_static_repeat_unrolling(capsys) -> None:
+    assert main(["explain", "{1⊸+⍟4𝕩}", "--x", "[1,2,3]"]) == 0
+    explanation = json.loads(capsys.readouterr().out)
+    assert explanation["semantic_ir"]["op"] == "repeat"
+    assert explanation["semantic_ir"]["count"] == 4
+    assert explanation["rewrites"][0]["rule"] == "unroll-static-repeat"
+    assert explanation["optimized_bqn"] == "(1+(1+(1+(1+𝕩))))"

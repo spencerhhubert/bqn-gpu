@@ -1143,6 +1143,12 @@ Returns the uniform dense array of sliding windows.
 | `long train` Right-associated train | supported | Four or more supported components following BQN train role rules, including reduction and combinator-derived functions. | Associates from the right into two- and three-trains according to BQN train semantics, then specializes the expanded tensor expression. |
 | `nested train` Nested train | supported | Parenthesized trains used as components of another parenthesized train, with a final dense-real result. | Retains each nested train in semantic IR and recursively inlines it before backend execution planning. |
 
+## Bounded iteration modifiers
+
+| Modifier | Status | Domain | Behavior |
+|---|---|---|---|
+| `⍟` Repeat | supported | A supported function operand and one literal natural-number count from zero through 64 whose unrolled expression contains at most 4,096 semantic IR nodes, with monadic or dyadic dense-real arguments. | Zero returns the right argument. Positive counts apply the operand that many times; a dyadic call reuses the original left argument each time. The compiler unrolls the bounded repetition before execution planning. |
+
 ## Dense mapping modifiers
 
 | Modifier | Status | Domain | Behavior |
@@ -1168,6 +1174,7 @@ Both `.bqn` files and BQN strings compile to the same backend-neutral expression
 | Self/Swap `˜`, Atop `∘`, Over `○`, Before `⊸`, and After `⟜` | supported | Primitive and reduction operands plus numeric literal Bind operands in unparenthesized derived-function chains. Combinators remain explicit in semantic IR and are inlined only after specialization. |
 | Cells `˘`, Rank `⎉`, Each `¨`, and Table `⌜` | supported | Dense uniform-result mapping. Rank accepts literal numeric atoms or strands; general computed rank operands and empty generic frames are not compiled yet. |
 | Parenthesized function trains | supported | Two-, three-, long-, and nested trains over supported primitive or derived functions, including numeric subjects in train argument positions. The train must be applied within the accepted program body. |
+| Statically bounded Repeat `⍟` | supported | A literal natural count from zero through 64, a supported operand, and an unrolled expression of at most 4,096 semantic IR nodes. Dynamic, negative, infinite, and array-valued repetition counts are not compiled yet. |
 | General BQN syntax | unsupported | General array notation, standalone function-valued programs, headers, computed or named function values, remaining modifiers, namespaces, strings, nested values, and control flow are not compiled yet. The CLI can delegate numeric-boundary programs to cBQN. |
 
 Source frontend tests:

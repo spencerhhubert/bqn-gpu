@@ -192,6 +192,34 @@ def test_dense_function_trains_match_cbqn(
 @pytest.mark.parametrize(
     ("source", "arguments"),
     [
+        ("{-⍟0𝕩}", {"x": V}),
+        ("{-⍟2𝕩}", {"x": V}),
+        ("{⌽⍟2𝕩}", {"x": V}),
+        ("{|⍟3𝕩}", {"x": V}),
+        ("{1⊸+⍟4𝕩}", {"x": V}),
+        ("{(⊢-+´÷≠)⍟2𝕩}", {"x": V}),
+        ("{𝕨+⍟3𝕩}", {"w": V, "x": decode_host_value([1, 0, 1, 0])}),
+    ],
+)
+def test_dense_static_repeat_matches_cbqn(
+    source: str,
+    arguments: dict[str, HostValue],
+    dense_backend: Any,
+    cbqn: CBQN,
+) -> None:
+    compiled = compile_bqn(source)
+    actual = compiled.execute(dense_backend, **arguments)
+    oracle_arguments = (
+        (arguments["w"], arguments["x"])
+        if compiled.arity == 2
+        else (arguments["x"],)
+    )
+    assert actual == cbqn.call(source, *oracle_arguments)
+
+
+@pytest.mark.parametrize(
+    ("source", "arguments"),
+    [
         ("{+¨𝕩}", {"x": HostValue.from_atom(3)}),
         ("{-¨𝕩}", {"x": M}),
         (
