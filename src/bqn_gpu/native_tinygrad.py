@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 
 from tinygrad import Device, Tensor, TinyJit, dtypes
+from tinygrad.engine.jit import JitError
 
 from .corpus import Program
 from .errors import DeviceError
@@ -134,9 +135,22 @@ class NativeTinygradRuntime:
 
         jitted = TinyJit(function)
         self.execution_mode = "native-jit-captured"
+        captured = True
 
         def execute(supplied: Mapping[str, Tensor]) -> Tensor:
-            return jitted(*(supplied[name] for name in names))
+            nonlocal captured
+            values = tuple(supplied[name] for name in names)
+            if not captured:
+                self.execution_mode = "native-eager"
+                return function(*values)
+            try:
+                return jitted(*values)
+            except JitError:
+                # A program that only reshapes or selects an argument records no
+                # kernel, so there is no captured graph to replay.
+                captured = False
+                self.execution_mode = "native-eager"
+                return function(*values)
 
         return execute
 
