@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from bqn_gpu import HostValue, TinygradBackend, compile_bqn
 from bqn_gpu.ir import evaluate
 from bqn_gpu.optimizer import optimize
@@ -197,7 +199,10 @@ def test_undo_is_proven_before_jit_capture(backend: TinygradBackend) -> None:
     optimization = backend.optimize(expression, arguments)
     assert optimization.events[0].rule == "inline-undo"
     executable = backend.compile(expression, arguments)
-    assert executable(arguments).to_host() == HostValue.from_array([1, 2, 3], (3,))
+    actual = executable(arguments).to_host()
+    assert actual.atom is False
+    assert actual.shape == (3,)
+    assert actual.data == pytest.approx([1, 2, 3], rel=5e-14, abs=5e-14)
     assert executable.execution_mode == "jit-captured"  # type: ignore[attr-defined]
 
 

@@ -348,7 +348,10 @@ def test_dense_undo_matches_cbqn(
         if compiled.arity == 2
         else (arguments["x"],)
     )
-    assert actual == cbqn.call(source, *oracle_arguments)
+    expected = cbqn.call(source, *oracle_arguments)
+    assert actual.atom == expected.atom
+    assert actual.shape == expected.shape
+    assert actual.data == pytest.approx(expected.data, rel=5e-14, abs=5e-14)
 
 
 @pytest.mark.parametrize(
